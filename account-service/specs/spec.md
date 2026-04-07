@@ -69,6 +69,7 @@ This document is specification-first. Business rules and API behaviour remain no
 #### Account
 - `accountId` (long)
 - `accountType` (CHECKING or SAVINGS)
+- `status` (ACTIVE or CLOSED)
 - `balance` (BigDecimal)
 - `interestRate` (Savings only)
 - `nextCheckNumber` (Checking only)
@@ -76,19 +77,25 @@ This document is specification-first. Business rules and API behaviour remain no
 - `updatedAt`
 
 #### Transaction
-- `transactionId` (long)
-- `accountId`
-- `amount`
-- `type` (DEPOSIT, WITHDRAW, TRANSFER)
-- `timestamp`
-- `description`
-- `status` (SUCCESS or FAILED)
+- A record of a monetary operation on an account. Both successful and failed monetary outcomes are persisted as transaction records in line with the shared platform rule.
+- `transactionId` (UUID string, exactly 36 characters)
+- `accountId` (foreign key linking this transaction to its account, using the same identifier type as `Account.accountId`)
+- `amount` (BigDecimal, exactly scale=2, greater than `0`)
+- `direction` (`CREDIT` or `DEBIT`)
+- `status` (`PENDING`, `SUCCESS`, or `FAILED`)
+- `timestamp` (ISO-8601 UTC string)
+- `description` (string, maximum 255 characters)
+- `senderInfo` (string, maximum 100 characters, present on `CREDIT` transactions)
+- `receiverInfo` (string, maximum 100 characters, present on `DEBIT` transactions)
 - `idempotencyKey` (string, optional) — present only on transactions originating from Deposit, Withdraw, or Transfer requests that supplied an `Idempotency-Key` header
+- Relationships: many transactions belong to one account.
 
 #### User
 - Represents an authenticated actor with a local application record linked to an external identity subject.
+- A `User` MAY be linked to a single `Customer` profile through `customerId` when the actor is an end-customer. Administrative or internal users are not required to have a linked customer profile.
 - `id`
 - `externalSubjectId`
+- `customerId` (optional)
 - `username`
 - `roles` (list of assigned roles)
 
@@ -104,14 +111,18 @@ This document is specification-first. Business rules and API behaviour remain no
 - `CHECKING`
 - `SAVINGS`
 
-#### TransactionType
-- `DEPOSIT`
-- `WITHDRAW`
-- `TRANSFER`
-
 #### TransactionStatus
+- `PENDING`
 - `SUCCESS`
 - `FAILED`
+
+#### TransactionDirection
+- `CREDIT`
+- `DEBIT`
+
+#### AccountStatus
+- `ACTIVE`
+- `CLOSED`
 
 ### ErrorResponse Schema
 ```json
@@ -121,6 +132,11 @@ This document is specification-first. Business rules and API behaviour remain no
   "field": "string"
 }
 ```
+- `ErrorResponse` is returned for all error responses defined by this specification.
+- In the current version of this API, that includes `400`, `401`, `404`, `409`, and `422` responses.
+- If additional error status codes are introduced in later revisions, they SHOULD use the same `ErrorResponse` schema unless this document explicitly states otherwise.
+- `code` is a machine-readable error code identifying the type of failure, for example `ACCOUNT_NOT_FOUND` or `INVALID_ACCOUNT_ID`.
+- `message` is a human-readable explanation of what went wrong.
 - `field` is optional and is used when a validation error is tied to a specific request field.
 
 ### Actors and Roles
@@ -153,7 +169,8 @@ This document is specification-first. Business rules and API behaviour remain no
     - Create customers, because customer creation is outside the scope of this API
 
 ### Glossary
-- **Active account** — any account record that exists in the system and has not been deleted. An account with a zero balance is still considered active.
+- **Active account** — an account record with `status=ACTIVE`. An account with a zero balance is still considered active unless it has been closed.
+- **Closed account** — an account record with `status=CLOSED`. Closed accounts remain retained in storage but are not available for normal operational use.
 
 ### Credential Policy
 Credential rules are enforced by the external Identity Service. This API never receives or stores raw credentials; it only receives the resulting JWT. The following patterns are agreed between this system and the Identity Service and must be enforced at registration time.
@@ -179,6 +196,7 @@ Credential rules are enforced by the external Identity Service. This API never r
 - If an operation references a field or role, its semantics come from this section unless the operation narrows them explicitly.
 - Developers should treat these definitions as the contract vocabulary that request models, response models, validation, and authorization behaviour must consistently reflect.
 - In the agreed stack, these definitions are expected to map cleanly to Spring Boot DTOs, JPA-backed domain models, frontend API types, and form state used by the React client.
+- Account status is part of the domain contract. This API uses only the documented `ACTIVE` and `CLOSED` states.
 
 ### QA Perspective
 - Validate that response payloads, enum values, and field presence align with these shared definitions.
@@ -348,7 +366,7 @@ The following are explicitly excluded from this specification and must not be im
 - The system MUST maintain an append-only audit log capturing all operations, including both successful and failed actions.
 - Audit logs MUST include actor identity, role, action, resource type, resource ID, timestamp, and outcome.
 - Audit logs MUST be retained for at least the same 7-year duration as financial records and MUST NOT be modified or deleted during the retention period.
-- All transaction records, including both `SUCCESS` and `FAILED` outcomes, MUST be retained and MUST NOT be deleted during the 7-year retention period.
+- All transaction records, including records for both successful and failed monetary outcomes, MUST be retained and MUST NOT be deleted during the 7-year retention period.
 - Transaction records SHOULD be treated as immutable once written.
 - "Delete" operations defined in this API MUST remove the resource from normal operational use.
 - Underlying records MUST remain stored for audit and regulatory purposes.
@@ -479,6 +497,7 @@ Creates a new account for an existing customer as either a checking or savings a
 ### Business Rules
 - Account creation requires an existing customer.
 - `accountType` is required and must be `CHECKING` or `SAVINGS`.
+- Newly created accounts MUST have `status=ACTIVE`.
 - `balance` is required and must be greater than or equal to `0`.
 - For `SAVINGS`, `interestRate` is required and `nextCheckNumber` must not be provided.
 - For `CHECKING`, `nextCheckNumber` is required and `interestRate` must not be provided.
@@ -560,6 +579,7 @@ Returns the details of a specific account.
 
 ### Business Rules
 - The account must exist to be retrieved.
+- Only accounts with `status=ACTIVE` are available through normal operational retrieval.
 - Returned data must include account fields defined in the `Account` domain object.
 
 ### Security Constraints
@@ -628,7 +648,7 @@ Returns all accounts belonging to a specific customer.
 
 ### Business Rules
 - The customer must exist to list accounts.
-- Response includes zero or more accounts.
+- Response includes zero or more active accounts.
 - If the customer exists and has no accounts, an empty list is returned with `200`.
 
 ### Security Constraints
@@ -706,6 +726,7 @@ This operation supports updating only the account fields that are explicitly mar
 
 ### Business Rules
 - The account must exist to be updated.
+- Only accounts with `status=ACTIVE` may be updated.
 - This is a partial update of mutable account attributes only; fields omitted from the request remain unchanged.
 - Mutable fields by account type:
   - `SAVINGS` account: `interestRate` only.
@@ -825,7 +846,7 @@ Deletes an account when account closure rules are satisfied.
 ### Business Rules
 - The account must exist to be deleted.
 - Accounts with non-zero balance cannot be deleted.
-- Account deletion removes the account from normal operational use.
+- Account deletion sets `status=CLOSED` and removes the account from normal operational use.
 
 ### Security Constraints
 - The caller must be authenticated.
@@ -904,10 +925,11 @@ Credits funds to an account and records a successful deposit transaction.
 
 ### Business Rules
 - The target account must exist.
+- Only accounts with `status=ACTIVE` may accept deposits.
 - `amount` is required and must be greater than `0`.
 - A successful deposit increases the account balance by `amount`.
-- A `Transaction` record is created with `type=DEPOSIT` and `status=SUCCESS` for successful operations.
-- Failed deposit attempts MUST create a `Transaction` record with `type=DEPOSIT` and `status=FAILED`.
+- A successful deposit MUST create a `Transaction` record with `direction=CREDIT` and `status=SUCCESS`.
+- Failed deposit attempts MUST create a `Transaction` record with `status=FAILED`.
 - Duplicate deposit retries with the same idempotency key MUST return the original outcome without applying the balance change again.
 
 ### Security Constraints
@@ -944,7 +966,7 @@ Credits funds to an account and records a successful deposit transaction.
 #### Positive Scenario
 - Given an existing account with balance `100.00`
 - When a deposit request is submitted with `amount=25.00`
-- Then the API returns `200`, account balance becomes `125.00`, and a deposit transaction is recorded as `SUCCESS`
+- Then the API returns `200`, account balance becomes `125.00`, and a deposit transaction is recorded with `direction=CREDIT` and `status=SUCCESS`
 
 #### Negative Scenario 1
 - Given an existing account
@@ -989,11 +1011,12 @@ Debits funds from an account and records the withdrawal transaction outcome.
 
 ### Business Rules
 - The target account must exist.
+- Only accounts with `status=ACTIVE` may allow withdrawals.
 - `amount` is required and must be greater than `0`.
 - Balance cannot become negative.
 - A successful withdrawal decreases the account balance by `amount`.
-- A successful withdrawal MUST create a `Transaction` record with `type=WITHDRAW` and `status=SUCCESS`.
-- A failed withdrawal attempt MUST create a `Transaction` record with `type=WITHDRAW` and `status=FAILED`.
+- A successful withdrawal MUST create a `Transaction` record with `direction=DEBIT` and `status=SUCCESS`.
+- A failed withdrawal attempt MUST create a `Transaction` record with `status=FAILED`.
 - Concurrent withdrawal/transfer requests against the same account are allowed and are evaluated against the latest committed balance at execution time.
 - Duplicate withdraw retries with the same idempotency key MUST return the original outcome without applying the balance change again.
 
@@ -1033,7 +1056,7 @@ Debits funds from an account and records the withdrawal transaction outcome.
 #### Positive Scenario
 - Given an existing account with balance `100.00`
 - When a withdraw request is submitted with `amount=20.00`
-- Then the API returns `200`, account balance becomes `80.00`, and a withdrawal transaction is recorded as `SUCCESS`
+- Then the API returns `200`, account balance becomes `80.00`, and a withdrawal transaction is recorded with `direction=DEBIT` and `status=SUCCESS`
 
 #### Negative Scenario 1
 - Given an existing account with balance `50.00`
@@ -1080,12 +1103,13 @@ Transfers funds from one account to another as a single atomic operation and rec
 
 ### Business Rules
 - Source and destination accounts must both exist.
+- Source and destination accounts must both have `status=ACTIVE`.
 - `fromAccountId` and `toAccountId` must be different.
 - `amount` is required and must be greater than `0`.
 - Source account balance cannot become negative.
 - Transfer is atomic: either both debit and credit succeed or neither is applied.
-- Successful transfers MUST create `Transaction` entries with `type=TRANSFER` and `status=SUCCESS`.
-- Failed transfer attempts MUST create `Transaction` entries with `type=TRANSFER` and `status=FAILED`.
+- Successful transfers MUST create `Transaction` entries for both accounts: a `DEBIT` transaction on the source account and a `CREDIT` transaction on the destination account. Successful transfer transaction records MUST have `status=SUCCESS`.
+- Failed transfer attempts MUST create transaction records for auditability with `status=FAILED`.
 - Concurrent transfer/withdrawal requests against the same source account are allowed and are evaluated against the latest committed balance at execution time.
 - Duplicate transfer retries with the same idempotency key MUST return the original outcome without applying the debit/credit again.
 
@@ -1111,7 +1135,7 @@ Transfers funds from one account to another as a single atomic operation and rec
 
 ### Edge Cases
 - A transfer between two accounts owned by the same customer is valid and permitted.
-- If atomicity fails after the debit is recorded, neither balance is modified and `FAILED` `Transaction` records are persisted for both accounts.
+- If atomicity fails after the debit is recorded, neither balance is modified and transaction records are still persisted as required for failed outcomes.
 - A second request with the same `Idempotency-Key` returns the original response without re-applying the debit/credit.
 - If the destination account does not exist, the source account balance is not modified.
 
@@ -1129,7 +1153,7 @@ Transfers funds from one account to another as a single atomic operation and rec
 #### Positive Scenario
 - Given source account balance `200.00` and destination account balance `50.00`
 - When a transfer request is submitted with `amount=75.00`
-- Then the API returns `200`, source balance becomes `125.00`, destination balance becomes `125.00`, and transfer transactions are recorded as `SUCCESS`
+- Then the API returns `200`, source balance becomes `125.00`, destination balance becomes `125.00`, and transfer transactions are recorded as `SUCCESS` with `direction=DEBIT` for the source account and `direction=CREDIT` for the destination account
 
 #### Negative Scenario 1
 - Given source account balance `30.00` and destination account exists
@@ -1159,7 +1183,8 @@ Transfers funds from one account to another as a single atomic operation and rec
 - `401` is used when the caller is unauthenticated (no valid token), when a `CUSTOMER` caller attempts to access a resource they do not own, or when a `CUSTOMER` caller attempts to invoke an admin-only operation.
 - `401` is also used when an authenticated caller lacks one or more required permissions for the target endpoint.
 - `404` is used when requested resources do not exist.
-- `409` is used for business-state conflicts (e.g., insufficient funds, blocked delete due to active accounts).
+- `404` is also used when an account exists as a retained record but is no longer available for normal operational access because it has `status=CLOSED`.
+- `409` is used for business-state conflicts (e.g., insufficient funds, delete prevented by active accounts).
 - `422` is used for semantically invalid but well-formed inputs (e.g., negative amount, incompatible field combinations).
 - `200` and `201` success responses return the updated or created resource representation relevant to the operation.
 
