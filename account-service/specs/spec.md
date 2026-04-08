@@ -51,7 +51,6 @@ This document is specification-first. Business rules and API behaviour remain no
 - Q: Should this API persist internal user data in addition to external identity? → A: Yes. The API persists a local user record linked to the external identity subject.
 - Q: Are admin role grant/revoke actions in scope for this API? → A: Yes, admin role-management capability is in scope.
 - Q: What validation applies to `interestRate` on savings accounts? → A: `interestRate` must be a non-negative decimal value with at most 4 decimal places.
-- Q: What validation applies to `nextCheckNumber` on checking accounts? → A: `nextCheckNumber` must be a whole number greater than or equal to `0` and greater than the current stored value.
 
 ## Shared Definitions
 
@@ -72,7 +71,6 @@ This document is specification-first. Business rules and API behaviour remain no
 - `status` (ACTIVE or CLOSED)
 - `balance` (BigDecimal)
 - `interestRate` (Savings only)
-- `nextCheckNumber` (Checking only)
 - `createdAt`
 - `updatedAt`
 
@@ -482,8 +480,7 @@ Creates a new account for an existing customer as either a checking or savings a
 {
   "accountType": "CHECKING | SAVINGS",
   "balance": "BigDecimal",
-  "interestRate": "BigDecimal (required for SAVINGS, forbidden for CHECKING)",
-  "nextCheckNumber": "long (required for CHECKING, forbidden for SAVINGS)"
+  "interestRate": "BigDecimal (required for SAVINGS, forbidden for CHECKING)"
 }
 ```
 - Expected Response Codes:
@@ -499,8 +496,8 @@ Creates a new account for an existing customer as either a checking or savings a
 - `accountType` is required and must be `CHECKING` or `SAVINGS`.
 - Newly created accounts MUST have `status=ACTIVE`.
 - `balance` is required and must be greater than or equal to `0`.
-- For `SAVINGS`, `interestRate` is required and `nextCheckNumber` must not be provided.
-- For `CHECKING`, `nextCheckNumber` is required and `interestRate` must not be provided.
+- For `SAVINGS`, `interestRate` is required.
+- For `CHECKING`, `interestRate` must not be provided.
 
 ### Security Constraints
 - The caller must be authenticated.
@@ -512,8 +509,8 @@ Creates a new account for an existing customer as either a checking or savings a
 - `customerId` must be a valid numeric value greater than `0`.
 - `accountType` is required and must be one of `CHECKING`, `SAVINGS`.
 - `balance` is required and must be a non-negative decimal value with at most two decimal places.
-- For `SAVINGS`: `interestRate` is required; `nextCheckNumber` must not be present.
-- For `CHECKING`: `nextCheckNumber` is required; `interestRate` must not be present.
+- For `SAVINGS`: `interestRate` is required.
+- For `CHECKING`: `interestRate` must not be present.
 
 ### Error Mapping
 - Invalid `customerId` format → `400`, `field="customerId"`
@@ -521,9 +518,7 @@ Creates a new account for an existing customer as either a checking or savings a
 - Missing or negative `balance` → `400`, `field="balance"`
 - Customer not found → `404`
 - `interestRate` provided for `CHECKING` account → `422`, `field="interestRate"`
-- `nextCheckNumber` provided for `SAVINGS` account → `422`, `field="nextCheckNumber"`
 - `interestRate` missing for `SAVINGS` account → `422`, `field="interestRate"`
-- `nextCheckNumber` missing for `CHECKING` account → `422`, `field="nextCheckNumber"`
 
 ### Edge Cases
 - A customer with no prior accounts may create their first account using this operation.
@@ -554,6 +549,11 @@ Creates a new account for an existing customer as either a checking or savings a
 - Given an existing customer
 - When a create account request is submitted with `accountType=CHECKING` and `interestRate` included in the body
 - Then the API returns `422` with an `ErrorResponse` indicating `field="interestRate"`
+
+#### Negative Scenario 2a
+- Given an existing customer
+- When a create account request is submitted with an unsupported field included in the body
+- Then the API returns an error according to the cross-cutting malformed-request rules
 
 #### Negative Scenario 3
 - Given a `CUSTOMER` caller who does not own the specified customer
@@ -713,8 +713,7 @@ This operation supports updating only the account fields that are explicitly mar
 - Request Body:
 ```json
 {
-  "interestRate": "BigDecimal (SAVINGS only)",
-  "nextCheckNumber": "long (CHECKING only)"
+  "interestRate": "BigDecimal (SAVINGS only)"
 }
 ```
 - Expected Response Codes:
@@ -727,10 +726,10 @@ This operation supports updating only the account fields that are explicitly mar
 ### Business Rules
 - The account must exist to be updated.
 - Only accounts with `status=ACTIVE` may be updated.
-- This is a partial update of mutable account attributes only; fields omitted from the request remain unchanged.
+- This operation updates the remaining mutable account attribute only.
 - Mutable fields by account type:
   - `SAVINGS` account: `interestRate` only.
-  - `CHECKING` account: `nextCheckNumber` only.
+  - `CHECKING` account: no mutable fields are exposed by this API.
 - Immutable fields for all accounts through this operation include `accountId`, `customerId`, `accountType`, `balance`, `createdAt`, and any transaction history.
 - Requests that violate account-type field compatibility are rejected.
 - If a request includes fields outside the defined request contract for this operation, the request is rejected.
@@ -741,7 +740,6 @@ This operation supports updating only the account fields that are explicitly mar
 | Field | CHECKING | SAVINGS | Notes |
 |---|---|---|---|
 | `interestRate` | Not allowed | Updatable | Rejected for `CHECKING` accounts |
-| `nextCheckNumber` | Updatable | Not allowed | Rejected for `SAVINGS` accounts |
 | `accountType` | Not allowed | Not allowed | Immutable after account creation |
 | `balance` | Not allowed | Not allowed | Changed only by Deposit, Withdraw, or Transfer |
 | `customerId` | Not allowed | Not allowed | Account ownership cannot be reassigned by this API |
@@ -756,12 +754,10 @@ This operation supports updating only the account fields that are explicitly mar
 
 ### Validation Rules
 - `accountId` must be a valid numeric value greater than `0`.
-- The request body must contain at least one of `interestRate` or `nextCheckNumber`; an empty body is rejected.
-- The request body MUST NOT contain fields other than `interestRate` and `nextCheckNumber`.
+- The request body must contain `interestRate`; an empty body is rejected.
+- The request body MUST NOT contain fields other than `interestRate`.
 - `interestRate` is only valid for `SAVINGS` accounts.
 - `interestRate`, when provided, must be a non-negative decimal value with at most 4 decimal places.
-- `nextCheckNumber` is only valid for `CHECKING` accounts.
-- `nextCheckNumber`, when provided, must be a whole number greater than or equal to `0` and greater than the current stored `nextCheckNumber`.
 
 ### Error Mapping
 - Invalid `accountId` format → `400`, `field="accountId"`
@@ -770,14 +766,11 @@ This operation supports updating only the account fields that are explicitly mar
 - Account not found → `404`
 - Negative `interestRate` or `interestRate` with more than 4 decimal places → `422`, `field="interestRate"`
 - `interestRate` submitted for a `CHECKING` account → `422`, `field="interestRate"`
-- `nextCheckNumber` less than `0` or not greater than the current stored value → `422`, `field="nextCheckNumber"`
-- `nextCheckNumber` submitted for a `SAVINGS` account → `422`, `field="nextCheckNumber"`
 
 ### Edge Cases
 - A request body containing only fields not applicable to the account type (e.g., `interestRate` on a `CHECKING` account) is treated as a `422`, not a `400`.
-- If both `interestRate` and `nextCheckNumber` are submitted, the API evaluates each field against the existing account type and rejects the request if any submitted field is not permitted for that account.
 - If an allowed mutable field is omitted, its current stored value remains unchanged.
-- A checking-account update that supplies the same `nextCheckNumber` as the current stored value is rejected.
+- A `CHECKING` account update request is rejected because this API exposes no mutable account-specific fields for checking accounts.
 
 ### Development Perspective
 - This operation must preserve the distinction between malformed requests (`400`) and well-formed but semantically invalid updates (`422`).
@@ -785,7 +778,7 @@ This operation supports updating only the account fields that are explicitly mar
 - In the agreed stack, this maps to a secured Spring Boot update endpoint with request-body validation and a frontend edit flow that exposes only the permitted mutable fields.
 
 ### QA Perspective
-- Verify partial-update behaviour, immutable-field rejection, wrong-account-type field rejection, boundary validation for `interestRate`, and monotonic validation for `nextCheckNumber`.
+- Verify partial-update behaviour, immutable-field rejection, wrong-account-type field rejection, and boundary validation for `interestRate`.
 - Confirm that successful updates change only the permitted field and preserve unrelated account values.
 
 ### Acceptance Criteria
@@ -794,11 +787,6 @@ This operation supports updating only the account fields that are explicitly mar
 - Given an existing savings account
 - When an update account request is submitted with a valid `interestRate`
 - Then the API returns `200` and the updated account details
-
-#### Positive Scenario 2
-- Given an existing checking account with current `nextCheckNumber=1200`
-- When an update account request is submitted with `nextCheckNumber=1201`
-- Then the API returns `200`, `nextCheckNumber` is updated to `1201`, and no other account fields are changed
 
 #### Negative Scenario 1
 - Given an existing checking account
@@ -819,11 +807,6 @@ This operation supports updating only the account fields that are explicitly mar
 - Given an existing account
 - When an update account request is submitted with an immutable or unsupported field such as `balance`
 - Then the API returns `400` with an `ErrorResponse`
-
-#### Negative Scenario 5
-- Given an existing checking account with current `nextCheckNumber=1200`
-- When an update account request is submitted with `nextCheckNumber=1200`
-- Then the API returns `422` with an `ErrorResponse` indicating `field="nextCheckNumber"`
 
 ---
 

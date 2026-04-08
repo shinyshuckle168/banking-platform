@@ -68,8 +68,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Create `CreateAccountRequest` (accountType, balance, interestRate, nextCheckNumber) and `AccountResponse` DTOs in `backend/src/main/java/com/bank/dto/`
-- [ ] T019 [US1] Implement `AccountService.createAccount()`: validate field-type compatibility (interestRate forbidden on CHECKING; nextCheckNumber forbidden on SAVINGS), save entity, return `AccountResponse` in `backend/src/main/java/com/bank/service/AccountService.java`
+- [ ] T018 [US1] Create `CreateAccountRequest` (accountType, balance, interestRate) and `AccountResponse` DTOs in `backend/src/main/java/com/bank/dto/`
+- [ ] T019 [US1] Implement `AccountService.createAccount()`: validate field-type compatibility (interestRate forbidden on CHECKING), save entity, return `AccountResponse` in `backend/src/main/java/com/bank/service/AccountService.java`
 - [ ] T020 [P] [US1] Implement `AccountService.getAccount()`: load by accountId, throw NotFoundException if missing in `backend/src/main/java/com/bank/service/AccountService.java`
 - [ ] T021 [P] [US1] Implement `AccountService.listCustomerAccounts()`: verify customer exists, return all accounts (empty list allowed) in `backend/src/main/java/com/bank/service/AccountService.java`
 - [ ] T022 [US1] Implement `POST /customers/{customerId}/accounts` in `backend/src/main/java/com/bank/controller/AccountController.java` returning 201/400/404/422
@@ -82,7 +82,7 @@
 - [ ] T028 [P] [US1] Implement `useCreateAccount` React Query mutation hook in `frontend/src/hooks/useCreateAccount.js`
 - [ ] T029 [P] [US1] Implement `useGetAccount` React Query query hook in `frontend/src/hooks/useGetAccount.js`
 - [ ] T030 [P] [US1] Implement `useListCustomerAccounts` React Query query hook in `frontend/src/hooks/useListCustomerAccounts.js`
-- [ ] T031 [P] [US1] Implement Create Account form page with accountType-conditional fields (interestRate / nextCheckNumber) and inline ErrorResponse field errors in `frontend/src/pages/CreateAccountPage.jsx`
+- [ ] T031 [P] [US1] Implement Create Account form page with accountType-conditional field handling for `interestRate` and inline ErrorResponse field errors in `frontend/src/pages/CreateAccountPage.jsx`
 - [ ] T032 [P] [US1] Implement Account Detail page displaying all Account fields in `frontend/src/pages/AccountDetailPage.jsx`
 - [ ] T033 [P] [US1] Implement Account List page displaying customer's accounts with links to detail page in `frontend/src/pages/AccountListPage.jsx`
 
@@ -98,7 +98,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Create `UpdateAccountRequest` DTO (interestRate nullable, nextCheckNumber nullable) in `backend/src/main/java/com/bank/dto/UpdateAccountRequest.java`
+- [ ] T034 [US2] Create `UpdateAccountRequest` DTO (interestRate nullable) in `backend/src/main/java/com/bank/dto/UpdateAccountRequest.java`
 - [ ] T035 [P] [US2] Implement `AccountService.updateAccount()`: reject type-incompatible fields with UnprocessableException, persist allowed field only in `backend/src/main/java/com/bank/service/AccountService.java`
 - [ ] T036 [P] [US2] Implement `AccountService.deleteAccount()`: reject non-zero balance with ConflictException and perform deletion by setting the deletion status field while retaining the record in `backend/src/main/java/com/bank/service/AccountService.java`
 - [ ] T037 [P] [US2] Implement `CustomerService.deleteCustomer()`: reject customer with active accounts with ConflictException and perform deletion by setting the deletion status field while retaining the record in `backend/src/main/java/com/bank/service/CustomerService.java`

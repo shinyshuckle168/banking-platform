@@ -191,7 +191,7 @@ account-service/
 - **MySQL for runtime, H2 for local/test**: runtime environments use MySQL, while H2 supports lightweight development and automated test execution.
 - **Optimistic locking** (`@Version` on `Account`): first-commit-wins without serialization overhead.
 - **Idempotency-Key** stored as unique column on `transaction`; duplicate DB insert = duplicate request; cached response returned.
-- `interestRate` / `nextCheckNumber` are nullable columns; account-type incompatibility enforced at service layer, not DB check constraints.
+- `interestRate` is a nullable column used only for SAVINGS accounts; account-type incompatibility is enforced at service layer, not DB check constraints.
 - **JWT Bearer token** is the standard Spring Boot default for "all endpoints require authenticated caller".
 - RBAC is implemented as role-based permission evaluation aligned to the endpoint permission matrix; direct per-user permission grants are out of scope unless the spec is expanded.
 - Multi-currency is out of scope for v1.
