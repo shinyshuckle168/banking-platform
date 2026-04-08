@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: false
+
+banking:
+  categories:
+    Housing: ["rent", "mortgage", "letting"]
+    Transport: ["fuel", "bus", "train", "uber", "taxi"]
+    "Food & Drink": ["restaurant", "cafe", "grocery", "supermarket"]
+    Entertainment: ["cinema", "netflix", "spotify", "gaming"]
+    Shopping: ["amazon", "ebay", "retail"]
+    Utilities: ["electricity", "gas", "water", "internet"]
+    Health: ["pharmacy", "dentist", "gym", "doctor"]
+    Income: ["salary", "payroll", "dividend", "interest"]
+  notifications:
+    allowed-service-ids:
+      test-service: "test-hashed-key"
+  idempotency:
+    purge-after-hours: 72
+  security:
+    jwt:
+      secret: "test-secret-key-for-junit-testing-only-256bits"

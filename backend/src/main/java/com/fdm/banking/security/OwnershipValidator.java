@@ -1,0 +1,39 @@
+package com.fdm.banking.security;
+
+import com.fdm.banking.exception.OwnershipException;
+import com.fdm.banking.repository.AccountRepository;
+import com.fdm.banking.entity.AccountEntity;
+import org.springframework.stereotype.Component;
+
+/**
+ * Validates that a caller owns the requested account. (T011)
+ * ADMIN role bypasses the check; CUSTOMER must own the account.
+ */
+@Component
+public class OwnershipValidator {
+
+    private final AccountRepository accountRepository;
+
+    public OwnershipValidator(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
+
+    /**
+     * Asserts ownership of accountId by the caller.
+     * @param accountId the account to check
+     * @param caller    the authenticated user
+     * @throws OwnershipException if CUSTOMER does not own the account
+     */
+    public void assertOwnership(long accountId, UserPrincipal caller) {
+        if (caller.isAdmin()) {
+            return; // ADMIN bypasses check
+        }
+        AccountEntity account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new com.fdm.banking.exception.ResourceNotFoundException(
+                        "Account not found: " + accountId, "ERR_ACC_NOT_FOUND"));
+        Long owningCustomerId = account.getCustomer().getCustomerId();
+        if (!owningCustomerId.equals(caller.getCustomerId())) {
+            throw new OwnershipException("Caller does not own account: " + accountId);
+        }
+    }
+}
