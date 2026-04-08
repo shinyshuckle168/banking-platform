@@ -9,6 +9,7 @@ import com.bankapp.customer.api.UpdateCustomerRequest;
 import com.bankapp.customer.domain.Customer;
 import com.bankapp.customer.repository.CustomerRepository;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -64,8 +65,9 @@ public class CustomerService {
         Customer customer = customerRepository.findByCustomerIdAndOwnerUserId(customerId, userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "CUSTOMER_NOT_FOUND", "Customer was not found."));
 
-        Instant requestTimestamp = request.updatedAt();
-        if (requestTimestamp == null || !requestTimestamp.equals(customer.getUpdatedAt())) {
+        Instant requestTimestamp = normalizeTimestamp(request.updatedAt());
+        Instant currentTimestamp = normalizeTimestamp(customer.getUpdatedAt());
+        if (requestTimestamp == null || currentTimestamp == null || !requestTimestamp.equals(currentTimestamp)) {
             throw new ApiException(HttpStatus.CONFLICT, "CUSTOMER_CONFLICT", "Customer state is stale. Refresh and try again.");
         }
 
@@ -80,6 +82,10 @@ public class CustomerService {
         }
 
         return CustomerResponse.from(customerRepository.save(customer));
+    }
+
+    private Instant normalizeTimestamp(Instant value) {
+        return value == null ? null : value.truncatedTo(ChronoUnit.MILLIS);
     }
 }
 

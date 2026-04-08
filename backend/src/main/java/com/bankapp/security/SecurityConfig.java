@@ -1,5 +1,7 @@
 package com.bankapp.security;
 
+import com.bankapp.common.api.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.bankapp.config.SecurityProperties;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -13,6 +15,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -25,12 +29,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Configuration
 @EnableMethodSecurity
 @EnableConfigurationProperties(SecurityProperties.class)
 public class SecurityConfig {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtTokenService jwtTokenService) throws Exception {
@@ -40,6 +47,17 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                    .authenticationEntryPoint((request, response, authException) ->
+                        writeErrorResponse(response, HttpStatus.UNAUTHORIZED, ErrorResponse.of(
+                            "UNAUTHORISED",
+                            "Access is not authorised for this request."
+                        )))
+                    .accessDeniedHandler((request, response, accessDeniedException) ->
+                        writeErrorResponse(response, HttpStatus.FORBIDDEN, ErrorResponse.of(
+                            "FORBIDDEN",
+                            "You do not have permission to access this resource."
+                        ))))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
@@ -53,6 +71,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    private void writeErrorResponse(HttpServletResponse response, HttpStatus status, ErrorResponse errorResponse) throws IOException {
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        objectMapper.writeValue(response.getOutputStream(), errorResponse);
+    }
+
     private static final class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         private final JwtTokenService jwtTokenService;
@@ -63,9 +87,9 @@ public class SecurityConfig {
 
         @Override
         protected void doFilterInternal(
-                HttpServletRequest request,
-                HttpServletResponse response,
-                FilterChain filterChain
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
         ) throws ServletException, IOException {
             String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 

@@ -11,6 +11,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Entity
@@ -44,7 +45,7 @@ public class Customer {
     }
 
     public Customer(UUID ownerUserId, String name, String address, CustomerType type) {
-        Instant now = Instant.now();
+        Instant now = normalizeTimestamp(Instant.now());
         this.ownerUserId = ownerUserId;
         this.name = name;
         this.address = address;
@@ -55,7 +56,7 @@ public class Customer {
 
     @PrePersist
     void prePersist() {
-        Instant now = Instant.now();
+        Instant now = normalizeTimestamp(Instant.now());
         if (createdAt == null) {
             createdAt = now;
         }
@@ -64,7 +65,11 @@ public class Customer {
 
     @PreUpdate
     void preUpdate() {
-        updatedAt = Instant.now();
+        updatedAt = normalizeTimestamp(Instant.now());
+    }
+
+    private static Instant normalizeTimestamp(Instant value) {
+        return value.truncatedTo(ChronoUnit.MILLIS);
     }
 
     public Long getCustomerId() {
