@@ -1,0 +1,64 @@
+# ===============================
+# Environment files
+# ===============================
+.env
+*.env
+
+# ===============================
+# Spring Boot Config (IMPORTANT)
+# ===============================
+application.properties
+application.yml
+application-*.properties
+application-*.yml
+
+# Keep example config (optional)
+!application-example.properties
+
+# ===============================
+# Maven / Build
+# ===============================
+target/
+*.class
+
+# ===============================
+# Logs
+# ===============================
+*.log
+logs/
+
+# ===============================
+# H2 / Database files (VERY IMPORTANT)
+# ===============================
+*.mv.db
+*.trace.db
+data/
+
+# ===============================
+# IDEs
+# ===============================
+.idea/
+.project
+.classpath
+.settings/
+.vscode/
+
+# ===============================
+# OS files
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Node (if React inside project)
+# ===============================
+node_modules/
+
+# ===============================
+# Misc
+# ===============================
+*.jar
+*.war
+*.zip
+
+
