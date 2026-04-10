@@ -2,10 +2,10 @@ package com.fdm.banking.service;
 
 import com.fdm.banking.dto.response.TransactionHistoryResponse;
 import com.fdm.banking.dto.response.TransactionItemResponse;
-import com.fdm.banking.entity.AccountEntity;
+import com.fdm.banking.entity.Account;
 import com.fdm.banking.entity.AccountStatus;
 import com.fdm.banking.entity.ExportCacheEntity;
-import com.fdm.banking.entity.TransactionEntity;
+import com.fdm.banking.entity.Transaction;
 import com.fdm.banking.exception.BusinessStateException;
 import com.fdm.banking.exception.PermissionDeniedException;
 import com.fdm.banking.exception.ResourceNotFoundException;
@@ -102,7 +102,7 @@ public class TransactionHistoryService {
         }
 
         // Check account status
-        AccountEntity account = accountRepository.findById(accountId)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new com.fdm.banking.exception.ResourceNotFoundException(
                         "Account not found", "ERR_ACC_NOT_FOUND"));
 
@@ -116,7 +116,7 @@ public class TransactionHistoryService {
             }
         }
 
-        List<TransactionEntity> transactions =
+        List<Transaction> transactions =
                 transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(
                         accountId, effectiveStart, effectiveEnd);
 
@@ -157,7 +157,7 @@ public class TransactionHistoryService {
         return exportCacheRepository.findByAccountIdAndParamHash(accountId, paramHash)
                 .map(ExportCacheEntity::getPdfData)
                 .orElseGet(() -> {
-                    List<TransactionEntity> txns =
+                    List<Transaction> txns =
                             transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(
                                     accountId, effectiveStart, effectiveEnd);
                     byte[] pdfBytes = pdfStatementService.buildPdf(accountId, effectiveStart.toLocalDate(),
@@ -183,7 +183,7 @@ public class TransactionHistoryService {
         }
     }
 
-    private TransactionItemResponse toItemResponse(TransactionEntity t) {
+    private TransactionItemResponse toItemResponse(Transaction t) {
         TransactionItemResponse item = new TransactionItemResponse();
         item.setTransactionId(t.getTransactionId());
         item.setAmount(t.getAmount());
@@ -193,6 +193,9 @@ public class TransactionHistoryService {
         item.setDescription(t.getDescription());
         item.setIdempotencyKey(t.getIdempotencyKey());
         item.setCategory(t.getCategory());
+        item.setSenderInfo(t.getSenderInfo());
+        item.setReceiverInfo(t.getReceiverInfo());
+        item.setExternalTransactionId(t.getExternalTransactionId());
         return item;
     }
 }

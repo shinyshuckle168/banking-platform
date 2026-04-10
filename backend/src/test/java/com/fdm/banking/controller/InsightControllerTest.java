@@ -34,7 +34,7 @@ class InsightControllerTest {
     private SpendingInsightService spendingInsightService;
 
     private JwtAuthenticationToken buildAuth() {
-        UserPrincipal principal = new UserPrincipal(1L, "user", "CUSTOMER",
+        UserPrincipal principal = new UserPrincipal("1", "user", List.of("CUSTOMER"),
                 List.of("INSIGHTS:READ"), 10L);
         return new JwtAuthenticationToken(principal);
     }

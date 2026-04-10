@@ -35,7 +35,7 @@ class StandingOrderControllerTest {
     private StandingOrderService standingOrderService;
 
     private JwtAuthenticationToken buildAuth() {
-        UserPrincipal principal = new UserPrincipal(1L, "user", "CUSTOMER",
+        UserPrincipal principal = new UserPrincipal("1", "user", List.of("CUSTOMER"),
                 List.of("STANDING_ORDER:READ"), 10L);
         return new JwtAuthenticationToken(principal);
     }

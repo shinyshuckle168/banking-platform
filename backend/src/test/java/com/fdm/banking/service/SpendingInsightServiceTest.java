@@ -40,21 +40,21 @@ class SpendingInsightServiceTest {
     @InjectMocks
     private SpendingInsightService service;
 
-    private AccountEntity account;
+    private Account account;
     private UserPrincipal caller;
 
     @BeforeEach
     void setUp() {
-        account = new AccountEntity();
+        account = new Account();
         account.setAccountId(1L);
         account.setCreatedAt(LocalDateTime.now().minusYears(2));
 
-        caller = new UserPrincipal(10L, "user", "CUSTOMER", List.of("INSIGHTS:READ"), 42L);
+        caller = new UserPrincipal("10", "user", List.of("CUSTOMER"), List.of("INSIGHTS:READ"), 42L);
     }
 
     @Test
     void missingPermission_throwsPermissionDenied() {
-        UserPrincipal noPerms = new UserPrincipal(10L, "user", "CUSTOMER", List.of(), 42L);
+        UserPrincipal noPerms = new UserPrincipal("10", "user", List.of("CUSTOMER"), List.of(), 42L);
         assertThatThrownBy(() -> service.getInsights(1L, 2024, 1, noPerms))
                 .isInstanceOf(PermissionDeniedException.class);
     }

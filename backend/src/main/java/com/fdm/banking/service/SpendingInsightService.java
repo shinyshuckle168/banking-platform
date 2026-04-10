@@ -75,7 +75,7 @@ public class SpendingInsightService {
                     "ERR_FUTURE_MONTH", "month");
         }
 
-        AccountEntity account = accountRepository.findById(accountId)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND"));
 
         // Compute month range
@@ -83,13 +83,13 @@ public class SpendingInsightService {
         LocalDateTime monthEnd = requestedMonth.atEndOfMonth().atTime(23, 59, 59);
 
         // Fetch eligible transactions (WITHDRAW and TRANSFER, SUCCESS only)
-        List<TransactionEntity> eligible = transactionQueryRepository.findEligibleForInsights(
+        List<Transaction> eligible = transactionQueryRepository.findEligibleForInsights(
                 accountId, List.of(TransactionType.WITHDRAW, TransactionType.TRANSFER),
                 TransactionStatus.SUCCESS, monthStart, monthEnd);
 
         // Auto-categorise uncategorised transactions (write back only if null)
         boolean hasUncategorised = false;
-        for (TransactionEntity t : eligible) {
+        for (Transaction t : eligible) {
             if (t.getCategory() == null) {
                 String resolved = categoryResolver.resolve(t.getDescription());
                 if (resolved != null) {
@@ -103,14 +103,14 @@ public class SpendingInsightService {
 
         // Aggregate by category
         BigDecimal totalDebitSpend = eligible.stream()
-                .map(TransactionEntity::getAmount)
+                .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         List<CategoryBreakdownItem> breakdown = buildBreakdown(eligible, totalDebitSpend);
 
         // Top transactions (up to 5)
         List<TransactionItemResponse> topTransactions = eligible.stream()
-                .sorted(Comparator.comparing(TransactionEntity::getAmount).reversed())
+                .sorted(Comparator.comparing(Transaction::getAmount).reversed())
                 .limit(5)
                 .map(this::toItemResponse)
                 .collect(Collectors.toList());
@@ -160,7 +160,7 @@ public class SpendingInsightService {
                     "ERR_INVALID_CATEGORY", "category");
         }
 
-        TransactionEntity transaction = transactionQueryRepository.findById(transactionId)
+        Transaction transaction = transactionQueryRepository.findById(transactionId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Transaction not found: " + transactionId, "ERR_TX_NOT_FOUND"));
 
@@ -173,12 +173,12 @@ public class SpendingInsightService {
         LocalDateTime monthStart = txMonth.atDay(1).atStartOfDay();
         LocalDateTime monthEnd = txMonth.atEndOfMonth().atTime(23, 59, 59);
 
-        List<TransactionEntity> eligible = transactionQueryRepository.findEligibleForInsights(
+        List<Transaction> eligible = transactionQueryRepository.findEligibleForInsights(
                 accountId, List.of(TransactionType.WITHDRAW, TransactionType.TRANSFER),
                 TransactionStatus.SUCCESS, monthStart, monthEnd);
 
         BigDecimal totalDebitSpend = eligible.stream()
-                .map(TransactionEntity::getAmount)
+                .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         List<CategoryBreakdownItem> breakdown = buildBreakdown(eligible, totalDebitSpend);
@@ -195,7 +195,7 @@ public class SpendingInsightService {
         return response;
     }
 
-    private List<CategoryBreakdownItem> buildBreakdown(List<TransactionEntity> eligible,
+    private List<CategoryBreakdownItem> buildBreakdown(List<Transaction> eligible,
                                                          BigDecimal totalDebitSpend) {
         Map<String, BigDecimal> totals = new LinkedHashMap<>();
         Map<String, Integer> counts = new LinkedHashMap<>();
@@ -204,7 +204,7 @@ public class SpendingInsightService {
             counts.put(cat, 0);
         }
 
-        for (TransactionEntity t : eligible) {
+        for (Transaction t : eligible) {
             String cat = t.getCategory();
             if (cat != null && totals.containsKey(cat)) {
                 totals.put(cat, totals.get(cat).add(t.getAmount()));
@@ -228,7 +228,7 @@ public class SpendingInsightService {
     }
 
     private List<MonthTrendItem> buildSixMonthTrend(long accountId, YearMonth requestedMonth,
-                                                      AccountEntity account) {
+                                                      Account account) {
         List<MonthTrendItem> trend = new ArrayList<>();
         YearMonth currentMonth = YearMonth.now();
 
@@ -248,10 +248,10 @@ public class SpendingInsightService {
             } else {
                 LocalDateTime mStart = trendMonth.atDay(1).atStartOfDay();
                 LocalDateTime mEnd = trendMonth.atEndOfMonth().atTime(23, 59, 59);
-                List<TransactionEntity> txns = transactionQueryRepository.findEligibleForInsights(
+                List<Transaction> txns = transactionQueryRepository.findEligibleForInsights(
                         accountId, List.of(TransactionType.WITHDRAW, TransactionType.TRANSFER),
                         TransactionStatus.SUCCESS, mStart, mEnd);
-                BigDecimal total = txns.stream().map(TransactionEntity::getAmount)
+                BigDecimal total = txns.stream().map(Transaction::getAmount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 item.setTotalSpend(total.setScale(2, RoundingMode.HALF_UP));
             }
@@ -260,7 +260,7 @@ public class SpendingInsightService {
         return trend;
     }
 
-    private TransactionItemResponse toItemResponse(TransactionEntity t) {
+    private TransactionItemResponse toItemResponse(Transaction t) {
         TransactionItemResponse item = new TransactionItemResponse();
         item.setTransactionId(t.getTransactionId());
         item.setAmount(t.getAmount());
@@ -270,6 +270,9 @@ public class SpendingInsightService {
         item.setDescription(t.getDescription());
         item.setIdempotencyKey(t.getIdempotencyKey());
         item.setCategory(t.getCategory());
+        item.setSenderInfo(t.getSenderInfo());
+        item.setReceiverInfo(t.getReceiverInfo());
+        item.setExternalTransactionId(t.getExternalTransactionId());
         return item;
     }
 }

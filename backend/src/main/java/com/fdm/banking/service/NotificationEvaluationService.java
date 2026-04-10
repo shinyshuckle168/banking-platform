@@ -67,7 +67,7 @@ public class NotificationEvaluationService {
         }
 
         // Validate customer-account linkage
-        AccountEntity account = accountRepository.findById(req.getAccountId()).orElseThrow(
+        Account account = accountRepository.findById(req.getAccountId()).orElseThrow(
                 () -> new SemanticValidationException("Account not found", "ERR_CUSTOMER_ACCOUNT_MISMATCH", "accountId"));
         Long owningCustomerId = account.getCustomer().getCustomerId();
         if (!owningCustomerId.equals(req.getCustomerId())) {
@@ -126,7 +126,7 @@ public class NotificationEvaluationService {
         entity.setMandatoryOverride(mandatoryOverride);
         notificationDecisionRepository.save(entity);
 
-        auditService.log(-1L, "SERVICE", "NOTIFICATION_EVALUATE",
+        auditService.log("-1", "SERVICE", "NOTIFICATION_EVALUATE",
                 "NOTIFICATION", req.getEventId(), "SUCCESS");
 
         return mapper.toResponse(entity);
@@ -148,7 +148,7 @@ public class NotificationEvaluationService {
             evaluate(req);
         } catch (Exception e) {
             // Log but do not propagate — scheduler failure notification is best-effort
-            auditService.log(-1L, "SYSTEM", "NOTIFICATION_INTERNAL_FAILED",
+            auditService.log("-1", "SYSTEM", "NOTIFICATION_INTERNAL_FAILED",
                     "NOTIFICATION", eventType, "ERROR");
         }
     }

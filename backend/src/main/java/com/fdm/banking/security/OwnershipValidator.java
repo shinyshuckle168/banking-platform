@@ -2,7 +2,7 @@ package com.fdm.banking.security;
 
 import com.fdm.banking.exception.OwnershipException;
 import com.fdm.banking.repository.AccountRepository;
-import com.fdm.banking.entity.AccountEntity;
+import com.fdm.banking.entity.Account;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,7 +28,7 @@ public class OwnershipValidator {
         if (caller.isAdmin()) {
             return; // ADMIN bypasses check
         }
-        AccountEntity account = accountRepository.findById(accountId)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new OwnershipException(
                         "Caller does not own account: " + accountId));
         Long owningCustomerId = account.getCustomer().getCustomerId();

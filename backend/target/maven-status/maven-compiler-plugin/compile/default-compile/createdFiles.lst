@@ -32,7 +32,6 @@ com\fdm\banking\entity\NotificationDecisionEntity.class
 com\fdm\banking\util\CategoryResolver.class
 com\fdm\banking\entity\TransactionType.class
 com\fdm\banking\exception\OwnershipException.class
-com\fdm\banking\entity\CustomerEntity.class
 com\fdm\banking\mapper\StandingOrderMapper.class
 com\fdm\banking\repository\CustomerRepository.class
 com\fdm\banking\BankingApplication.class
@@ -58,7 +57,6 @@ com\fdm\banking\util\ValidPayeeAccount.class
 com\fdm\banking\service\PdfStatementService.class
 com\fdm\banking\dto\response\SpendingInsightResponse$MonthTrendItem.class
 com\fdm\banking\entity\NotificationDecision.class
-com\fdm\banking\entity\TransactionEntity.class
 com\fdm\banking\security\JwtAuthenticationFilter.class
 com\fdm\banking\dto\request\CreateStandingOrderRequest.class
 com\fdm\banking\controller\TransactionController.class
@@ -66,12 +64,10 @@ com\fdm\banking\security\UserPrincipal.class
 com\fdm\banking\entity\IdempotencyRecordEntity.class
 com\fdm\banking\util\Mod97Validator.class
 com\fdm\banking\dto\response\SpendingInsightResponse$PeriodInfo.class
-com\fdm\banking\entity\UserEntity.class
 com\fdm\banking\repository\ExportCacheRepository.class
 com\fdm\banking\exception\LockException.class
 com\fdm\banking\service\AuditService.class
 com\fdm\banking\entity\Frequency.class
-com\fdm\banking\entity\AccountEntity.class
 com\fdm\banking\exception\BusinessStateException.class
 com\fdm\banking\entity\StandingOrderStatus.class
 com\fdm\banking\dto\response\TransactionItemResponse.class

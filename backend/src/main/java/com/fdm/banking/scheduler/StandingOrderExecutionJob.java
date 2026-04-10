@@ -104,7 +104,7 @@ public class StandingOrderExecutionJob {
             return; // Already processed this cycle
         }
 
-        AccountEntity account = accountRepository.findById(order.getSourceAccountId()).orElse(null);
+        Account account = accountRepository.findById(order.getSourceAccountId()).orElse(null);
         if (account == null) {
             order.setStatus(StandingOrderStatus.TERMINATED);
             standingOrderRepository.save(order);
@@ -125,7 +125,7 @@ public class StandingOrderExecutionJob {
     private void finalExecutionAttempt(StandingOrderEntity order) {
         String idempotencyKey = order.getStandingOrderId() + ":" + order.getNextRunDate().toLocalDate();
 
-        AccountEntity account = accountRepository.findById(order.getSourceAccountId()).orElse(null);
+        Account account = accountRepository.findById(order.getSourceAccountId()).orElse(null);
         if (account == null) {
             order.setStatus(StandingOrderStatus.TERMINATED);
             standingOrderRepository.save(order);
@@ -134,7 +134,7 @@ public class StandingOrderExecutionJob {
 
         if (account.getBalance().compareTo(order.getAmount()) < 0) {
             // Final failure — create FAILED transaction
-            TransactionEntity failedTx = new TransactionEntity();
+            Transaction failedTx = new Transaction();
             failedTx.setAccount(account);
             failedTx.setAmount(order.getAmount());
             failedTx.setType(TransactionType.TRANSFER);
@@ -158,7 +158,7 @@ public class StandingOrderExecutionJob {
                 );
             } catch (Exception e) {
                 // Log but do not fail the scheduler
-                auditService.log(-1L, "SYSTEM", "NOTIFICATION_FAILED",
+                auditService.log("-1", "SYSTEM", "NOTIFICATION_FAILED",
                         "STANDING_ORDER", order.getStandingOrderId(), "ERROR");
             }
             return;
@@ -167,13 +167,13 @@ public class StandingOrderExecutionJob {
         executeTransfer(account, order, idempotencyKey);
     }
 
-    private void executeTransfer(AccountEntity account, StandingOrderEntity order, String idempotencyKey) {
+    private void executeTransfer(Account account, StandingOrderEntity order, String idempotencyKey) {
         // Deduct balance
         account.setBalance(account.getBalance().subtract(order.getAmount()));
         accountRepository.save(account);
 
         // Create SUCCESS transaction
-        TransactionEntity tx = new TransactionEntity();
+        Transaction tx = new Transaction();
         tx.setAccount(account);
         tx.setAmount(order.getAmount());
         tx.setType(TransactionType.TRANSFER);
@@ -195,7 +195,7 @@ public class StandingOrderExecutionJob {
         order.setStatus(StandingOrderStatus.ACTIVE);
         standingOrderRepository.save(order);
 
-        auditService.log(-1L, "SYSTEM", "STANDING_ORDER_EXECUTED",
+        auditService.log("-1", "SYSTEM", "STANDING_ORDER_EXECUTED",
                 "STANDING_ORDER", order.getStandingOrderId(), "SUCCESS");
     }
 

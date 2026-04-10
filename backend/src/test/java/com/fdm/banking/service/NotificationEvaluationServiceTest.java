@@ -40,15 +40,15 @@ class NotificationEvaluationServiceTest {
     @InjectMocks
     private NotificationEvaluationService service;
 
-    private AccountEntity account;
-    private CustomerEntity customer;
+    private Account account;
+    private Customer customer;
 
     @BeforeEach
     void setUp() {
-        customer = new CustomerEntity();
+        customer = new Customer();
         customer.setCustomerId(42L);
 
-        account = new AccountEntity();
+        account = new Account();
         account.setAccountId(1L);
         account.setCustomer(customer);
 

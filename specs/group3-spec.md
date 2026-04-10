@@ -398,6 +398,216 @@ same `Idempotency-Key` header value on a repeated request.
 
 ---
 
+# Cross-Cutting: JWT Integration with Group 1
+
+## Group 1 Token Format
+
+Group 1 owns authentication and issues all JWT access tokens. Tokens are
+signed with HS256 using the shared secret at `banking.security.jwt.secret`.
+
+```
+Header:  { "alg": "HS256", "typ": "JWT" }
+Payload: {
+  "sub":   "<UUID string>",     // Group 1 userId as UUID — NOT a Long
+  "roles": ["CUSTOMER"],        // List<String> — NOT a single "role" claim
+  "exp":   <unix timestamp>,
+  "iat":   <unix timestamp>
+}
+```
+
+**Claims that do NOT exist in Group 1 tokens** (must not be read by our
+filter): `userId`, `role`, `permissions`, `customerId`.
+
+## JwtAuthenticationFilter — Updated Behaviour
+
+1. Extract `sub` from the JWT as a String (Group 1 UUID or local dev username)
+2. Extract `roles` as `List<String>` from the `roles` claim. Fall back to
+   single `role` claim for backward compatibility with local `jwt.io` tokens
+3. Look up the local `UserEntity` by `externalSubjectId` matching `sub`. If
+   not found, fall back to `findByUsername(sub)` to allow jwt.io test tokens
+   where `sub` is a plain username to still authenticate during local development
+4. If no user is found in either lookup proceed unauthenticated — the downstream
+   security rules enforce access
+5. If `user.isEnabled()` is false return 401 immediately
+6. Derive `customerId` from `user.getCustomerId()` stored in the local users table
+7. Derive permissions by reading `user.getRole().getPermissions()` (comma-separated
+   string on the RoleEntity) and splitting into a Collection
+8. Build `UserPrincipal` with: `sub` as userId String, roles list from DB role name,
+   permissions collection, and Long customerId from DB
+
+## UserPrincipal — Changed Fields
+
+| Field | Old type | New type | Notes |
+|-------|----------|----------|-------|
+| userId | Long | String | Holds UUID or username for local dev |
+| role | String | List\<String\> roles | Group 1 sends an array |
+
+- `getUserId()` returns `String`
+- `getRoles()` returns `List<String>` (new)
+- `getRole()` kept as backward-compatible helper returning first role as String
+- `isAdmin()` checks `roles.contains("ADMIN")`
+- `isCustomer()` checks `roles.contains("CUSTOMER")`
+- `hasPermission(String)`, `getCustomerId()`, `getPermissions()` — unchanged
+
+## UserEntity — Added Fields
+
+- `externalSubjectId` — `VARCHAR(50)`, stores Group 1's UUID so the filter can
+  resolve the JWT `sub` claim to a local user record
+- `customerId` — `BIGINT NULL`, FK to the Customer record, used by the filter
+  to populate `UserPrincipal.customerId` without reading a claim from the JWT
+
+## AuditService — Changed Signature
+
+- `actorId` parameter type changed from `Long` to `String` to hold UUID values
+- `AuditLogEntity.actor_id` column type changed from `BIGINT` to `VARCHAR(50)`
+- System/scheduler events that previously passed `-1L` now pass `"-1"`
+
+---
+
+# Cross-Cutting: Multi-Group Integration Conflict Resolutions
+
+The following changes were applied to align Group 3 with the shared data model
+and with Group 1/2 contracts discovered during integration testing.
+
+## Conflict 1 — TransactionEntity: senderInfo / receiverInfo
+
+**Problem:** Group 1 and Group 2 attach `senderInfo` and `receiverInfo`
+metadata to every transaction. Group 3's `TransactionEntity` lacked these
+columns; downstream consumers (statements, insights) could not surface them.
+
+**Resolution:** Add two nullable `VARCHAR(100)` columns to `transactions`:
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `sender_info` | VARCHAR(100) | YES |
+| `receiver_info` | VARCHAR(100) | YES |
+
+- `TransactionItemResponse` gains `senderInfo` / `receiverInfo` String fields.
+- `toItemResponse()` in `TransactionHistoryService` and `SpendingInsightService`
+  maps both fields from entity to DTO.
+
+## Conflict 2 — TransactionEntity: externalTransactionId
+
+**Problem:** Group 1 references transactions by a UUID string
+`externalTransactionId`. Group 3 only had the internal auto-increment
+`transactionId` Long, making cross-group traceability impossible.
+
+**Resolution:** Add a `VARCHAR(36)` column `external_transaction_id` (nullable,
+unique) to `transactions`. The `@PrePersist` hook auto-assigns a UUID when the
+value is null, guaranteeing every persisted transaction carries a
+cross-group-safe identifier.
+
+- `TransactionItemResponse` gains an `externalTransactionId` String field.
+- `toItemResponse()` in both history and insight services maps the field.
+
+## Conflict 3 — CustomerEntity: Group 1 Customer Schema Alignment
+
+**Problem:** Group 3's `CustomerEntity` modelled customers with
+`firstName`, `lastName`, `email`, and `phoneNumber`. Group 1's canonical
+customer schema uses `name` (single combined field), `address`, and an
+enum `type` (values `PERSON` / `COMPANY`). The old schema prevented
+customer records created by Group 1 from populating correctly.
+
+**Resolution:**
+
+- Remove `firstName`, `lastName`, `email`, `phoneNumber` from `CustomerEntity`.
+- Add:
+  - `name VARCHAR(255) NOT NULL`
+  - `address VARCHAR(255) NOT NULL`
+  - `type CustomerType NOT NULL` (`@Enumerated(EnumType.STRING)`)
+  - `updatedAt LocalDateTime` set on both `@PrePersist` and `@PreUpdate`
+  - `@OneToMany(mappedBy = "customer") List<AccountEntity> accounts`
+- Add new enum `CustomerType` with values `PERSON` and `COMPANY`.
+- `PdfStatementService.buildStatementPdf()` signature changes: the two
+  parameters `String firstName, String lastName` are replaced by a single
+  `String customerName`. The `fullName` local variable is set directly from
+  `customerName` with an `"N/A"` fallback.
+- `MonthlyStatementService` uses `customer.getName()` and passes the value as
+  the single `customerName` argument.
+
+## Conflict 4 — isEnabled Account-Active Check (Already Resolved)
+
+**Status: Done.** `JwtAuthenticationFilter` already returns HTTP 401 when
+`user.isEnabled()` is false. No further change required.
+
+## Conflict 5 — Login and Register Pages
+
+**Problem:** The frontend had no authentication UI; users could not obtain a
+JWT token through the application. The `axiosInstance` request interceptor
+already sent the `Authorization` header from `localStorage` but there was no
+way to populate it.
+
+**Resolution:** Add two React components:
+
+- `LoginPage` — username/password form; calls `POST /api/auth/login`; stores
+  the returned JWT in `localStorage` under key `jwt`; redirects to `/` on success.
+- `RegisterPage` — username/password form; calls `POST /api/auth/register`;
+  on success immediately calls `POST /api/auth/login` to obtain a token and
+  redirects to `/`.
+
+## Conflict 6 — Protected Routes
+
+**Problem:** All Group 3 dashboard tabs were accessible without a token.
+
+**Resolution:** Add a `ProtectedRoute` component that reads `jwt` from
+`localStorage`. If absent it renders `<Navigate to="/login" replace />`.
+All dashboard content is wrapped in `ProtectedRoute`.
+
+## Conflict 7 — Dynamic Account ID from JWT
+
+**Problem:** `App.jsx` used a hardcoded constant `DEMO_ACCOUNT_ID = 1`.
+All API calls used this constant, making the application unusable for any
+real authenticated user.
+
+**Resolution:**
+
+- Decode the JWT payload from `localStorage` (base64 `atob` on the middle
+  segment — no external library needed).
+- Read the `sub` claim from the decoded payload as a `userId` string.
+- Introduce a `selectedAccountId` state, defaulting to `null`.
+- Render an account selector that lets the authenticated user choose from their
+  accounts after login. The selector is populated by a list returned from the
+  backend for the resolved `customerId`.
+- All tab components receive `selectedAccountId` instead of the constant.
+
+## Conflict 8 — Vite Dev Proxy and axiosInstance Base URL
+
+**Problem:** `axiosInstance` had a hardcoded fallback base URL of
+`http://localhost:8080`, causing CORS errors during Vite development because
+requests were made cross-origin instead of through the dev server.
+
+**Resolution:**
+
+- Update `axiosInstance.js`: change fallback from `'http://localhost:8080'` to
+  `''` so all requests are relative to the Vite dev server origin.
+- Add a `server.proxy` block to `vite.config.js` that forwards the following
+  path prefixes to `http://localhost:8080`:
+  - `/api`
+  - `/accounts`
+  - `/customers`
+  - `/notifications`
+
+## Conflict 9 — 401 Response Interceptor (Already Resolved)
+
+**Status: Done.** `axiosInstance` already contains a response interceptor that
+clears `localStorage` and redirects to `/login` on a 401 response. No further
+change required.
+
+## Conflict 10 — CustomerType Enum: INDIVIDUAL / BUSINESS → PERSON / COMPANY
+
+**Problem:** Any frontend code that compared or displayed customer type strings
+using the legacy values `INDIVIDUAL` or `BUSINESS` would silently break after
+the `CustomerType` enum was aligned to Group 1's values (`PERSON` / `COMPANY`).
+
+**Resolution:** Search all frontend source files for the strings `INDIVIDUAL`
+and `BUSINESS` in enum or conditional contexts and replace with `PERSON` and
+`COMPANY` respectively. No occurrences were found in the existing UI at the time
+of integration — the check confirms no frontend files need updating for this
+conflict. If customer type display is added in future it must use `PERSON` /
+`COMPANY`.
+
+---
+
 # US-08 — Get Transaction History
 
 ## Description

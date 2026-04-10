@@ -38,19 +38,19 @@ class StandingOrderExecutionJobTest {
     private StandingOrderExecutionJob job;
 
     private StandingOrderEntity order;
-    private AccountEntity account;
+    private Account account;
 
     @BeforeEach
     void setUp() {
-        account = new AccountEntity();
+        account = new Account();
         account.setAccountId(1L);
         account.setBalance(new BigDecimal("1000.00"));
 
-        CustomerEntity customer = new CustomerEntity();
+        Customer customer = new Customer();
         customer.setCustomerId(42L);
         account.setCustomer(customer);
 
-        AccountEntity payee = new AccountEntity();
+        Account payee = new Account();
         payee.setAccountId(2L);
 
         order = new StandingOrderEntity();

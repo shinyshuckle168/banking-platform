@@ -40,23 +40,22 @@ class MonthlyStatementServiceTest {
     @InjectMocks
     private MonthlyStatementService service;
 
-    private AccountEntity account;
+    private Account account;
     private UserPrincipal caller;
 
     @BeforeEach
     void setUp() {
-        CustomerEntity customer = new CustomerEntity();
-        customer.setFirstName("Jane");
-        customer.setLastName("Doe");
+        Customer customer = new Customer();
+        customer.setName("Jane Doe");
 
-        account = new AccountEntity();
+        account = new Account();
         account.setAccountId(1L);
         account.setAccountNumber("ACC-001");
         account.setStatus(AccountStatus.ACTIVE);
         account.setBalance(new BigDecimal("1000.00"));
         account.setCustomer(customer);
 
-        caller = new UserPrincipal(10L, "user", "CUSTOMER", List.of("STATEMENT:READ"), 42L);
+        caller = new UserPrincipal("10", "user", List.of("CUSTOMER"), List.of("STATEMENT:READ"), 42L);
 
         when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
         when(transactionQueryRepository
@@ -64,7 +63,7 @@ class MonthlyStatementServiceTest {
                 .thenReturn(List.of());
         when(exportCacheRepository.findByAccountIdAndParamHash(anyLong(), anyString()))
                 .thenReturn(Optional.empty());
-        when(pdfStatementService.buildStatementPdf(anyLong(), any(), any(), any(), any(),
+        when(pdfStatementService.buildStatementPdf(anyLong(), any(), any(), any(),
                 any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .thenReturn(new byte[]{1, 2, 3});
         when(exportCacheRepository.save(any())).thenReturn(new ExportCacheEntity());
@@ -72,7 +71,7 @@ class MonthlyStatementServiceTest {
 
     @Test
     void missingPermission_throwsPermissionDenied() {
-        UserPrincipal noPerms = new UserPrincipal(10L, "user", "CUSTOMER", List.of(), 42L);
+        UserPrincipal noPerms = new UserPrincipal("10", "user", List.of("CUSTOMER"), List.of(), 42L);
         assertThatThrownBy(() -> service.generateStatement(1L, "2024-01", noPerms))
                 .isInstanceOf(PermissionDeniedException.class);
     }
@@ -113,7 +112,7 @@ class MonthlyStatementServiceTest {
         byte[] result = service.generateStatement(1L, "2024-01", caller);
         assertThat(result).isEqualTo(cachedPdf);
         verify(pdfStatementService, never()).buildStatementPdf(
-                anyLong(), any(), any(), any(), any(), any(), anyBoolean(),
+                anyLong(), any(), any(), any(), any(), anyBoolean(),
                 any(), any(), any(), any(), any());
     }
 }

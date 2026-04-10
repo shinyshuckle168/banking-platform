@@ -15,6 +15,9 @@ public class TransactionItemResponse {
     private String description;
     private String idempotencyKey;
     private String category;
+    private String senderInfo;
+    private String receiverInfo;
+    private String externalTransactionId;
 
     public TransactionItemResponse() {}
 
@@ -34,4 +37,10 @@ public class TransactionItemResponse {
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getSenderInfo() { return senderInfo; }
+    public void setSenderInfo(String senderInfo) { this.senderInfo = senderInfo; }
+    public String getReceiverInfo() { return receiverInfo; }
+    public void setReceiverInfo(String receiverInfo) { this.receiverInfo = receiverInfo; }
+    public String getExternalTransactionId() { return externalTransactionId; }
+    public void setExternalTransactionId(String externalTransactionId) { this.externalTransactionId = externalTransactionId; }
 }

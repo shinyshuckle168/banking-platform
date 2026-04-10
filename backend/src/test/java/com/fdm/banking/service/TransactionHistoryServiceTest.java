@@ -40,21 +40,21 @@ class TransactionHistoryServiceTest {
     @InjectMocks
     private TransactionHistoryService service;
 
-    private AccountEntity account;
+    private Account account;
     private UserPrincipal caller;
 
     @BeforeEach
     void setUp() {
-        account = new AccountEntity();
+        account = new Account();
         account.setAccountId(1L);
         account.setStatus(AccountStatus.ACTIVE);
 
-        caller = new UserPrincipal(10L, "user", "CUSTOMER", List.of("TRANSACTION:READ"), 42L);
+        caller = new UserPrincipal("10", "user", List.of("CUSTOMER"), List.of("TRANSACTION:READ"), 42L);
     }
 
     @Test
     void missingPermission_throwsPermissionDenied() {
-        UserPrincipal noPerms = new UserPrincipal(10L, "user", "CUSTOMER", List.of(), 42L);
+        UserPrincipal noPerms = new UserPrincipal("10", "user", List.of("CUSTOMER"), List.of(), 42L);
         assertThatThrownBy(() -> service.getHistory(1L, null, null, noPerms))
                 .isInstanceOf(PermissionDeniedException.class);
     }

@@ -20,8 +20,8 @@ public class AuditLogEntity {
     @Column(name = "log_id")
     private Long logId;
 
-    @Column(name = "actor_id", nullable = false)
-    private Long actorId;
+    @Column(name = "actor_id", nullable = false, length = 50)
+    private String actorId;
 
     @Column(name = "actor_role", nullable = false, length = 50)
     private String actorRole;
@@ -48,8 +48,8 @@ public class AuditLogEntity {
 
     public Long getLogId() { return logId; }
     public void setLogId(Long logId) { this.logId = logId; }
-    public Long getActorId() { return actorId; }
-    public void setActorId(Long actorId) { this.actorId = actorId; }
+    public String getActorId() { return actorId; }
+    public void setActorId(String actorId) { this.actorId = actorId; }
     public String getActorRole() { return actorRole; }
     public void setActorRole(String actorRole) { this.actorRole = actorRole; }
     public String getAction() { return action; }

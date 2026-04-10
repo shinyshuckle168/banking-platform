@@ -69,6 +69,7 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .anyRequest().authenticated())
                 .headers(headers -> headers.frameOptions(fo -> fo.disable())); // H2 console
         return http.build();

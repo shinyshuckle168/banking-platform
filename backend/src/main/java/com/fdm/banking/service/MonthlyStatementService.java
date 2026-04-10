@@ -77,7 +77,7 @@ public class MonthlyStatementService {
         }
 
         // Load account
-        AccountEntity account = accountRepository.findById(accountId)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Account not found", "ERR_ACC_NOT_FOUND"));
 
@@ -93,20 +93,20 @@ public class MonthlyStatementService {
                 });
     }
 
-    private byte[] buildAndCachePdf(AccountEntity account, YearMonth yearMonth,
+    private byte[] buildAndCachePdf(Account account, YearMonth yearMonth,
                                      YearMonth currentMonth, String cacheKey) {
         long accountId = account.getAccountId();
         LocalDateTime periodStart = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime periodEnd = yearMonth.atEndOfMonth().atTime(23, 59, 59);
 
-        List<TransactionEntity> transactions =
+        List<Transaction> transactions =
                 transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(
                         accountId, periodStart, periodEnd);
 
         // Calculate balances
         BigDecimal totalIn = BigDecimal.ZERO;
         BigDecimal totalOut = BigDecimal.ZERO;
-        for (TransactionEntity t : transactions) {
+        for (Transaction t : transactions) {
             if (t.getStatus() == TransactionStatus.SUCCESS) {
                 if (t.getType() == TransactionType.DEPOSIT
                         || (t.getType() == TransactionType.TRANSFER && isCredit(t, accountId))) {
@@ -124,16 +124,14 @@ public class MonthlyStatementService {
 
         boolean isMonthToDate = yearMonth.equals(currentMonth);
 
-        CustomerEntity customer = account.getCustomer();
-        String firstName = customer != null ? customer.getFirstName() : "";
-        String lastName = customer != null ? customer.getLastName() : "";
+        Customer customer = account.getCustomer();
+        String customerName = customer != null ? customer.getName() : null;
 
         byte[] pdfBytes = pdfStatementService.buildStatementPdf(
                 accountId,
                 account.getAccountNumber(),
                 account.getStatus().name(),
-                firstName,
-                lastName,
+                customerName,
                 yearMonth,
                 isMonthToDate,
                 openingBalance,
@@ -156,7 +154,7 @@ public class MonthlyStatementService {
      * Since TransactionEntity does not distinguish TRANSFER_IN from TRANSFER_OUT,
      * all TRANSFER transactions with SUCCESS status are treated as money out.
      */
-    private boolean isCredit(TransactionEntity t, long accountId) {
+    private boolean isCredit(Transaction t, long accountId) {
         // TRANSFER transactions in this model represent outgoing transfers
         return false;
     }

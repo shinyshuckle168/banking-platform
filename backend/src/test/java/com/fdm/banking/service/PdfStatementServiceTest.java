@@ -1,6 +1,6 @@
 package com.fdm.banking.service;
 
-import com.fdm.banking.entity.TransactionEntity;
+import com.fdm.banking.entity.Transaction;
 import com.fdm.banking.entity.TransactionStatus;
 import com.fdm.banking.entity.TransactionType;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class PdfStatementServiceTest {
 
     @Test
     void generatePdf_withTransactions_returnsPdfBytes() {
-        TransactionEntity item = new TransactionEntity();
+        Transaction item = new Transaction();
         item.setTransactionId(1L);
         item.setAmount(new BigDecimal("100.00"));
         item.setType(TransactionType.TRANSFER);

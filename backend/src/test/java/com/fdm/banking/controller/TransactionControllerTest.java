@@ -36,7 +36,7 @@ class TransactionControllerTest {
     private TransactionHistoryService transactionHistoryService;
 
     private JwtAuthenticationToken buildAuth() {
-        UserPrincipal principal = new UserPrincipal(1L, "user", "CUSTOMER", List.of("TX:VIEW"), 10L);
+        UserPrincipal principal = new UserPrincipal("1", "user", List.of("CUSTOMER"), List.of("TX:VIEW"), 10L);
         return new JwtAuthenticationToken(principal);
     }
 

@@ -33,7 +33,7 @@ class StatementControllerTest {
     private MonthlyStatementService monthlyStatementService;
 
     private JwtAuthenticationToken buildAuth() {
-        UserPrincipal principal = new UserPrincipal(1L, "user", "CUSTOMER",
+        UserPrincipal principal = new UserPrincipal("1", "user", List.of("CUSTOMER"),
                 List.of("STATEMENT:READ"), 10L);
         return new JwtAuthenticationToken(principal);
     }

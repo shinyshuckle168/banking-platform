@@ -1,5 +1,6 @@
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\controller\StatementController.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\TransactionHistoryResponse.java
+D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\User.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\service\SpendingInsightService.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\exception\ResourceNotFoundException.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\NotificationDecisionResponse.java
@@ -10,8 +11,8 @@ D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fd
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\service\NotificationEvaluationService.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\RoleEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\scheduler\IdempotencyPurgeJob.java
+D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\CustomerType.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\service\TransactionHistoryService.java
-D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\AccountEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\service\MonthlyStatementService.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\CustomerRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\config\BankingCategoriesProperties.java
@@ -22,7 +23,6 @@ D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fd
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\SpendingInsightResponse.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\NotificationPreferenceRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\scheduler\StandingOrderExecutionJob.java
-D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\CustomerEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\StandingOrderResponse.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\Frequency.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\security\ServiceApiKeyFilter.java
@@ -32,6 +32,7 @@ D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fd
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\exception\RetentionWindowException.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\StandingOrderStatus.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\exception\GlobalExceptionHandler.java
+D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\Customer.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\CancelStandingOrderResponse.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\ExportCacheRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\service\PdfStatementService.java
@@ -54,14 +55,13 @@ D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fd
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\service\StandingOrderService.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\controller\NotificationController.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\controller\StandingOrderController.java
+D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\Transaction.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\util\ValidPayeeAccount.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\TransactionItemResponse.java
-D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\TransactionEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\AccountRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\NotificationDecisionEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\exception\BusinessStateException.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\exception\OwnershipException.java
-D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\UserEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\mapper\StandingOrderMapper.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\AuditLogRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\NotificationDecision.java
@@ -74,6 +74,7 @@ D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fd
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\IdempotencyRecordEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\TransactionType.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\BankingApplication.java
+D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\Account.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\security\OwnershipValidator.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\util\CanadianHolidayService.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\config\CorsConfig.java

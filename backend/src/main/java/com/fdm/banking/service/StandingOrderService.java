@@ -78,7 +78,7 @@ public class StandingOrderService {
                     "ERR_END_DATE_BEFORE_START", "endDate");
         }
 
-        AccountEntity account = accountRepository.findById(accountId)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND"));
 
         // Validate amount <= dailyTransferLimit

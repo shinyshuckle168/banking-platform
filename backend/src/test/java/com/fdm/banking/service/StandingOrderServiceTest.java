@@ -44,27 +44,27 @@ class StandingOrderServiceTest {
     @InjectMocks
     private StandingOrderService service;
 
-    private AccountEntity account;
+    private Account account;
     private UserPrincipal caller;
 
     @BeforeEach
     void setUp() {
-        account = new AccountEntity();
+        account = new Account();
         account.setAccountId(1L);
         account.setBalance(new BigDecimal("5000.00"));
         account.setDailyTransferLimit(new BigDecimal("3000.00"));
         account.setStatus(AccountStatus.ACTIVE);
-        CustomerEntity customer = new CustomerEntity();
+        Customer customer = new Customer();
         customer.setCustomerId(42L);
         account.setCustomer(customer);
 
-        caller = new UserPrincipal(10L, "user", "CUSTOMER",
+        caller = new UserPrincipal("10", "user", List.of("CUSTOMER"),
                 List.of("SO:CREATE", "SO:READ", "SO:CANCEL"), 42L);
     }
 
     @Test
     void create_missingPermission_throwsPermissionDenied() {
-        UserPrincipal noPerms = new UserPrincipal(10L, "user", "CUSTOMER", List.of(), 42L);
+        UserPrincipal noPerms = new UserPrincipal("10", "user", List.of("CUSTOMER"), List.of(), 42L);
         assertThatThrownBy(() -> service.create(1L, new CreateStandingOrderRequest(), noPerms))
                 .isInstanceOf(PermissionDeniedException.class);
     }

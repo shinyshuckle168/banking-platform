@@ -1,6 +1,6 @@
 package com.fdm.banking.service;
 
-import com.fdm.banking.entity.TransactionEntity;
+import com.fdm.banking.entity.Transaction;
 import com.fdm.banking.entity.TransactionStatus;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -36,15 +36,14 @@ public class PdfStatementService {
     public byte[] buildStatementPdf(long accountId,
                                      String accountNumber,
                                      String accountStatus,
-                                     String firstName,
-                                     String lastName,
+                                     String customerName,
                                      YearMonth yearMonth,
                                      boolean isMonthToDate,
                                      BigDecimal openingBalance,
                                      BigDecimal closingBalance,
                                      BigDecimal totalIn,
                                      BigDecimal totalOut,
-                                     List<TransactionEntity> transactions) {
+                                     List<Transaction> transactions) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (PdfWriter writer = new PdfWriter(baos);
              PdfDocument pdf = new PdfDocument(writer);
@@ -53,8 +52,7 @@ public class PdfStatementService {
             String periodLabel = yearMonth.format(MONTH_FMT)
                     + (isMonthToDate ? " (Month-to-Date)" : "");
             String generatedDate = LocalDate.now().format(DATE_FMT);
-            String fullName = (firstName + " " + lastName).trim();
-            if (fullName.isEmpty()) fullName = "N/A";
+            String fullName = (customerName != null && !customerName.isBlank()) ? customerName : "N/A";
 
             // ---- Bank header ----
             doc.add(new Paragraph("FDM Digital Bank")
@@ -106,7 +104,7 @@ public class PdfStatementService {
                         .add(new Paragraph("No transactions in the selected period.")
                                 .setTextAlignment(TextAlignment.CENTER)));
             } else {
-                for (TransactionEntity t : transactions) {
+                for (Transaction t : transactions) {
                     boolean failed = t.getStatus() == TransactionStatus.FAILED;
                     table.addCell(dataCell(t.getTimestamp().format(DATE_FMT), failed));
                     table.addCell(dataCell(t.getAmount().toPlainString(), failed));
@@ -129,7 +127,7 @@ public class PdfStatementService {
      * @return PDF as byte array
      */
     public byte[] buildPdf(long accountId, LocalDate startDate, LocalDate endDate,
-                            List<TransactionEntity> transactions) {
+                            List<Transaction> transactions) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (PdfWriter writer = new PdfWriter(baos);
              PdfDocument pdf = new PdfDocument(writer);
@@ -157,7 +155,7 @@ public class PdfStatementService {
             table.addHeaderCell(new Cell().add(new Paragraph("Timestamp").setBold()));
             table.addHeaderCell(new Cell().add(new Paragraph("Description").setBold()));
 
-            for (TransactionEntity t : transactions) {
+            for (Transaction t : transactions) {
                 table.addCell(new Cell().add(new Paragraph(String.valueOf(t.getTransactionId()))));
                 table.addCell(new Cell().add(new Paragraph(t.getAmount().toPlainString())));
                 table.addCell(new Cell().add(new Paragraph(t.getType().name())));
