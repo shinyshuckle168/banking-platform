@@ -1,6 +1,5 @@
 package com.fdm.banking.controller;
 
-import com.fdm.banking.dto.response.MonthlyStatementResponse;
 import com.fdm.banking.exception.GlobalExceptionHandler;
 import com.fdm.banking.security.JwtAuthenticationToken;
 import com.fdm.banking.security.UserPrincipal;
@@ -18,7 +17,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Controller slice tests for StatementController. (T085)
@@ -40,14 +39,16 @@ class StatementControllerTest {
     }
 
     @Test
-    void getStatement_returnsOk() throws Exception {
-        MonthlyStatementResponse resp = new MonthlyStatementResponse();
-        resp.setAccountId(1L);
-        when(monthlyStatementService.getStatement(anyLong(), anyString(), any(), any()))
-                .thenReturn(resp);
+    void getStatement_returnsOkWithPdfContentType() throws Exception {
+        byte[] fakePdf = "%PDF-1.4 fake".getBytes();
+        when(monthlyStatementService.generateStatement(anyLong(), anyString(), any()))
+                .thenReturn(fakePdf);
 
         mockMvc.perform(get("/accounts/1/statements/2024-01")
                         .with(authentication(buildAuth())))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("statement-1-2024-01.pdf")));
     }
 }

@@ -11,15 +11,15 @@ import org.springframework.stereotype.Component;
 <span class="nc" id="L11">public class NotificationDecisionMapper {</span>
 
     public NotificationDecisionResponse toResponse(NotificationDecisionEntity entity) {
-<span class="fc" id="L14">        NotificationDecisionResponse r = new NotificationDecisionResponse();</span>
-<span class="fc" id="L15">        r.setEventId(entity.getEventId());</span>
-<span class="fc" id="L16">        r.setDecision(entity.getDecision().name());</span>
-<span class="fc" id="L17">        r.setDecisionReason(entity.getDecisionReason());</span>
-<span class="fc" id="L18">        r.setCustomerId(entity.getCustomerId());</span>
-<span class="fc" id="L19">        r.setAccountId(entity.getAccountId());</span>
-<span class="fc" id="L20">        r.setEvaluatedAt(entity.getEvaluatedAt());</span>
-<span class="fc" id="L21">        r.setMandatoryOverride(entity.isMandatoryOverride());</span>
-<span class="fc" id="L22">        return r;</span>
+<span class="nc" id="L14">        NotificationDecisionResponse r = new NotificationDecisionResponse();</span>
+<span class="nc" id="L15">        r.setEventId(entity.getEventId());</span>
+<span class="nc" id="L16">        r.setDecision(entity.getDecision().name());</span>
+<span class="nc" id="L17">        r.setDecisionReason(entity.getDecisionReason());</span>
+<span class="nc" id="L18">        r.setCustomerId(entity.getCustomerId());</span>
+<span class="nc" id="L19">        r.setAccountId(entity.getAccountId());</span>
+<span class="nc" id="L20">        r.setEvaluatedAt(entity.getEvaluatedAt());</span>
+<span class="nc" id="L21">        r.setMandatoryOverride(entity.isMandatoryOverride());</span>
+<span class="nc" id="L22">        return r;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

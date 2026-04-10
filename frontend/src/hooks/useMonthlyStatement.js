@@ -1,9 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
-import { getMonthlyStatement } from '../api/statementApi';
+import { useMutation } from '@tanstack/react-query';
+import { getMonthlyStatementPdf } from '../api/statementApi';
 
-export const useMonthlyStatement = (accountId, period, version) =>
-  useQuery({
-    queryKey: ['statement', accountId, period, version],
-    queryFn: () => getMonthlyStatement(accountId, period, version).then((r) => r.data),
-    enabled: !!accountId && !!period,
+export const useMonthlyStatement = (accountId) =>
+  useMutation({
+    mutationFn: (period) => getMonthlyStatementPdf(accountId, period),
+    onSuccess: (response, period) => {
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `statement-${accountId}-${period}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
   });

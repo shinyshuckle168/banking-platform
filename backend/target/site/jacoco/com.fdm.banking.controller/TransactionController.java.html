@@ -22,9 +22,9 @@ public class TransactionController {
 
     private final TransactionHistoryService transactionHistoryService;
 
-<span class="fc" id="L25">    public TransactionController(TransactionHistoryService transactionHistoryService) {</span>
-<span class="fc" id="L26">        this.transactionHistoryService = transactionHistoryService;</span>
-<span class="fc" id="L27">    }</span>
+<span class="nc" id="L25">    public TransactionController(TransactionHistoryService transactionHistoryService) {</span>
+<span class="nc" id="L26">        this.transactionHistoryService = transactionHistoryService;</span>
+<span class="nc" id="L27">    }</span>
 
     @GetMapping
     public ResponseEntity&lt;TransactionHistoryResponse&gt; getTransactionHistory(
@@ -32,10 +32,10 @@ public class TransactionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             Authentication authentication) {
-<span class="fc" id="L35">        UserPrincipal caller = extractPrincipal(authentication);</span>
-<span class="fc" id="L36">        TransactionHistoryResponse response = transactionHistoryService.getHistory(</span>
+<span class="nc" id="L35">        UserPrincipal caller = extractPrincipal(authentication);</span>
+<span class="nc" id="L36">        TransactionHistoryResponse response = transactionHistoryService.getHistory(</span>
                 accountId, startDate, endDate, caller);
-<span class="fc" id="L38">        return ResponseEntity.ok(response);</span>
+<span class="nc" id="L38">        return ResponseEntity.ok(response);</span>
     }
 
     @GetMapping(&quot;/export&quot;)
@@ -58,10 +58,19 @@ public class TransactionController {
     }
 
     private UserPrincipal extractPrincipal(Authentication authentication) {
-<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        if (authentication instanceof JwtAuthenticationToken jwtToken) {</span>
-<span class="fc" id="L62">            return jwtToken.getPrincipal();</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (authentication instanceof JwtAuthenticationToken jwtToken) {</span>
+<span class="nc" id="L62">            return jwtToken.getPrincipal();</span>
         }
 <span class="nc" id="L64">        throw new com.fdm.banking.exception.PermissionDeniedException(&quot;JWT&quot;);</span>
+    }
+
+    @GetMapping(&quot;/test&quot;)
+    public ResponseEntity&lt;String&gt; test(Authentication authentication) {
+<span class="nc bnc" id="L69" title="All 2 branches missed.">    if (authentication == null) {</span>
+<span class="nc" id="L70">        return ResponseEntity.status(403).body(&quot;No authentication found&quot;);</span>
+    }
+<span class="nc" id="L72">    return ResponseEntity.ok(&quot;Auth type: &quot; + authentication.getClass().getSimpleName() </span>
+<span class="nc" id="L73">        + &quot; | Principal: &quot; + authentication.getPrincipal());</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

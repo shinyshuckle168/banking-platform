@@ -27,13 +27,13 @@ public class UserPrincipal {
 <span class="nc" id="L27">    public String getUsername() { return username; }</span>
 <span class="fc" id="L28">    public String getRole() { return role; }</span>
 <span class="nc" id="L29">    public Collection&lt;String&gt; getPermissions() { return permissions; }</span>
-<span class="fc" id="L30">    public Long getCustomerId() { return customerId; }</span>
+<span class="nc" id="L30">    public Long getCustomerId() { return customerId; }</span>
 
     public boolean hasPermission(String permission) {
 <span class="pc bpc" id="L33" title="1 of 4 branches missed.">        return permissions != null &amp;&amp; permissions.contains(permission);</span>
     }
 
-<span class="fc" id="L36">    public boolean isAdmin() { return &quot;ADMIN&quot;.equals(role); }</span>
+<span class="nc" id="L36">    public boolean isAdmin() { return &quot;ADMIN&quot;.equals(role); }</span>
 <span class="nc" id="L37">    public boolean isCustomer() { return &quot;CUSTOMER&quot;.equals(role); }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

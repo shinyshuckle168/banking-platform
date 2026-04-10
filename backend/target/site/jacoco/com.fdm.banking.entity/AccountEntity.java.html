@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long accountId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = &quot;customer_id&quot;, nullable = false)
     private CustomerEntity customer;
 
@@ -49,21 +49,21 @@ import java.time.LocalDateTime;
         }
 <span class="nc" id="L50">    }</span>
 
-<span class="nc" id="L52">    public Long getAccountId() { return accountId; }</span>
+<span class="fc" id="L52">    public Long getAccountId() { return accountId; }</span>
 <span class="fc" id="L53">    public void setAccountId(Long accountId) { this.accountId = accountId; }</span>
 <span class="fc" id="L54">    public CustomerEntity getCustomer() { return customer; }</span>
 <span class="fc" id="L55">    public void setCustomer(CustomerEntity customer) { this.customer = customer; }</span>
-<span class="nc" id="L56">    public String getAccountNumber() { return accountNumber; }</span>
-<span class="nc" id="L57">    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }</span>
+<span class="fc" id="L56">    public String getAccountNumber() { return accountNumber; }</span>
+<span class="fc" id="L57">    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }</span>
 <span class="fc" id="L58">    public AccountStatus getStatus() { return status; }</span>
 <span class="fc" id="L59">    public void setStatus(AccountStatus status) { this.status = status; }</span>
 <span class="fc" id="L60">    public BigDecimal getBalance() { return balance; }</span>
 <span class="fc" id="L61">    public void setBalance(BigDecimal balance) { this.balance = balance; }</span>
 <span class="nc" id="L62">    public BigDecimal getDailyTransferLimit() { return dailyTransferLimit; }</span>
-<span class="fc" id="L63">    public void setDailyTransferLimit(BigDecimal dailyTransferLimit) { this.dailyTransferLimit = dailyTransferLimit; }</span>
-<span class="fc" id="L64">    public LocalDateTime getCreatedAt() { return createdAt; }</span>
-<span class="fc" id="L65">    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }</span>
-<span class="fc" id="L66">    public LocalDateTime getClosedAt() { return closedAt; }</span>
-<span class="fc" id="L67">    public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }</span>
+<span class="nc" id="L63">    public void setDailyTransferLimit(BigDecimal dailyTransferLimit) { this.dailyTransferLimit = dailyTransferLimit; }</span>
+<span class="nc" id="L64">    public LocalDateTime getCreatedAt() { return createdAt; }</span>
+<span class="nc" id="L65">    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }</span>
+<span class="nc" id="L66">    public LocalDateTime getClosedAt() { return closedAt; }</span>
+<span class="nc" id="L67">    public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -47,81 +47,93 @@ public class TransactionHistoryService {
                                      OwnershipValidator ownershipValidator,
                                      PdfStatementService pdfStatementService,
                                      ExportCacheRepository exportCacheRepository,
-<span class="fc" id="L50">                                     AuditService auditService) {</span>
-<span class="fc" id="L51">        this.transactionQueryRepository = transactionQueryRepository;</span>
-<span class="fc" id="L52">        this.accountRepository = accountRepository;</span>
-<span class="fc" id="L53">        this.ownershipValidator = ownershipValidator;</span>
-<span class="fc" id="L54">        this.pdfStatementService = pdfStatementService;</span>
-<span class="fc" id="L55">        this.exportCacheRepository = exportCacheRepository;</span>
-<span class="fc" id="L56">        this.auditService = auditService;</span>
-<span class="fc" id="L57">    }</span>
+<span class="nc" id="L50">                                     AuditService auditService) {</span>
+<span class="nc" id="L51">        this.transactionQueryRepository = transactionQueryRepository;</span>
+<span class="nc" id="L52">        this.accountRepository = accountRepository;</span>
+<span class="nc" id="L53">        this.ownershipValidator = ownershipValidator;</span>
+<span class="nc" id="L54">        this.pdfStatementService = pdfStatementService;</span>
+<span class="nc" id="L55">        this.exportCacheRepository = exportCacheRepository;</span>
+<span class="nc" id="L56">        this.auditService = auditService;</span>
+<span class="nc" id="L57">    }</span>
 
     /**
      * Retrieves transaction history for an account within a date range. (T026)
      */
     public TransactionHistoryResponse getHistory(long accountId, LocalDate startDate,
                                                   LocalDate endDate, UserPrincipal caller) {
-<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (!caller.hasPermission(&quot;TRANSACTION:READ&quot;)) {</span>
-<span class="fc" id="L65">            throw new PermissionDeniedException(&quot;TRANSACTION:READ&quot;);</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (!caller.hasPermission(&quot;TRANSACTION:READ&quot;)) {</span>
+<span class="nc" id="L65">            throw new PermissionDeniedException(&quot;TRANSACTION:READ&quot;);</span>
         }
-<span class="fc" id="L67">        ownershipValidator.assertOwnership(accountId, caller);</span>
+<span class="nc" id="L67">        ownershipValidator.assertOwnership(accountId, caller);</span>
 
-<span class="fc" id="L69">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc" id="L69">        LocalDateTime now = LocalDateTime.now();</span>
+
+        // Reject future startDate
+<span class="nc bnc" id="L72" title="All 4 branches missed.">        if (startDate != null &amp;&amp; startDate.isAfter(LocalDate.now())) {</span>
+<span class="nc" id="L73">            throw new BusinessStateException(</span>
+                    &quot;startDate must not be in the future&quot;, &quot;ERR_FUTURE_START_DATE&quot;, &quot;startDate&quot;);
+        }
+
+        // Reject endDate before startDate
+<span class="nc bnc" id="L78" title="All 6 branches missed.">        if (startDate != null &amp;&amp; endDate != null &amp;&amp; endDate.isBefore(startDate)) {</span>
+<span class="nc" id="L79">            throw new BusinessStateException(</span>
+                    &quot;endDate must be after startDate&quot;, &quot;ERR_END_DATE_BEFORE_START&quot;, &quot;endDate&quot;);
+        }
 
         // Apply defaults
-<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        LocalDateTime effectiveStart = (startDate != null)</span>
-<span class="nc" id="L73">                ? startDate.atStartOfDay()</span>
-<span class="fc" id="L74">                : now.minusDays(28);</span>
-<span class="fc bfc" id="L75" title="All 2 branches covered.">        LocalDateTime effectiveEnd = (endDate != null)</span>
-<span class="fc" id="L76">                ? endDate.atTime(23, 59, 59)</span>
-<span class="fc" id="L77">                : now;</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        LocalDateTime effectiveStart = (startDate != null)</span>
+<span class="nc" id="L85">                ? startDate.atStartOfDay()</span>
+<span class="nc" id="L86">                : now.minusDays(28);</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        LocalDateTime effectiveEnd = (endDate != null)</span>
+<span class="nc" id="L88">                ? endDate.atTime(23, 59, 59)</span>
+<span class="nc" id="L89">                : now;</span>
 
         // Override future endDate silently
-<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (effectiveEnd.isAfter(now)) {</span>
-<span class="fc" id="L81">            effectiveEnd = now;</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (effectiveEnd.isAfter(now)) {</span>
+<span class="nc" id="L93">            effectiveEnd = now;</span>
         }
 
         // Validate range &lt;= 366 days
-<span class="fc" id="L85">        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(</span>
-<span class="fc" id="L86">                effectiveStart.toLocalDate(), effectiveEnd.toLocalDate());</span>
-<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if (daysBetween &gt; MAX_RANGE_DAYS) {</span>
-<span class="nc" id="L88">            throw new BusinessStateException(</span>
+<span class="nc" id="L97">        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(</span>
+<span class="nc" id="L98">                effectiveStart.toLocalDate(), effectiveEnd.toLocalDate());</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (daysBetween &gt; MAX_RANGE_DAYS) {</span>
+<span class="nc" id="L100">            throw new BusinessStateException(</span>
                     &quot;Date range must not exceed 366 days&quot;, &quot;ERR_DATE_RANGE_EXCEEDED&quot;, &quot;endDate&quot;);
         }
 
         // Check account status
-<span class="fc" id="L93">        AccountEntity account = accountRepository.findById(accountId)</span>
-<span class="fc" id="L94">                .orElseThrow(() -&gt; new com.fdm.banking.exception.ResourceNotFoundException(</span>
+<span class="nc" id="L105">        AccountEntity account = accountRepository.findById(accountId)</span>
+<span class="nc" id="L106">                .orElseThrow(() -&gt; new com.fdm.banking.exception.ResourceNotFoundException(</span>
                         &quot;Account not found&quot;, &quot;ERR_ACC_NOT_FOUND&quot;));
 
-<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (account.getStatus() == AccountStatus.CLOSED) {</span>
-<span class="fc" id="L98">            LocalDateTime closedAt = account.getClosedAt();</span>
-<span class="pc bpc" id="L99" title="2 of 4 branches missed.">            if (closedAt != null &amp;&amp; closedAt.plusDays(CLOSED_ACCOUNT_WINDOW_DAYS).isBefore(now)) {</span>
-<span class="fc" id="L100">                auditService.log(caller.getUserId(), caller.getRole(),</span>
-<span class="fc" id="L101">                        &quot;TRANSACTION_HISTORY_FAILED&quot;, &quot;ACCOUNT&quot;, String.valueOf(accountId), &quot;DENIED&quot;);</span>
-<span class="fc" id="L102">                throw new RetentionWindowException(</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (account.getStatus() == AccountStatus.CLOSED) {</span>
+<span class="nc" id="L110">            LocalDateTime closedAt = account.getClosedAt();</span>
+<span class="nc bnc" id="L111" title="All 4 branches missed.">            if (closedAt != null &amp;&amp; closedAt.plusDays(CLOSED_ACCOUNT_WINDOW_DAYS).isBefore(now)) {</span>
+<span class="nc" id="L112">                auditService.log(caller.getUserId(), caller.getRole(),</span>
+<span class="nc" id="L113">                        &quot;TRANSACTION_HISTORY_FAILED&quot;, &quot;ACCOUNT&quot;, String.valueOf(accountId), &quot;DENIED&quot;);</span>
+<span class="nc" id="L114">                throw new RetentionWindowException(</span>
                         &quot;Account closed and 90-day window has expired&quot;, &quot;ERR_RETENTION_WINDOW&quot;);
             }
         }
 
-<span class="fc" id="L107">        List&lt;TransactionEntity&gt; transactions =</span>
-<span class="fc" id="L108">                transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(</span>
-<span class="fc" id="L109">                        accountId, effectiveStart, effectiveEnd);</span>
+<span class="nc" id="L119">        List&lt;TransactionEntity&gt; transactions =</span>
+<span class="nc" id="L120">                transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(</span>
+<span class="nc" id="L121">                        accountId, effectiveStart, effectiveEnd);</span>
 
-<span class="fc" id="L111">        List&lt;TransactionItemResponse&gt; items = transactions.stream()</span>
-<span class="fc" id="L112">                .map(this::toItemResponse)</span>
-<span class="fc" id="L113">                .collect(Collectors.toList());</span>
+<span class="nc" id="L123">        List&lt;TransactionItemResponse&gt; items = transactions.stream()</span>
+<span class="nc" id="L124">                .map(this::toItemResponse)</span>
+<span class="nc" id="L125">                .collect(Collectors.toList());</span>
 
-<span class="fc" id="L115">        auditService.log(caller.getUserId(), caller.getRole(),</span>
-<span class="fc" id="L116">                &quot;TRANSACTION_HISTORY&quot;, &quot;ACCOUNT&quot;, String.valueOf(accountId), &quot;SUCCESS&quot;);</span>
+<span class="nc" id="L127">        auditService.log(caller.getUserId(), caller.getRole(),</span>
+<span class="nc" id="L128">                &quot;TRANSACTION_HISTORY&quot;, &quot;ACCOUNT&quot;, String.valueOf(accountId), &quot;SUCCESS&quot;);</span>
 
-<span class="fc" id="L118">        TransactionHistoryResponse response = new TransactionHistoryResponse();</span>
-<span class="fc" id="L119">        response.setAccountId(accountId);</span>
-<span class="fc" id="L120">        response.setStartDate(effectiveStart);</span>
-<span class="fc" id="L121">        response.setEndDate(effectiveEnd);</span>
-<span class="fc" id="L122">        response.setTransactionCount(items.size());</span>
-<span class="fc" id="L123">        response.setTransactions(items);</span>
-<span class="fc" id="L124">        return response;</span>
+<span class="nc" id="L130">        TransactionHistoryResponse response = new TransactionHistoryResponse();</span>
+<span class="nc" id="L131">        response.setAccountId(accountId);</span>
+<span class="nc" id="L132">        response.setStartDate(effectiveStart);</span>
+<span class="nc" id="L133">        response.setEndDate(effectiveEnd);</span>
+<span class="nc" id="L134">        response.setTransactionCount(items.size());</span>
+<span class="nc" id="L135">        response.setTransactions(items);</span>
+<span class="nc" id="L136">        return response;</span>
     }
 
     /**
@@ -129,59 +141,59 @@ public class TransactionHistoryService {
      */
     public byte[] exportPdf(long accountId, LocalDate startDate,
                              LocalDate endDate, UserPrincipal caller) {
-<span class="nc bnc" id="L132" title="All 2 branches missed.">        if (!caller.hasPermission(&quot;TRANSACTION:READ&quot;)) {</span>
-<span class="nc" id="L133">            throw new PermissionDeniedException(&quot;TRANSACTION:READ&quot;);</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (!caller.hasPermission(&quot;TRANSACTION:READ&quot;)) {</span>
+<span class="nc" id="L145">            throw new PermissionDeniedException(&quot;TRANSACTION:READ&quot;);</span>
         }
-<span class="nc" id="L135">        ownershipValidator.assertOwnership(accountId, caller);</span>
+<span class="nc" id="L147">        ownershipValidator.assertOwnership(accountId, caller);</span>
 
-<span class="nc" id="L137">        LocalDateTime now = LocalDateTime.now();</span>
-<span class="nc bnc" id="L138" title="All 2 branches missed.">        LocalDateTime effectiveStart = (startDate != null) ? startDate.atStartOfDay() : now.minusDays(28);</span>
-<span class="nc bnc" id="L139" title="All 2 branches missed.">        LocalDateTime rawEffectiveEnd = (endDate != null) ? endDate.atTime(23, 59, 59) : now;</span>
-<span class="nc bnc" id="L140" title="All 2 branches missed.">        LocalDateTime effectiveEnd = rawEffectiveEnd.isAfter(now) ? now : rawEffectiveEnd;</span>
+<span class="nc" id="L149">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        LocalDateTime effectiveStart = (startDate != null) ? startDate.atStartOfDay() : now.minusDays(28);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        LocalDateTime rawEffectiveEnd = (endDate != null) ? endDate.atTime(23, 59, 59) : now;</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        LocalDateTime effectiveEnd = rawEffectiveEnd.isAfter(now) ? now : rawEffectiveEnd;</span>
 
-<span class="nc" id="L142">        String paramHash = computeHash(accountId, effectiveStart, effectiveEnd);</span>
+<span class="nc" id="L154">        String paramHash = computeHash(accountId, effectiveStart, effectiveEnd);</span>
 
         // Check cache
-<span class="nc" id="L145">        return exportCacheRepository.findByAccountIdAndParamHash(accountId, paramHash)</span>
-<span class="nc" id="L146">                .map(ExportCacheEntity::getPdfData)</span>
-<span class="nc" id="L147">                .orElseGet(() -&gt; {</span>
-<span class="nc" id="L148">                    List&lt;TransactionEntity&gt; txns =</span>
-<span class="nc" id="L149">                            transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(</span>
-<span class="nc" id="L150">                                    accountId, effectiveStart, effectiveEnd);</span>
-<span class="nc" id="L151">                    byte[] pdfBytes = pdfStatementService.buildPdf(accountId, effectiveStart.toLocalDate(),</span>
-<span class="nc" id="L152">                            effectiveEnd.toLocalDate(), txns);</span>
+<span class="nc" id="L157">        return exportCacheRepository.findByAccountIdAndParamHash(accountId, paramHash)</span>
+<span class="nc" id="L158">                .map(ExportCacheEntity::getPdfData)</span>
+<span class="nc" id="L159">                .orElseGet(() -&gt; {</span>
+<span class="nc" id="L160">                    List&lt;TransactionEntity&gt; txns =</span>
+<span class="nc" id="L161">                            transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(</span>
+<span class="nc" id="L162">                                    accountId, effectiveStart, effectiveEnd);</span>
+<span class="nc" id="L163">                    byte[] pdfBytes = pdfStatementService.buildPdf(accountId, effectiveStart.toLocalDate(),</span>
+<span class="nc" id="L164">                            effectiveEnd.toLocalDate(), txns);</span>
 
-<span class="nc" id="L154">                    ExportCacheEntity cache = new ExportCacheEntity();</span>
-<span class="nc" id="L155">                    cache.setAccountId(accountId);</span>
-<span class="nc" id="L156">                    cache.setParamHash(paramHash);</span>
-<span class="nc" id="L157">                    cache.setPdfData(pdfBytes);</span>
-<span class="nc" id="L158">                    exportCacheRepository.save(cache);</span>
-<span class="nc" id="L159">                    return pdfBytes;</span>
+<span class="nc" id="L166">                    ExportCacheEntity cache = new ExportCacheEntity();</span>
+<span class="nc" id="L167">                    cache.setAccountId(accountId);</span>
+<span class="nc" id="L168">                    cache.setParamHash(paramHash);</span>
+<span class="nc" id="L169">                    cache.setPdfData(pdfBytes);</span>
+<span class="nc" id="L170">                    exportCacheRepository.save(cache);</span>
+<span class="nc" id="L171">                    return pdfBytes;</span>
                 });
     }
 
     private String computeHash(long accountId, LocalDateTime start, LocalDateTime end) {
-<span class="nc" id="L164">        String input = accountId + &quot;|&quot; + start.toLocalDate() + &quot;|&quot; + end.toLocalDate();</span>
+<span class="nc" id="L176">        String input = accountId + &quot;|&quot; + start.toLocalDate() + &quot;|&quot; + end.toLocalDate();</span>
         try {
-<span class="nc" id="L166">            MessageDigest md = MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
-<span class="nc" id="L167">            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));</span>
-<span class="nc" id="L168">            return HexFormat.of().formatHex(hash);</span>
-<span class="nc" id="L169">        } catch (NoSuchAlgorithmException e) {</span>
-<span class="nc" id="L170">            throw new IllegalStateException(&quot;SHA-256 not available&quot;, e);</span>
+<span class="nc" id="L178">            MessageDigest md = MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
+<span class="nc" id="L179">            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));</span>
+<span class="nc" id="L180">            return HexFormat.of().formatHex(hash);</span>
+<span class="nc" id="L181">        } catch (NoSuchAlgorithmException e) {</span>
+<span class="nc" id="L182">            throw new IllegalStateException(&quot;SHA-256 not available&quot;, e);</span>
         }
     }
 
     private TransactionItemResponse toItemResponse(TransactionEntity t) {
-<span class="nc" id="L175">        TransactionItemResponse item = new TransactionItemResponse();</span>
-<span class="nc" id="L176">        item.setTransactionId(t.getTransactionId());</span>
-<span class="nc" id="L177">        item.setAmount(t.getAmount());</span>
-<span class="nc" id="L178">        item.setType(t.getType().name());</span>
-<span class="nc" id="L179">        item.setStatus(t.getStatus().name());</span>
-<span class="nc" id="L180">        item.setTimestamp(t.getTimestamp());</span>
-<span class="nc" id="L181">        item.setDescription(t.getDescription());</span>
-<span class="nc" id="L182">        item.setIdempotencyKey(t.getIdempotencyKey());</span>
-<span class="nc" id="L183">        item.setCategory(t.getCategory());</span>
-<span class="nc" id="L184">        return item;</span>
+<span class="nc" id="L187">        TransactionItemResponse item = new TransactionItemResponse();</span>
+<span class="nc" id="L188">        item.setTransactionId(t.getTransactionId());</span>
+<span class="nc" id="L189">        item.setAmount(t.getAmount());</span>
+<span class="nc" id="L190">        item.setType(t.getType().name());</span>
+<span class="nc" id="L191">        item.setStatus(t.getStatus().name());</span>
+<span class="nc" id="L192">        item.setTimestamp(t.getTimestamp());</span>
+<span class="nc" id="L193">        item.setDescription(t.getDescription());</span>
+<span class="nc" id="L194">        item.setIdempotencyKey(t.getIdempotencyKey());</span>
+<span class="nc" id="L195">        item.setCategory(t.getCategory());</span>
+<span class="nc" id="L196">        return item;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

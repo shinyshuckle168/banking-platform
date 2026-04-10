@@ -2,12 +2,12 @@ com\fdm\banking\dto\response\CancelStandingOrderResponse.class
 com\fdm\banking\scheduler\IdempotencyPurgeJob.class
 com\fdm\banking\entity\ExportCacheEntity.class
 com\fdm\banking\entity\RoleEntity.class
+com\fdm\banking\config\NotificationsProperties.class
 com\fdm\banking\exception\RetentionWindowException.class
-com\fdm\banking\dto\response\MonthlyStatementResponse.class
-com\fdm\banking\mapper\MonthlyStatementMapper$1.class
-com\fdm\banking\repository\MonthlyStatementRepository.class
 com\fdm\banking\dto\request\NotificationEventRequest.class
+com\fdm\banking\entity\TransactionStatus.class
 com\fdm\banking\config\SchedulerConfig.class
+com\fdm\banking\config\BankingCategoriesProperties.class
 com\fdm\banking\dto\response\ErrorResponse.class
 com\fdm\banking\security\JwtAuthenticationToken.class
 com\fdm\banking\entity\AccountStatus.class
@@ -20,6 +20,7 @@ com\fdm\banking\entity\NotificationPreferenceEntity.class
 com\fdm\banking\service\StandingOrderService.class
 com\fdm\banking\repository\UserRepository.class
 com\fdm\banking\service\TransactionHistoryService.class
+com\fdm\banking\config\CorsConfig.class
 com\fdm\banking\service\SpendingInsightService.class
 com\fdm\banking\dto\response\TransactionHistoryResponse.class
 com\fdm\banking\security\ServiceAuthentication.class
@@ -29,11 +30,11 @@ com\fdm\banking\repository\NotificationDecisionRepository.class
 com\fdm\banking\repository\IdempotencyRecordRepository.class
 com\fdm\banking\entity\NotificationDecisionEntity.class
 com\fdm\banking\util\CategoryResolver.class
+com\fdm\banking\entity\TransactionType.class
 com\fdm\banking\exception\OwnershipException.class
 com\fdm\banking\entity\CustomerEntity.class
 com\fdm\banking\mapper\StandingOrderMapper.class
 com\fdm\banking\repository\CustomerRepository.class
-com\fdm\banking\mapper\MonthlyStatementMapper.class
 com\fdm\banking\BankingApplication.class
 com\fdm\banking\exception\GlobalExceptionHandler.class
 com\fdm\banking\security\ServiceApiKeyFilter.class
@@ -42,7 +43,6 @@ com\fdm\banking\entity\AuditLogEntity.class
 com\fdm\banking\controller\StatementController.class
 com\fdm\banking\exception\PermissionDeniedException.class
 com\fdm\banking\mapper\NotificationDecisionMapper.class
-com\fdm\banking\entity\MonthlyStatementEntity.class
 com\fdm\banking\repository\NotificationPreferenceRepository.class
 com\fdm\banking\controller\StandingOrderController.class
 com\fdm\banking\controller\NotificationController.class

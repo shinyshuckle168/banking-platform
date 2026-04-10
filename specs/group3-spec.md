@@ -194,28 +194,40 @@ notification should be raised.
   event occurred
 - `payload` — object, optional. Event-specific contextual data
 
-#### MonthlyStatement
+#### MonthlyStatementPdf
 
-The formal monthly account record for an eligible account and closed period.
+A dynamically generated PDF bank statement produced on demand from live
+transaction data. Not stored in the database. Returned as
+`application/pdf` bytes.
 
-- `accountId` — long, identifies the account the statement belongs to.
-  Immutable
-- `period` — string in ISO month format YYYY-MM, for example 2026-03
-- `openingBalance` — BigDecimal at exactly two decimal places. Must match the
-  closing balance of the prior period's issued statement
-- `closingBalance` — BigDecimal at exactly two decimal places. The closing
-  balance for the statement period
+**Customer Details section**
+- Customer full name (first name and last name)
+- Account number
+- Account type (CHECKING or SAVINGS where available)
+- Account status (ACTIVE or CLOSED)
+- Statement period (e.g. March 2026) — labelled as month-to-date when the
+  current in-progress month is selected
+- Statement generated date
+
+**Summary section**
+- `openingBalance` — BigDecimal at exactly two decimal places. Calculated as
+  account balance minus net SUCCESS credits plus net SUCCESS debits recorded
+  in the selected month
+- `closingBalance` — BigDecimal at exactly two decimal places. Account balance
+  as at the last day of the selected month derived from all SUCCESS transactions
 - `totalMoneyIn` — BigDecimal at exactly two decimal places. Sum of all DEPOSIT
   and TRANSFER-in transactions with status SUCCESS in the period
 - `totalMoneyOut` — BigDecimal at exactly two decimal places. Sum of all
   WITHDRAW and TRANSFER-out transactions with status SUCCESS in the period
-- `transactions` — list of all transaction records for the period including
-  both SUCCESS and FAILED outcomes. Never truncated regardless of volume
-- `versionNumber` — integer, starts at 1 and is incremented on each correction
-- `correctionSummary` — string, present on corrected versions only. Lists every
-  field that differs from the prior version
-- `generatedAt` — string in ISO-8601 UTC format. System-managed timestamp of
-  statement assembly
+
+**Transaction table section**
+- All transactions for the selected month in chronological order including
+  both SUCCESS and FAILED outcomes. Never truncated
+- Each row: date, description, type, amount, status
+- FAILED transactions are clearly marked in the table
+
+The PDF is idempotent. Identical requests for the same account and period
+return the same PDF content using the shared export cache.
 
 #### SpendingInsight
 
@@ -1195,75 +1207,86 @@ detection. It does not depend on any specific delivery channel.
 
 ## Description
 
-Retrieves the formal monthly statement for an eligible account and a specified
-closed period. The statement is the official record of account activity and
-includes opening balance, closing balance, total money in, total money out, and
-all transactions for the period including both SUCCESS and FAILED outcomes.
-Corrections to previously issued statements are tracked through immutable
-versioning. Statement assembly from upstream period-end inputs is handled by an
-internal system process and is not part of this contract. The
-`GET /accounts/{accountId}/statements/{period}` endpoint only retrieves already
-assembled statement records. It does not generate statements on the fly.
-Requests for periods with no assembled statement record return `404`.
-*(clarification 2026-04-09)*
+Generates a professional bank statement PDF on demand for an eligible account
+and a selected month. The statement is generated dynamically from live
+transaction data — it is not a stored record retrieved from the database.
+The customer selects a month and year. The system fetches all transactions for
+that month, calculates opening and closing balances, and returns a formatted PDF
+document. *(updated 2026-04-10)*
 
 ---
 
 ## HTTP Contract
 
-### Endpoint — Get Monthly Statement
+### Endpoint — Generate Monthly Statement PDF
 
 - Method: `GET`
 - Path: `/accounts/{accountId}/statements/{period}`
-- Query Parameters:
-  - `version` (optional, integer) — specific version number. Defaults to the
-    latest version if not supplied
+- Query Parameters: None
 - Request Body: None
 - Expected Response Codes:
-  - `200` Statement returned successfully
+  - `200` PDF generated and returned successfully
   - `400` Invalid `accountId` or `period` format
   - `401` Unauthenticated or caller not authorised
-  - `404` Account not found or no statement exists for the specified period
-  - `409` Statement period has not yet closed
-  - `410` Statement is beyond the self-service retention window
+  - `404` Account not found
+  - `409` Future month requested (month has not yet started)
 
-### Response Fields — Get Monthly Statement (200)
+### Response — Generate Monthly Statement PDF (200)
 
-- `accountId` — long, the account. Immutable
-- `period` — ISO month format YYYY-MM
-- `openingBalance` — BigDecimal at exactly two decimal places. Must match the
-  closing balance of the prior period's issued statement
-- `closingBalance` — BigDecimal at exactly two decimal places
-- `totalMoneyIn` — BigDecimal at exactly two decimal places. Sum of all DEPOSIT
-  and TRANSFER-in transactions with status SUCCESS
-- `totalMoneyOut` — BigDecimal at exactly two decimal places. Sum of all
-  WITHDRAW and TRANSFER-out transactions with status SUCCESS
-- `transactions` — list of all transaction records for the period including
-  both SUCCESS and FAILED outcomes. Each entry includes `transactionId`,
-  `amount`, `type`, `status`, `timestamp`, `description`, and `idempotencyKey`
-  where present. Never truncated
-- `versionNumber` — integer, starts at 1 and increments on each correction
-- `correctionSummary` — string, present on corrected versions only
-- `generatedAt` — ISO-8601 UTC timestamp
+- Content-Type: `application/pdf`
+- Content-Disposition: `attachment; filename="statement-{accountId}-{period}.pdf"`
+- Body: PDF bytes containing the complete bank statement
+
+### PDF Content — Customer Details Section
+
+- Customer full name (first name and last name)
+- Account number
+- Account type (CHECKING or SAVINGS where available)
+- Account status (ACTIVE or CLOSED)
+- Statement period label — displayed as the calendar month name and year
+  (e.g. `March 2026`). Shown as `March 2026 (Month-to-Date)` when the current
+  in-progress month is selected
+- Statement generated date
+
+### PDF Content — Summary Section
+
+- Opening balance at exactly two decimal places
+- Closing balance at exactly two decimal places
+- Total money in at exactly two decimal places
+- Total money out at exactly two decimal places
+
+### PDF Content — Transaction Table Section
+
+- All transactions for the selected month in chronological order
+- Both SUCCESS and FAILED transactions are included. Never truncated
+- Each row: date, description, type, amount, status
+- FAILED transactions are clearly marked in the table
 
 ---
 
 ## Business Rules
 
-- A monthly statement is the formal record for an eligible account and period
-- The customer selects a specific month when requesting a statement
-- The statement must include opening balance, closing balance, total money in,
-  and total money out
-- The statement includes all transactions for the period including both SUCCESS
-  and FAILED records
-- An account with no activity in the period still produces a statement showing
-  zero totals where policy requires it
-- Any correction to an issued statement must create a new version. The original
-  is retained and never overwritten
+- The statement is generated dynamically from live transaction data each time
+  the endpoint is called. It is not stored in the database
+- The customer selects a specific month and year when requesting a statement
+- Opening balance is calculated as: account balance minus the net of all
+  SUCCESS credits (DEPOSIT, TRANSFER-in) plus all SUCCESS debits (WITHDRAW,
+  TRANSFER-out) recorded in the selected month
+- Closing balance is derived from all SUCCESS transactions up to the last day
+  of the selected month using the same account balance as the base
+- Total money in is the sum of all DEPOSIT and TRANSFER-in transactions with
+  status SUCCESS in the selected month
+- Total money out is the sum of all WITHDRAW and TRANSFER-out transactions with
+  status SUCCESS in the selected month
+- An account with no transactions in the period still generates a PDF showing
+  zero totals
+- A future month that has not yet started must be rejected with `409`
+- The current in-progress month is allowed. The PDF header must label the
+  period as month-to-date
 - The `STATEMENT:READ` permission must be re-validated at the point of delivery
-- Statements beyond the defined self-service retention period are not available
-  through this API
-- Statement records are retained for 7 years per CRA and FINTRAC requirements
+- The PDF is idempotent. Identical requests for the same account and period
+  return the same PDF content using the shared ExportCache keyed on
+  `accountId + period`
 
 ---
 
@@ -1284,9 +1307,8 @@ Requests for periods with no assembled statement record return `404`.
 
 - `accountId` must be a valid long greater than `0` identifying an existing
   account
-- `period` must be a valid ISO month format YYYY-MM representing a closed
-  statement period
-- `version` when provided must be a positive integer
+- `period` must be a valid ISO month format YYYY-MM
+- `period` must not refer to a future month that has not yet started
 
 ---
 
@@ -1294,15 +1316,10 @@ Requests for periods with no assembled statement record return `404`.
 
 - Invalid or empty `accountId` → `400`, `field="accountId"`
 - Invalid `period` format (not YYYY-MM) → `400`, `field="period"`
-- Invalid `version` format → `400`, `field="version"`
 - Caller unauthenticated or lacks `STATEMENT:READ` → `401`
 - CUSTOMER caller does not own the account → `401`
 - Account not found → `404`, `field="accountId"`
-- No statement exists for the specified period → `404`, `field="period"`
-- Requested version does not exist → `404`, `field="version"`
-- Period has not reached its formal cut-off point → `409`, `field="period"`
-- Statement period is beyond the self-service retention window → `410`,
-  `field="period"`
+- Future month requested → `409`, `field="period"`
 
 ---
 
@@ -1310,11 +1327,11 @@ Requests for periods with no assembled statement record return `404`.
 
 | Category | Edge Case | Expected Result | Forbidden |
 |---|---|---|---|
-| Timing & Cut-off | Late-arriving period-end data | Block generation until all upstream inputs confirmed. Issue a versioned correction if generated prematurely | Generate before all inputs are confirmed |
-| Data Integrity | Opening balance mismatch with prior closing balance | Halt generation. Log discrepancy. Raise operational alert | Produce statement with mismatched balances |
-| Access | Permission revoked between request and retrieval | Re-validate permission at point of delivery. Return authorisation error if no longer held | Return statement content when permission is no longer held |
-| Volume & Retention | Statement beyond retention window | Return specific error directing customer to contact support | Return generic 404 or empty response |
-| Auditability | Correction without traceable version history | Retain original. Assign incremented version number. Record change summary | Overwrite original without retaining it |
+| Timing | Current in-progress month requested | Generate PDF with available transactions. Label period as month-to-date | Reject as future or incomplete |
+| Timing | Future month (not started) requested | Return `409` with `field="period"` | Generate empty PDF or return `404` |
+| Volume | Account with no transactions in period | Generate PDF showing zero totals in summary section | Return `404` or error |
+| Idempotency | Same account and period requested twice | Both requests return identical PDF bytes from cache | Return different content on repeated calls |
+| Access | Permission revoked between request and generation | Re-validate permission at point of delivery. Return `401` if no longer held | Return PDF when permission is no longer held |
 
 ---
 
@@ -1322,66 +1339,58 @@ Requests for periods with no assembled statement record return `404`.
 
 | # | Constraint | Rule |
 |---|---|---|
-| C1 | Complete inputs before generation | Statement must not be generated until all upstream period-end inputs are confirmed |
-| C3 | Point-of-delivery permission check | `STATEMENT:READ` must be re-validated at delivery not only at request time |
-| C4 | Immutable originals | Corrections must create a new version. The original must not be overwritten |
-| C5 | Retention boundary enforced | Requests beyond the retention window must return a specific error |
-| C6 | Permission-based access only | Statement access must be resolved through permissions and roles |
+| C1 | Dynamic generation only | Statement must be generated on demand from live data. No stored statement records |
+| C2 | Point-of-delivery permission check | `STATEMENT:READ` must be re-validated at delivery not only at request time |
+| C3 | Future month blocked | Requests for months that have not started must be rejected with `409` |
+| C4 | Idempotent output | Same account and period must produce the same PDF bytes via ExportCache |
+| C5 | Permission-based access only | Statement access must be resolved through permissions and roles |
 
 ---
 
 ## Acceptance Criteria
 
-### Positive Scenario 1 — Statement returned for a closed period
+### Positive Scenario 1 — PDF generated for a closed month
 
-- Given an eligible account with a closed period and a CUSTOMER caller with
-  `STATEMENT:READ` who owns the account
-- When GET /accounts/{accountId}/statements/2026-03 is submitted
-- Then the API returns `200` with `openingBalance`, `closingBalance`,
-  `totalMoneyIn`, `totalMoneyOut` at exactly two decimal places, all
-  transactions including SUCCESS and FAILED in `transactions`, `versionNumber`
-  of `1`, and `generatedAt` timestamp present
+- Given an existing account with transactions in March 2026
+- And a CUSTOMER caller with `STATEMENT:READ` who owns the account
+- When GET /accounts/1/statements/2026-03 is submitted
+- Then the API returns `200` with `Content-Type: application/pdf`
+- And the PDF contains customer name, account number, account type,
+  opening balance, closing balance, total money in, total money out,
+  and all transactions for March 2026
 
-### Positive Scenario 2 — Corrected statement returned
+### Positive Scenario 2 — Empty month generates PDF with zero totals
 
-- Given a corrected statement at version 2
+- Given an existing account with no transactions in the selected month
 - When the request is submitted
-- Then the API returns `200` with `versionNumber` of `2` and
-  `correctionSummary` listing every field that changed
+- Then the API returns `200` with a PDF showing zero totals in the summary
+  section
 
-### Positive Scenario 3 — Empty month returns zero totals
+### Positive Scenario 3 — Current month returns month-to-date PDF
 
-- Given an eligible account with no activity in the selected month
+- Given the current month is selected
 - When the request is submitted
-- Then the API returns `200` with `totalMoneyIn` of `0.00`, `totalMoneyOut`
-  of `0.00`, and `transactions` as an empty list
+- Then the PDF header labels the period as month-to-date
 
-### Negative Scenario 1 — Caller lacks STATEMENT:READ
+### Positive Scenario 4 — Identical requests return same PDF
+
+- Given the same account and period requested twice
+- When both requests are submitted
+- Then both return the same PDF content confirming idempotency via ExportCache
+
+### Negative Scenario 1 — Future month rejected
+
+- Given a month that has not yet started
+- When the request is submitted
+- Then the API returns `409` with `field="period"`
+
+### Negative Scenario 2 — Caller lacks STATEMENT:READ
 
 - Given a caller without `STATEMENT:READ`
 - When the request is submitted
 - Then the API returns `401` with an `ErrorResponse`
 
-### Negative Scenario 2 — Account not found
-
-- Given an account that does not exist
-- When the request is submitted
-- Then the API returns `404` with `field` set to `accountId`
-
-### Negative Scenario 3 — Period not yet closed
-
-- Given a period that has not reached its cut-off point
-- When the request is submitted
-- Then the API returns `409` with `field` set to `period`
-
-### Negative Scenario 4 — Period beyond retention window
-
-- Given a statement older than the self-service retention period
-- When the request is submitted
-- Then the API returns `410` with `field` set to `period` and `message`
-  directing the customer to contact their branch or support team
-
-### Negative Scenario 5 — Invalid period format
+### Negative Scenario 3 — Invalid period format
 
 - Given an invalid period format
 - When the request is submitted
@@ -1795,14 +1804,23 @@ of `2026-04-14`.
 already a business day. Backend fix applied: candidate starts from the input
 date with no offset.
 
-### GAP-5 — US-11: GET statement endpoint does not generate statements
+### GAP-5 — US-11: Redesigned from stored record retrieval to dynamic PDF generation
 
-**Spec sections updated**: US-11 Description
-**Finding**: Testers expected the endpoint to generate a statement when none
-existed for the period. The spec implied this but did not state it explicitly.
-**Resolution**: Added explicit clarification to Description: the endpoint is
-retrieval-only; no on-the-fly generation occurs; `404` is returned when no
-assembled record exists.
+**Spec sections updated**: US-11 Description, HTTP Contract, Business Rules,
+Validation Rules, Error Mapping, Acceptance Criteria; Shared Definitions
+(MonthlyStatement domain object replaced with MonthlyStatementPdf)
+**Finding**: The original design stored assembled statement records in a
+`monthly_statements` table and retrieved them by period. This required a
+separate internal statement-generation process outside the API boundary. The
+design was changed to generate the PDF on demand from live transaction data,
+eliminating the stored record entirely.
+**Resolution**: US-11 fully redesigned. The endpoint now generates a PDF
+dynamically, returns `application/pdf`, uses the shared ExportCache for
+idempotency, and supports the current in-progress month as month-to-date.
+The `MonthlyStatementEntity`, `MonthlyStatementRepository`,
+`MonthlyStatementResponse`, `MonthlyStatementMapper`, `versionNumber`,
+`correctionSummary`, `transactions_json`, and `410` retention error are all
+removed. *(updated 2026-04-10)*
 
 ### GAP-6 — US-12: accountExisted false for directly seeded historical data
 

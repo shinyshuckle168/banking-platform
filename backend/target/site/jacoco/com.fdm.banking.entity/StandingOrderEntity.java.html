@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
         @Index(name = &quot;idx_so_status&quot;, columnList = &quot;status&quot;),
         @Index(name = &quot;idx_so_next_run_date&quot;, columnList = &quot;next_run_date&quot;)
 })
-<span class="fc" id="L17">public class StandingOrderEntity {</span>
+<span class="nc" id="L17">public class StandingOrderEntity {</span>
 
     @Id
     @Column(name = &quot;standing_order_id&quot;, length = 36)
@@ -69,16 +69,16 @@ import java.time.LocalDateTime;
 <span class="nc" id="L69">        updatedAt = LocalDateTime.now();</span>
 <span class="nc" id="L70">    }</span>
 
-<span class="fc" id="L72">    public String getStandingOrderId() { return standingOrderId; }</span>
-<span class="fc" id="L73">    public void setStandingOrderId(String standingOrderId) { this.standingOrderId = standingOrderId; }</span>
-<span class="fc" id="L74">    public Long getSourceAccountId() { return sourceAccountId; }</span>
-<span class="fc" id="L75">    public void setSourceAccountId(Long sourceAccountId) { this.sourceAccountId = sourceAccountId; }</span>
+<span class="nc" id="L72">    public String getStandingOrderId() { return standingOrderId; }</span>
+<span class="nc" id="L73">    public void setStandingOrderId(String standingOrderId) { this.standingOrderId = standingOrderId; }</span>
+<span class="nc" id="L74">    public Long getSourceAccountId() { return sourceAccountId; }</span>
+<span class="nc" id="L75">    public void setSourceAccountId(Long sourceAccountId) { this.sourceAccountId = sourceAccountId; }</span>
 <span class="nc" id="L76">    public String getPayeeAccount() { return payeeAccount; }</span>
 <span class="nc" id="L77">    public void setPayeeAccount(String payeeAccount) { this.payeeAccount = payeeAccount; }</span>
 <span class="nc" id="L78">    public String getPayeeName() { return payeeName; }</span>
 <span class="nc" id="L79">    public void setPayeeName(String payeeName) { this.payeeName = payeeName; }</span>
-<span class="fc" id="L80">    public BigDecimal getAmount() { return amount; }</span>
-<span class="fc" id="L81">    public void setAmount(BigDecimal amount) { this.amount = amount; }</span>
+<span class="nc" id="L80">    public BigDecimal getAmount() { return amount; }</span>
+<span class="nc" id="L81">    public void setAmount(BigDecimal amount) { this.amount = amount; }</span>
 <span class="nc" id="L82">    public Frequency getFrequency() { return frequency; }</span>
 <span class="nc" id="L83">    public void setFrequency(Frequency frequency) { this.frequency = frequency; }</span>
 <span class="nc" id="L84">    public LocalDateTime getStartDate() { return startDate; }</span>
@@ -86,11 +86,11 @@ import java.time.LocalDateTime;
 <span class="nc" id="L86">    public LocalDateTime getEndDate() { return endDate; }</span>
 <span class="nc" id="L87">    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }</span>
 <span class="nc" id="L88">    public String getReference() { return reference; }</span>
-<span class="fc" id="L89">    public void setReference(String reference) { this.reference = reference; }</span>
-<span class="fc" id="L90">    public StandingOrderStatus getStatus() { return status; }</span>
-<span class="fc" id="L91">    public void setStatus(StandingOrderStatus status) { this.status = status; }</span>
-<span class="fc" id="L92">    public LocalDateTime getNextRunDate() { return nextRunDate; }</span>
-<span class="fc" id="L93">    public void setNextRunDate(LocalDateTime nextRunDate) { this.nextRunDate = nextRunDate; }</span>
+<span class="nc" id="L89">    public void setReference(String reference) { this.reference = reference; }</span>
+<span class="nc" id="L90">    public StandingOrderStatus getStatus() { return status; }</span>
+<span class="nc" id="L91">    public void setStatus(StandingOrderStatus status) { this.status = status; }</span>
+<span class="nc" id="L92">    public LocalDateTime getNextRunDate() { return nextRunDate; }</span>
+<span class="nc" id="L93">    public void setNextRunDate(LocalDateTime nextRunDate) { this.nextRunDate = nextRunDate; }</span>
 <span class="nc" id="L94">    public LocalDateTime getCreatedAt() { return createdAt; }</span>
 <span class="nc" id="L95">    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }</span>
 <span class="nc" id="L96">    public LocalDateTime getUpdatedAt() { return updatedAt; }</span>

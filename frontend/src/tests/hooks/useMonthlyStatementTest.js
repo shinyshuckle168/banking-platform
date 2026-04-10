@@ -1,13 +1,13 @@
 import React from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 
 vi.mock('../../api/statementApi', () => ({
-  getMonthlyStatement: vi.fn(),
+  getMonthlyStatementPdf: vi.fn(),
 }));
 
-import { getMonthlyStatement } from '../../api/statementApi';
+import { getMonthlyStatementPdf } from '../../api/statementApi';
 import { useMonthlyStatement } from '../../hooks/useMonthlyStatement';
 
 const wrapper = ({ children }) =>
@@ -17,29 +17,30 @@ const wrapper = ({ children }) =>
   );
 
 describe('useMonthlyStatement', () => {
-  it('uses correct query key including version', async () => {
-    getMonthlyStatement.mockResolvedValue({ data: { period: '2026-01', versionNumber: 2 } });
+  it('calls getMonthlyStatementPdf with correct accountId and period', async () => {
+    const fakeBlob = new Uint8Array([37, 80, 68, 70]);
+    getMonthlyStatementPdf.mockResolvedValue({ data: fakeBlob });
 
-    const { result } = renderHook(() => useMonthlyStatement(1, '2026-01', 2), { wrapper });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(getMonthlyStatement).toHaveBeenCalledWith(1, '2026-01', 2);
+    // Mock browser download APIs
+    window.URL.createObjectURL = vi.fn(() => 'blob:test');
+    window.URL.revokeObjectURL = vi.fn();
+
+    const { result } = renderHook(() => useMonthlyStatement(1), { wrapper });
+    await act(async () => {
+      result.current.mutate('2026-01');
+    });
+    expect(getMonthlyStatementPdf).toHaveBeenCalledWith(1, '2026-01');
   });
 
-  it('returns data on success', async () => {
-    const mockData = { period: '2026-01', versionNumber: 1, totalMoneyIn: 500 };
-    getMonthlyStatement.mockResolvedValue({ data: mockData });
+  it('exposes error when API call fails', async () => {
+    const err = { response: { status: 409, data: { code: 'ERR_FUTURE_MONTH', field: 'period' } } };
+    getMonthlyStatementPdf.mockRejectedValue(err);
 
-    const { result } = renderHook(() => useMonthlyStatement(1, '2026-01', undefined), { wrapper });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(mockData);
-  });
-
-  it('exposes error on 410 response', async () => {
-    const err = { response: { status: 410, data: { code: 'ERR_RETENTION_WINDOW' } } };
-    getMonthlyStatement.mockRejectedValue(err);
-
-    const { result } = renderHook(() => useMonthlyStatement(1, '2018-01', undefined), { wrapper });
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error?.response?.status).toBe(410);
+    const { result } = renderHook(() => useMonthlyStatement(1), { wrapper });
+    await act(async () => {
+      result.current.mutate('2099-12');
+    });
+    expect(result.current.isError).toBe(true);
   });
 });
+

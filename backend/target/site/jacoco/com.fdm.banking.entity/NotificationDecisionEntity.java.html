@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
         @Index(name = &quot;idx_nd_customer_id&quot;, columnList = &quot;customer_id&quot;),
         @Index(name = &quot;idx_nd_event_type&quot;, columnList = &quot;event_type&quot;)
 })
-<span class="fc" id="L16">public class NotificationDecisionEntity {</span>
+<span class="nc" id="L16">public class NotificationDecisionEntity {</span>
 
     @Id
     @Column(name = &quot;event_id&quot;, length = 36)
@@ -41,7 +41,7 @@ import java.time.LocalDateTime;
     @Column(name = &quot;decision_reason&quot;, nullable = false, length = 500)
     private String decisionReason;
 
-<span class="fc" id="L44">    @Column(name = &quot;mandatory_override&quot;, nullable = false)</span>
+<span class="nc" id="L44">    @Column(name = &quot;mandatory_override&quot;, nullable = false)</span>
     private boolean mandatoryOverride = false;
 
     @Column(name = &quot;evaluated_at&quot;, nullable = false)
@@ -52,25 +52,25 @@ import java.time.LocalDateTime;
 <span class="nc" id="L52">        evaluatedAt = LocalDateTime.now();</span>
 <span class="nc" id="L53">    }</span>
 
-<span class="fc" id="L55">    public String getEventId() { return eventId; }</span>
-<span class="fc" id="L56">    public void setEventId(String eventId) { this.eventId = eventId; }</span>
+<span class="nc" id="L55">    public String getEventId() { return eventId; }</span>
+<span class="nc" id="L56">    public void setEventId(String eventId) { this.eventId = eventId; }</span>
 <span class="nc" id="L57">    public String getEventType() { return eventType; }</span>
-<span class="fc" id="L58">    public void setEventType(String eventType) { this.eventType = eventType; }</span>
-<span class="fc" id="L59">    public Long getAccountId() { return accountId; }</span>
-<span class="fc" id="L60">    public void setAccountId(Long accountId) { this.accountId = accountId; }</span>
-<span class="fc" id="L61">    public Long getCustomerId() { return customerId; }</span>
-<span class="fc" id="L62">    public void setCustomerId(Long customerId) { this.customerId = customerId; }</span>
+<span class="nc" id="L58">    public void setEventType(String eventType) { this.eventType = eventType; }</span>
+<span class="nc" id="L59">    public Long getAccountId() { return accountId; }</span>
+<span class="nc" id="L60">    public void setAccountId(Long accountId) { this.accountId = accountId; }</span>
+<span class="nc" id="L61">    public Long getCustomerId() { return customerId; }</span>
+<span class="nc" id="L62">    public void setCustomerId(Long customerId) { this.customerId = customerId; }</span>
 <span class="nc" id="L63">    public LocalDateTime getBusinessTimestamp() { return businessTimestamp; }</span>
-<span class="fc" id="L64">    public void setBusinessTimestamp(LocalDateTime businessTimestamp) { this.businessTimestamp = businessTimestamp; }</span>
+<span class="nc" id="L64">    public void setBusinessTimestamp(LocalDateTime businessTimestamp) { this.businessTimestamp = businessTimestamp; }</span>
 <span class="nc" id="L65">    public String getPayload() { return payload; }</span>
-<span class="fc" id="L66">    public void setPayload(String payload) { this.payload = payload; }</span>
-<span class="fc" id="L67">    public NotificationDecision getDecision() { return decision; }</span>
-<span class="fc" id="L68">    public void setDecision(NotificationDecision decision) { this.decision = decision; }</span>
-<span class="fc" id="L69">    public String getDecisionReason() { return decisionReason; }</span>
-<span class="fc" id="L70">    public void setDecisionReason(String decisionReason) { this.decisionReason = decisionReason; }</span>
-<span class="fc" id="L71">    public boolean isMandatoryOverride() { return mandatoryOverride; }</span>
-<span class="fc" id="L72">    public void setMandatoryOverride(boolean mandatoryOverride) { this.mandatoryOverride = mandatoryOverride; }</span>
-<span class="fc" id="L73">    public LocalDateTime getEvaluatedAt() { return evaluatedAt; }</span>
+<span class="nc" id="L66">    public void setPayload(String payload) { this.payload = payload; }</span>
+<span class="nc" id="L67">    public NotificationDecision getDecision() { return decision; }</span>
+<span class="nc" id="L68">    public void setDecision(NotificationDecision decision) { this.decision = decision; }</span>
+<span class="nc" id="L69">    public String getDecisionReason() { return decisionReason; }</span>
+<span class="nc" id="L70">    public void setDecisionReason(String decisionReason) { this.decisionReason = decisionReason; }</span>
+<span class="nc" id="L71">    public boolean isMandatoryOverride() { return mandatoryOverride; }</span>
+<span class="nc" id="L72">    public void setMandatoryOverride(boolean mandatoryOverride) { this.mandatoryOverride = mandatoryOverride; }</span>
+<span class="nc" id="L73">    public LocalDateTime getEvaluatedAt() { return evaluatedAt; }</span>
 <span class="nc" id="L74">    public void setEvaluatedAt(LocalDateTime evaluatedAt) { this.evaluatedAt = evaluatedAt; }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

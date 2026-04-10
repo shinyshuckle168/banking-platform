@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
     @ExceptionHandler(PermissionDeniedException.class)
     public ResponseEntity&lt;ErrorResponse&gt; handlePermissionDenied(PermissionDeniedException ex) {
-<span class="fc" id="L26">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
-<span class="fc" id="L27">                .body(new ErrorResponse(&quot;ERR_UNAUTHORIZED&quot;, ex.getMessage()));</span>
+<span class="nc" id="L26">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="nc" id="L27">                .body(new ErrorResponse(&quot;ERR_UNAUTHORIZED&quot;, ex.getMessage()));</span>
     }
 
     @ExceptionHandler(LockException.class)

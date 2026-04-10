@@ -33,15 +33,15 @@ public class StandingOrderExecutionJob {
                                       IdempotencyRecordRepository idempotencyRecordRepository,
                                       NotificationEvaluationService notificationEvaluationService,
                                       com.fdm.banking.util.CanadianHolidayService canadianHolidayService,
-<span class="fc" id="L36">                                      AuditService auditService) {</span>
-<span class="fc" id="L37">        this.standingOrderRepository = standingOrderRepository;</span>
-<span class="fc" id="L38">        this.transactionQueryRepository = transactionQueryRepository;</span>
-<span class="fc" id="L39">        this.accountRepository = accountRepository;</span>
-<span class="fc" id="L40">        this.idempotencyRecordRepository = idempotencyRecordRepository;</span>
-<span class="fc" id="L41">        this.notificationEvaluationService = notificationEvaluationService;</span>
-<span class="fc" id="L42">        this.canadianHolidayService = canadianHolidayService;</span>
-<span class="fc" id="L43">        this.auditService = auditService;</span>
-<span class="fc" id="L44">    }</span>
+<span class="nc" id="L36">                                      AuditService auditService) {</span>
+<span class="nc" id="L37">        this.standingOrderRepository = standingOrderRepository;</span>
+<span class="nc" id="L38">        this.transactionQueryRepository = transactionQueryRepository;</span>
+<span class="nc" id="L39">        this.accountRepository = accountRepository;</span>
+<span class="nc" id="L40">        this.idempotencyRecordRepository = idempotencyRecordRepository;</span>
+<span class="nc" id="L41">        this.notificationEvaluationService = notificationEvaluationService;</span>
+<span class="nc" id="L42">        this.canadianHolidayService = canadianHolidayService;</span>
+<span class="nc" id="L43">        this.auditService = auditService;</span>
+<span class="nc" id="L44">    }</span>
 
     /**
      * Main daily execution at 00:00:01 UTC — processes orders due today. (T054)
@@ -49,19 +49,19 @@ public class StandingOrderExecutionJob {
     @Scheduled(cron = &quot;1 0 0 * * *&quot;, zone = &quot;UTC&quot;)
     @Transactional
     public void processOrders() {
-<span class="fc" id="L52">        LocalDateTime now = LocalDateTime.now();</span>
-<span class="fc" id="L53">        LocalDate today = now.toLocalDate();</span>
+<span class="nc" id="L52">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc" id="L53">        LocalDate today = now.toLocalDate();</span>
 
-<span class="fc" id="L55">        List&lt;StandingOrderEntity&gt; dueOrders = standingOrderRepository</span>
-<span class="fc" id="L56">                .findByStatusAndNextRunDateBefore(StandingOrderStatus.ACTIVE,</span>
-<span class="fc" id="L57">                        today.plusDays(1).atStartOfDay());</span>
+<span class="nc" id="L55">        List&lt;StandingOrderEntity&gt; dueOrders = standingOrderRepository</span>
+<span class="nc" id="L56">                .findByStatusAndNextRunDateBefore(StandingOrderStatus.ACTIVE,</span>
+<span class="nc" id="L57">                        today.plusDays(1).atStartOfDay());</span>
 
-<span class="fc bfc" id="L59" title="All 2 branches covered.">        for (StandingOrderEntity order : dueOrders) {</span>
-<span class="pc bpc" id="L60" title="1 of 2 branches missed.">            if (order.getNextRunDate().toLocalDate().equals(today)) {</span>
-<span class="fc" id="L61">                attemptExecution(order);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        for (StandingOrderEntity order : dueOrders) {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">            if (order.getNextRunDate().toLocalDate().equals(today)) {</span>
+<span class="nc" id="L61">                attemptExecution(order);</span>
             }
-<span class="fc" id="L63">        }</span>
-<span class="fc" id="L64">    }</span>
+<span class="nc" id="L63">        }</span>
+<span class="nc" id="L64">    }</span>
 
     /**
      * First retry attempt at 08:00 UTC — processes RETRY_PENDING orders. (T054)
@@ -97,25 +97,25 @@ public class StandingOrderExecutionJob {
      * Attempts to execute a standing order. (T055)
      */
     public void attemptExecution(StandingOrderEntity order) {
-<span class="fc" id="L100">        String idempotencyKey = order.getStandingOrderId() + &quot;:&quot; + order.getNextRunDate().toLocalDate();</span>
+<span class="nc" id="L100">        String idempotencyKey = order.getStandingOrderId() + &quot;:&quot; + order.getNextRunDate().toLocalDate();</span>
 
         // Idempotency check
-<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (idempotencyRecordRepository.findByIdempotencyKey(idempotencyKey).isPresent()) {</span>
-<span class="fc" id="L104">            return; // Already processed this cycle</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (idempotencyRecordRepository.findByIdempotencyKey(idempotencyKey).isPresent()) {</span>
+<span class="nc" id="L104">            return; // Already processed this cycle</span>
         }
 
-<span class="fc" id="L107">        AccountEntity account = accountRepository.findById(order.getSourceAccountId()).orElse(null);</span>
-<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if (account == null) {</span>
+<span class="nc" id="L107">        AccountEntity account = accountRepository.findById(order.getSourceAccountId()).orElse(null);</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (account == null) {</span>
 <span class="nc" id="L109">            order.setStatus(StandingOrderStatus.TERMINATED);</span>
 <span class="nc" id="L110">            standingOrderRepository.save(order);</span>
 <span class="nc" id="L111">            return;</span>
         }
 
         // Check balance sufficiency
-<span class="pc bpc" id="L115" title="1 of 2 branches missed.">        if (account.getBalance().compareTo(order.getAmount()) &lt; 0) {</span>
-<span class="fc" id="L116">            order.setStatus(StandingOrderStatus.RETRY_PENDING);</span>
-<span class="fc" id="L117">            standingOrderRepository.save(order);</span>
-<span class="fc" id="L118">            return;</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (account.getBalance().compareTo(order.getAmount()) &lt; 0) {</span>
+<span class="nc" id="L116">            order.setStatus(StandingOrderStatus.RETRY_PENDING);</span>
+<span class="nc" id="L117">            standingOrderRepository.save(order);</span>
+<span class="nc" id="L118">            return;</span>
         }
 
         // Execute transfer

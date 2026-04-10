@@ -1,23 +1,45 @@
 import { useState } from 'react';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import ErrorMessage from '../shared/ErrorMessage';
-import StatementViewer from './StatementViewer';
 import { useMonthlyStatement } from '../../hooks/useMonthlyStatement';
 
 /**
- * Monthly Statement page with period and optional version inputs. (T089)
+ * Monthly Statement page. Generates and downloads a PDF bank statement
+ * for the selected month and year. (T089)
  */
 const MonthlyStatementPage = ({ accountId }) => {
-  const [period, setPeriod] = useState('');
-  const [version, setVersion] = useState('');
+  const currentDate = new Date();
+  const [year, setYear] = useState(String(currentDate.getFullYear()));
+  const [month, setMonth] = useState(String(currentDate.getMonth() + 1).padStart(2, '0'));
 
-  const { data, isLoading, isError, error } = useMonthlyStatement(
-    accountId,
-    period || undefined,
-    version ? parseInt(version, 10) : undefined
-  );
+  const { mutate, isPending, isError, error, isSuccess } = useMonthlyStatement(accountId);
 
   const serverError = error?.response?.data;
+
+  const handleDownload = () => {
+    const period = `${year}-${month}`;
+    mutate(period);
+  };
+
+  const years = [];
+  for (let y = currentDate.getFullYear(); y >= currentDate.getFullYear() - 5; y--) {
+    years.push(y);
+  }
+
+  const months = [
+    { value: '01', label: 'January' },
+    { value: '02', label: 'February' },
+    { value: '03', label: 'March' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'May' },
+    { value: '06', label: 'June' },
+    { value: '07', label: 'July' },
+    { value: '08', label: 'August' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ];
 
   return (
     <div>
@@ -27,41 +49,50 @@ const MonthlyStatementPage = ({ accountId }) => {
 
       <div className="filter-row">
         <div className="filter-group">
-          <label>Period (YYYY-MM)</label>
-          <input
-            type="text"
-            placeholder="2026-03"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            pattern="\d{4}-\d{2}"
-            style={{ minWidth: 130 }}
-          />
+          <label htmlFor="month-select">Month</label>
+          <select id="month-select" value={month} onChange={(e) => setMonth(e.target.value)} style={{ minWidth: 130 }}>
+            {months.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
         </div>
         <div className="filter-group">
-          <label>Version (optional)</label>
-          <input
-            type="number"
-            min="1"
-            value={version}
-            onChange={(e) => setVersion(e.target.value)}
-            style={{ minWidth: 80 }}
-          />
+          <label htmlFor="year-select">Year</label>
+          <select id="year-select" value={year} onChange={(e) => setYear(e.target.value)} style={{ minWidth: 90 }}>
+            {years.map((y) => (
+              <option key={y} value={String(y)}>{y}</option>
+            ))}
+          </select>
+        </div>
+        <div className="filter-group" style={{ justifyContent: 'flex-end' }}>
+          <button
+            className="btn btn-primary"
+            onClick={handleDownload}
+            disabled={isPending || !accountId}
+          >
+            {isPending ? 'Generating…' : 'Download PDF'}
+          </button>
         </div>
       </div>
 
-      {isLoading && <LoadingSpinner />}
+      {isPending && <LoadingSpinner />}
 
       {isError && (
         <ErrorMessage
           code={serverError?.code}
-          message={serverError?.message || 'Failed to load statement.'}
+          message={serverError?.message || 'Failed to generate statement.'}
           field={serverError?.field}
         />
       )}
 
-      {data && <StatementViewer statement={data} />}
+      {isSuccess && !isPending && (
+        <div style={{ marginTop: 16, color: 'var(--success-fg)' }}>
+          Statement downloaded successfully.
+        </div>
+      )}
     </div>
   );
 };
 
 export default MonthlyStatementPage;
+

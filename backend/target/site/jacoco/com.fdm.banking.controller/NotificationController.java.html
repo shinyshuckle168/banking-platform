@@ -17,14 +17,14 @@ public class NotificationController {
 
     private final NotificationEvaluationService notificationEvaluationService;
 
-<span class="fc" id="L20">    public NotificationController(NotificationEvaluationService notificationEvaluationService) {</span>
-<span class="fc" id="L21">        this.notificationEvaluationService = notificationEvaluationService;</span>
-<span class="fc" id="L22">    }</span>
+<span class="nc" id="L20">    public NotificationController(NotificationEvaluationService notificationEvaluationService) {</span>
+<span class="nc" id="L21">        this.notificationEvaluationService = notificationEvaluationService;</span>
+<span class="nc" id="L22">    }</span>
 
     @PostMapping(&quot;/evaluate&quot;)
     public ResponseEntity&lt;NotificationDecisionResponse&gt; evaluate(
             @RequestBody @Valid NotificationEventRequest request) {
-<span class="fc" id="L27">        return ResponseEntity.ok(notificationEvaluationService.evaluate(request));</span>
+<span class="nc" id="L27">        return ResponseEntity.ok(notificationEvaluationService.evaluate(request));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * Request DTO for creating a standing order. (T047)
  */
-<span class="fc" id="L11">public class CreateStandingOrderRequest {</span>
+<span class="nc" id="L11">public class CreateStandingOrderRequest {</span>
 
     @NotBlank(message = &quot;Payee account is required&quot;)
     @Size(max = 34, message = &quot;Payee account must not exceed 34 characters&quot;)
@@ -36,19 +36,19 @@ import java.time.LocalDateTime;
     @Pattern(regexp = &quot;[A-Za-z0-9]+&quot;, message = &quot;Reference must be alphanumeric&quot;)
     private String reference;
 
-<span class="fc" id="L39">    public String getPayeeAccount() { return payeeAccount; }</span>
-<span class="fc" id="L40">    public void setPayeeAccount(String payeeAccount) { this.payeeAccount = payeeAccount; }</span>
+<span class="nc" id="L39">    public String getPayeeAccount() { return payeeAccount; }</span>
+<span class="nc" id="L40">    public void setPayeeAccount(String payeeAccount) { this.payeeAccount = payeeAccount; }</span>
 <span class="nc" id="L41">    public String getPayeeName() { return payeeName; }</span>
 <span class="nc" id="L42">    public void setPayeeName(String payeeName) { this.payeeName = payeeName; }</span>
 <span class="nc" id="L43">    public BigDecimal getAmount() { return amount; }</span>
-<span class="fc" id="L44">    public void setAmount(BigDecimal amount) { this.amount = amount; }</span>
+<span class="nc" id="L44">    public void setAmount(BigDecimal amount) { this.amount = amount; }</span>
 <span class="nc" id="L45">    public String getFrequency() { return frequency; }</span>
-<span class="fc" id="L46">    public void setFrequency(String frequency) { this.frequency = frequency; }</span>
-<span class="fc" id="L47">    public LocalDateTime getStartDate() { return startDate; }</span>
-<span class="fc" id="L48">    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }</span>
+<span class="nc" id="L46">    public void setFrequency(String frequency) { this.frequency = frequency; }</span>
+<span class="nc" id="L47">    public LocalDateTime getStartDate() { return startDate; }</span>
+<span class="nc" id="L48">    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }</span>
 <span class="nc" id="L49">    public LocalDateTime getEndDate() { return endDate; }</span>
 <span class="nc" id="L50">    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }</span>
 <span class="nc" id="L51">    public String getReference() { return reference; }</span>
-<span class="fc" id="L52">    public void setReference(String reference) { this.reference = reference; }</span>
+<span class="nc" id="L52">    public void setReference(String reference) { this.reference = reference; }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

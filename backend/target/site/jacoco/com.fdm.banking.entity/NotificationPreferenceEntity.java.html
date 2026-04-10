@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
                 name = &quot;uq_np_customer_event&quot;,
                 columnNames = {&quot;customer_id&quot;, &quot;event_type&quot;}),
         indexes = @Index(name = &quot;idx_np_customer_id&quot;, columnList = &quot;customer_id&quot;))
-<span class="fc" id="L16">public class NotificationPreferenceEntity {</span>
+<span class="nc" id="L16">public class NotificationPreferenceEntity {</span>
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
     @Column(name = &quot;event_type&quot;, nullable = false, length = 100)
     private String eventType;
 
-<span class="fc" id="L29">    @Column(name = &quot;opted_in&quot;, nullable = false)</span>
+<span class="nc" id="L29">    @Column(name = &quot;opted_in&quot;, nullable = false)</span>
     private boolean optedIn = true;
 
     @Column(name = &quot;updated_at&quot;, nullable = false)
@@ -44,8 +44,8 @@ import java.time.LocalDateTime;
 <span class="nc" id="L44">    public void setCustomerId(Long customerId) { this.customerId = customerId; }</span>
 <span class="nc" id="L45">    public String getEventType() { return eventType; }</span>
 <span class="nc" id="L46">    public void setEventType(String eventType) { this.eventType = eventType; }</span>
-<span class="fc" id="L47">    public boolean isOptedIn() { return optedIn; }</span>
-<span class="fc" id="L48">    public void setOptedIn(boolean optedIn) { this.optedIn = optedIn; }</span>
+<span class="nc" id="L47">    public boolean isOptedIn() { return optedIn; }</span>
+<span class="nc" id="L48">    public void setOptedIn(boolean optedIn) { this.optedIn = optedIn; }</span>
 <span class="nc" id="L49">    public LocalDateTime getUpdatedAt() { return updatedAt; }</span>
 <span class="nc" id="L50">    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }</span>
 }

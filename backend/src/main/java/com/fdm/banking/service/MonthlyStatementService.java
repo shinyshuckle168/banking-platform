@@ -1,47 +1,59 @@
 package com.fdm.banking.service;
 
-import com.fdm.banking.dto.response.MonthlyStatementResponse;
-import com.fdm.banking.entity.MonthlyStatementEntity;
+import com.fdm.banking.entity.*;
 import com.fdm.banking.exception.*;
-import com.fdm.banking.mapper.MonthlyStatementMapper;
-import com.fdm.banking.repository.MonthlyStatementRepository;
+import com.fdm.banking.repository.AccountRepository;
+import com.fdm.banking.repository.ExportCacheRepository;
+import com.fdm.banking.repository.TransactionQueryRepository;
 import com.fdm.banking.security.OwnershipValidator;
 import com.fdm.banking.security.UserPrincipal;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.HexFormat;
+import java.util.List;
 
 /**
- * Monthly statement service. (T082)
+ * Monthly statement service — generates PDF on demand from live transaction data. (T082)
  */
 @Service
 public class MonthlyStatementService {
 
-    private static final int RETENTION_YEARS = 7;
     private static final DateTimeFormatter PERIOD_FMT = DateTimeFormatter.ofPattern("yyyy-MM");
 
-    private final MonthlyStatementRepository monthlyStatementRepository;
+    private final AccountRepository accountRepository;
+    private final TransactionQueryRepository transactionQueryRepository;
+    private final ExportCacheRepository exportCacheRepository;
     private final OwnershipValidator ownershipValidator;
-    private final MonthlyStatementMapper mapper;
+    private final PdfStatementService pdfStatementService;
     private final AuditService auditService;
 
-    public MonthlyStatementService(MonthlyStatementRepository monthlyStatementRepository,
+    public MonthlyStatementService(AccountRepository accountRepository,
+                                    TransactionQueryRepository transactionQueryRepository,
+                                    ExportCacheRepository exportCacheRepository,
                                     OwnershipValidator ownershipValidator,
-                                    MonthlyStatementMapper mapper,
+                                    PdfStatementService pdfStatementService,
                                     AuditService auditService) {
-        this.monthlyStatementRepository = monthlyStatementRepository;
+        this.accountRepository = accountRepository;
+        this.transactionQueryRepository = transactionQueryRepository;
+        this.exportCacheRepository = exportCacheRepository;
         this.ownershipValidator = ownershipValidator;
-        this.mapper = mapper;
+        this.pdfStatementService = pdfStatementService;
         this.auditService = auditService;
     }
 
     /**
-     * Retrieves a monthly statement for a closed period. (T082)
+     * Generates a monthly statement PDF on demand. (T082)
      */
-    public MonthlyStatementResponse getStatement(long accountId, String period,
-                                                   Integer version, UserPrincipal caller) {
+    public byte[] generateStatement(long accountId, String period, UserPrincipal caller) {
         // Re-validate permission at delivery
         if (!caller.hasPermission("STATEMENT:READ")) {
             throw new PermissionDeniedException("STATEMENT:READ");
@@ -49,49 +61,114 @@ public class MonthlyStatementService {
         ownershipValidator.assertOwnership(accountId, caller);
 
         // Validate period format
-        LocalDate periodStart;
+        YearMonth yearMonth;
         try {
-            periodStart = LocalDate.parse(period + "-01",
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            yearMonth = YearMonth.parse(period, PERIOD_FMT);
         } catch (DateTimeParseException e) {
             throw new SemanticValidationException("Invalid period format. Expected YYYY-MM",
                     "ERR_INVALID_PERIOD_FORMAT", "period");
         }
 
-        // Period must be before current month
-        LocalDate today = LocalDate.now();
-        LocalDate firstOfCurrentMonth = today.withDayOfMonth(1);
-        if (!periodStart.isBefore(firstOfCurrentMonth)) {
-            throw new BusinessStateException("Period is not yet closed",
-                    "ERR_PERIOD_NOT_CLOSED", "period");
+        // Reject future months (month not yet started)
+        YearMonth currentMonth = YearMonth.now();
+        if (yearMonth.isAfter(currentMonth)) {
+            throw new BusinessStateException("Future month requested",
+                    "ERR_FUTURE_MONTH", "period");
         }
 
-        // Retention window: not more than 7 years ago
-        LocalDate retentionCutoff = today.minusYears(RETENTION_YEARS);
-        if (periodStart.isBefore(retentionCutoff)) {
-            throw new RetentionWindowException("Statement is beyond 7-year retention window",
-                    "ERR_RETENTION_WINDOW_EXCEEDED");
+        // Load account
+        AccountEntity account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Account not found", "ERR_ACC_NOT_FOUND"));
+
+        // Check cache first (idempotency)
+        String cacheKey = computeHash(accountId, period);
+        return exportCacheRepository.findByAccountIdAndParamHash(accountId, cacheKey)
+                .map(ExportCacheEntity::getPdfData)
+                .orElseGet(() -> {
+                    byte[] pdf = buildAndCachePdf(account, yearMonth, currentMonth, cacheKey);
+                    auditService.log(caller.getUserId(), caller.getRole(),
+                            "STATEMENT_GENERATED", "STATEMENT", accountId + "/" + period, "SUCCESS");
+                    return pdf;
+                });
+    }
+
+    private byte[] buildAndCachePdf(AccountEntity account, YearMonth yearMonth,
+                                     YearMonth currentMonth, String cacheKey) {
+        long accountId = account.getAccountId();
+        LocalDateTime periodStart = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime periodEnd = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+        List<TransactionEntity> transactions =
+                transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(
+                        accountId, periodStart, periodEnd);
+
+        // Calculate balances
+        BigDecimal totalIn = BigDecimal.ZERO;
+        BigDecimal totalOut = BigDecimal.ZERO;
+        for (TransactionEntity t : transactions) {
+            if (t.getStatus() == TransactionStatus.SUCCESS) {
+                if (t.getType() == TransactionType.DEPOSIT
+                        || (t.getType() == TransactionType.TRANSFER && isCredit(t, accountId))) {
+                    totalIn = totalIn.add(t.getAmount());
+                } else if (t.getType() == TransactionType.WITHDRAW
+                        || (t.getType() == TransactionType.TRANSFER && !isCredit(t, accountId))) {
+                    totalOut = totalOut.add(t.getAmount());
+                }
+            }
         }
 
-        // Resolve statement
-        MonthlyStatementEntity entity;
-        if (version != null) {
-            entity = monthlyStatementRepository
-                    .findByAccountIdAndPeriodAndVersionNumber(accountId, period, version)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Statement not found for period " + period + " version " + version,
-                            "ERR_STATEMENT_NOT_FOUND"));
-        } else {
-            entity = monthlyStatementRepository
-                    .findTopByAccountIdAndPeriodOrderByVersionNumberDesc(accountId, period)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "No statement found for period " + period,
-                            "ERR_STATEMENT_NOT_FOUND"));
+        // Opening balance = current balance - net activity in period
+        BigDecimal closingBalance = account.getBalance();
+        BigDecimal openingBalance = closingBalance.subtract(totalIn).add(totalOut);
+
+        boolean isMonthToDate = yearMonth.equals(currentMonth);
+
+        CustomerEntity customer = account.getCustomer();
+        String firstName = customer != null ? customer.getFirstName() : "";
+        String lastName = customer != null ? customer.getLastName() : "";
+
+        byte[] pdfBytes = pdfStatementService.buildStatementPdf(
+                accountId,
+                account.getAccountNumber(),
+                account.getStatus().name(),
+                firstName,
+                lastName,
+                yearMonth,
+                isMonthToDate,
+                openingBalance,
+                closingBalance,
+                totalIn,
+                totalOut,
+                transactions);
+
+        ExportCacheEntity cache = new ExportCacheEntity();
+        cache.setAccountId(accountId);
+        cache.setParamHash(cacheKey);
+        cache.setPdfData(pdfBytes);
+        exportCacheRepository.save(cache);
+        return pdfBytes;
+    }
+
+    /**
+     * For TRANSFER transactions, we treat all TRANSFER amounts as debits (money out).
+     * The direction is determined by the transaction description or type context.
+     * Since TransactionEntity does not distinguish TRANSFER_IN from TRANSFER_OUT,
+     * all TRANSFER transactions with SUCCESS status are treated as money out.
+     */
+    private boolean isCredit(TransactionEntity t, long accountId) {
+        // TRANSFER transactions in this model represent outgoing transfers
+        return false;
+    }
+
+    private String computeHash(long accountId, String period) {
+        String input = "STATEMENT|" + accountId + "|" + period;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
         }
-
-        auditService.log(caller.getUserId(), caller.getRole(),
-                "STATEMENT_READ", "STATEMENT", accountId + "/" + period, "SUCCESS");
-
-        return mapper.toResponse(entity);
     }
 }

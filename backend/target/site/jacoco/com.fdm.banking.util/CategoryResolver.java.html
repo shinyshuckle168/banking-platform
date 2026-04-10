@@ -16,9 +16,9 @@ public class CategoryResolver {
 
     private final Map&lt;String, List&lt;String&gt;&gt; categories;
 
-<span class="fc" id="L19">    public CategoryResolver(BankingCategoriesProperties props) {</span>
-<span class="pc bpc" id="L20" title="1 of 2 branches missed.">        this.categories = props.getCategories() != null ? props.getCategories() : new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L21">    }</span>
+<span class="nc" id="L19">    public CategoryResolver(BankingCategoriesProperties props) {</span>
+<span class="nc bnc" id="L20" title="All 2 branches missed.">        this.categories = props.getCategories() != null ? props.getCategories() : new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L21">    }</span>
 
     /**
      * Resolves the spending category for a transaction description.
@@ -26,18 +26,18 @@ public class CategoryResolver {
      * @return matching category name, or null if no keyword matches
      */
     public String resolve(String description) {
-<span class="fc bfc" id="L29" title="All 4 branches covered.">        if (description == null || description.isBlank()) {</span>
-<span class="fc" id="L30">            return null;</span>
+<span class="nc bnc" id="L29" title="All 4 branches missed.">        if (description == null || description.isBlank()) {</span>
+<span class="nc" id="L30">            return null;</span>
         }
-<span class="fc" id="L32">        String lower = description.toLowerCase();</span>
-<span class="fc bfc" id="L33" title="All 2 branches covered.">        for (Map.Entry&lt;String, List&lt;String&gt;&gt; entry : categories.entrySet()) {</span>
-<span class="fc bfc" id="L34" title="All 2 branches covered.">            for (String keyword : entry.getValue()) {</span>
-<span class="fc bfc" id="L35" title="All 2 branches covered.">                if (lower.contains(keyword.toLowerCase())) {</span>
-<span class="fc" id="L36">                    return entry.getKey();</span>
+<span class="nc" id="L32">        String lower = description.toLowerCase();</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        for (Map.Entry&lt;String, List&lt;String&gt;&gt; entry : categories.entrySet()) {</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">            for (String keyword : entry.getValue()) {</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">                if (lower.contains(keyword.toLowerCase())) {</span>
+<span class="nc" id="L36">                    return entry.getKey();</span>
                 }
-<span class="fc" id="L38">            }</span>
-<span class="fc" id="L39">        }</span>
-<span class="fc" id="L40">        return null;</span>
+<span class="nc" id="L38">            }</span>
+<span class="nc" id="L39">        }</span>
+<span class="nc" id="L40">        return null;</span>
     }
 
     public Map&lt;String, List&lt;String&gt;&gt; getCategories() {

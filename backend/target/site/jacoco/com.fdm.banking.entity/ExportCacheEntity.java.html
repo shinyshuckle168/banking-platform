@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
         uniqueConstraints = @UniqueConstraint(
                 name = &quot;uq_ec_account_param_hash&quot;,
                 columnNames = {&quot;account_id&quot;, &quot;param_hash&quot;}))
-<span class="nc" id="L15">public class ExportCacheEntity {</span>
+<span class="fc" id="L15">public class ExportCacheEntity {</span>
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,11 +39,11 @@ import java.time.LocalDateTime;
 <span class="nc" id="L39">    public Long getCacheId() { return cacheId; }</span>
 <span class="nc" id="L40">    public void setCacheId(Long cacheId) { this.cacheId = cacheId; }</span>
 <span class="nc" id="L41">    public Long getAccountId() { return accountId; }</span>
-<span class="nc" id="L42">    public void setAccountId(Long accountId) { this.accountId = accountId; }</span>
+<span class="fc" id="L42">    public void setAccountId(Long accountId) { this.accountId = accountId; }</span>
 <span class="nc" id="L43">    public String getParamHash() { return paramHash; }</span>
-<span class="nc" id="L44">    public void setParamHash(String paramHash) { this.paramHash = paramHash; }</span>
-<span class="nc" id="L45">    public byte[] getPdfData() { return pdfData; }</span>
-<span class="nc" id="L46">    public void setPdfData(byte[] pdfData) { this.pdfData = pdfData; }</span>
+<span class="fc" id="L44">    public void setParamHash(String paramHash) { this.paramHash = paramHash; }</span>
+<span class="fc" id="L45">    public byte[] getPdfData() { return pdfData; }</span>
+<span class="fc" id="L46">    public void setPdfData(byte[] pdfData) { this.pdfData = pdfData; }</span>
 <span class="nc" id="L47">    public LocalDateTime getCreatedAt() { return createdAt; }</span>
 <span class="nc" id="L48">    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }</span>
 }

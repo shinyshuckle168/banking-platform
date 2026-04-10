@@ -67,8 +67,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 <span class="nc" id="L67">            SecurityContextHolder.getContext().setAuthentication(auth);</span>
 <span class="nc" id="L68">        } catch (Exception e) {</span>
             // Invalid token — proceed without authentication
-<span class="nc" id="L70">        }</span>
-<span class="nc" id="L71">        filterChain.doFilter(request, response);</span>
-<span class="nc" id="L72">    }</span>
+<span class="nc" id="L70">             System.out.println(&quot;JWT ERROR: &quot; + e.getMessage());</span>
+<span class="nc" id="L71">        }</span>
+<span class="nc" id="L72">        filterChain.doFilter(request, response);</span>
+<span class="nc" id="L73">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

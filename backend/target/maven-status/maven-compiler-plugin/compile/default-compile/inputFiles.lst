@@ -24,9 +24,7 @@ D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fd
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\scheduler\StandingOrderExecutionJob.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\CustomerEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\StandingOrderResponse.java
-D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\MonthlyStatementResponse.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\Frequency.java
-D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\MonthlyStatementEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\security\ServiceApiKeyFilter.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\StandingOrderRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\controller\TransactionController.java
@@ -48,7 +46,6 @@ D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fd
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\security\ServiceAuthentication.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\StandingOrderEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\dto\response\ErrorResponse.java
-D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\mapper\MonthlyStatementMapper.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\util\Mod97Validator.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\NotificationPreferenceEntity.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\security\JwtAuthenticationToken.java
@@ -69,7 +66,6 @@ D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fd
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\AuditLogRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\NotificationDecision.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\entity\TransactionStatus.java
-D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\MonthlyStatementRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\service\AuditService.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\repository\NotificationDecisionRepository.java
 D:\FDM\Spec-Driven-Project\digital-banking-platform\backend\src\main\java\com\fdm\banking\mapper\NotificationDecisionMapper.java

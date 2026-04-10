@@ -22,9 +22,9 @@ public class StandingOrderController {
 
     private final StandingOrderService standingOrderService;
 
-<span class="fc" id="L25">    public StandingOrderController(StandingOrderService standingOrderService) {</span>
-<span class="fc" id="L26">        this.standingOrderService = standingOrderService;</span>
-<span class="fc" id="L27">    }</span>
+<span class="nc" id="L25">    public StandingOrderController(StandingOrderService standingOrderService) {</span>
+<span class="nc" id="L26">        this.standingOrderService = standingOrderService;</span>
+<span class="nc" id="L27">    }</span>
 
     @PostMapping(&quot;/accounts/{accountId}/standing-orders&quot;)
     public ResponseEntity&lt;StandingOrderResponse&gt; createStandingOrder(
@@ -40,8 +40,8 @@ public class StandingOrderController {
     public ResponseEntity&lt;StandingOrderListResponse&gt; listStandingOrders(
             @PathVariable long accountId,
             Authentication authentication) {
-<span class="fc" id="L43">        UserPrincipal caller = extractPrincipal(authentication);</span>
-<span class="fc" id="L44">        return ResponseEntity.ok(standingOrderService.list(accountId, caller));</span>
+<span class="nc" id="L43">        UserPrincipal caller = extractPrincipal(authentication);</span>
+<span class="nc" id="L44">        return ResponseEntity.ok(standingOrderService.list(accountId, caller));</span>
     }
 
     @DeleteMapping(&quot;/standing-orders/{standingOrderId}&quot;)
@@ -53,8 +53,8 @@ public class StandingOrderController {
     }
 
     private UserPrincipal extractPrincipal(Authentication authentication) {
-<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        if (authentication instanceof JwtAuthenticationToken jwtToken) {</span>
-<span class="fc" id="L57">            return jwtToken.getPrincipal();</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (authentication instanceof JwtAuthenticationToken jwtToken) {</span>
+<span class="nc" id="L57">            return jwtToken.getPrincipal();</span>
         }
 <span class="nc" id="L59">        throw new PermissionDeniedException(&quot;JWT&quot;);</span>
     }
