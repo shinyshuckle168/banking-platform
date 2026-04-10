@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "username": "{{username}}",
+      "password": "Wrong@123"
+    }
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test('Status is 401', function () { pm.response.to.have.status(401);
+      });
+
+      const json = pm.response.json();
+
+      pm.test('Generic invalid credentials response', function () {
+      pm.expect(json.code).to.eql('INVALID_CREDENTIALS'); });
+    language: text/javascript
+order: 8000

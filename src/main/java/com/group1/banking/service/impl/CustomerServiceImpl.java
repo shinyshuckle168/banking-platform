@@ -1,24 +1,32 @@
 package com.group1.banking.service.impl;
 
-import com.group1.banking.dto.customer.CreateCustomerRequest;
-import com.group1.banking.dto.customer.CustomerResponse;
-import com.group1.banking.dto.customer.PatchCustomerRequest;
-import com.group1.banking.entity.Customer;
-import com.group1.banking.entity.User;
-import com.group1.banking.exception.BadRequestException;
-import com.group1.banking.exception.NotFoundException;
-import com.group1.banking.mapper.CustomerMapper;
-import com.group1.banking.repository.CustomerRepository;
-import com.group1.banking.repository.UserRepository;
-import com.group1.banking.security.CustomUserPrincipal;
-import com.group1.banking.service.CustomerService;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
+import com.group1.banking.dto.customer.AccountResponse;
+import com.group1.banking.dto.customer.CreateCustomerRequest;
+import com.group1.banking.dto.customer.CustomerResponse;
+import com.group1.banking.dto.customer.PatchCustomerRequest;
+import com.group1.banking.entity.AccountStatus;
+import com.group1.banking.entity.Customer;
+import com.group1.banking.entity.User;
+import com.group1.banking.exception.BadRequestException;
+import com.group1.banking.exception.ConflictException;
+import com.group1.banking.exception.NotFoundException;
+import com.group1.banking.exception.UnauthorisedException;
+import com.group1.banking.mapper.CustomerMapper;
+import com.group1.banking.repository.AccountRepository;
+import com.group1.banking.repository.CustomerRepository;
+import com.group1.banking.repository.UserRepository;
+import com.group1.banking.security.AuthenticatedUser;
+import com.group1.banking.security.CustomUserPrincipal;
+import com.group1.banking.service.CustomerService;
 
 @Service
 @Transactional
@@ -27,13 +35,15 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
     private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
 
     public CustomerServiceImpl(CustomerRepository customerRepository,
                                CustomerMapper customerMapper,
-                               UserRepository userRepository) {
+                               UserRepository userRepository, AccountRepository accountRepository) {
         this.customerRepository = customerRepository;
         this.customerMapper = customerMapper;
         this.userRepository = userRepository;
+        this.accountRepository = accountRepository;
     }
 
     @Override
@@ -93,15 +103,81 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerResponse getCustomer(Long customerId) {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found."));
-        return customerMapper.toResponse(customer);
+
+        List<AccountResponse> accounts = accountRepository
+                .findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(customerId, AccountStatus.ACTIVE)
+                .stream()
+                .map(AccountResponse::from)
+                .toList();
+
+        return CustomerResponse.builder()
+                .customerId(customer.getCustomerId())
+                .name(customer.getName())
+                .address(customer.getAddress())
+                .type(customer.getType())
+                .accounts(accounts)
+                .createdAt(customer.getCreatedAt())
+                .updatedAt(customer.getUpdatedAt())
+                .build();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CustomerResponse> getAllCustomers() {
         List<Customer> customerList = customerRepository.findAll();
+
         return customerList.stream()
-                .map(customerMapper::toResponse)
+                .map(customer -> {
+                    List<AccountResponse> accounts = accountRepository
+                            .findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(
+                                    customer.getCustomerId(), AccountStatus.ACTIVE)
+                            .stream()
+                            .map(AccountResponse::from)
+                            .toList();
+
+                    return CustomerResponse.builder()
+                            .customerId(customer.getCustomerId())
+                            .name(customer.getName())
+                            .address(customer.getAddress())
+                            .type(customer.getType())
+                            .accounts(accounts)
+                            .createdAt(customer.getCreatedAt())
+                            .updatedAt(customer.getUpdatedAt())
+                            .build();
+                })
                 .toList();
+    }
+    
+    @Transactional
+    public void deleteCustomer(Long customerId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication.getPrincipal() instanceof CustomUserPrincipal principal)) {
+            throw new UnauthorisedException("UNAUTHORIZED", "Unauthorized");
+        }
+
+        UUID userId = principal.getUserId();
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UnauthorisedException("UNAUTHORIZED", "Unauthorized"));
+
+        System.out.println("User Roles"+ user.getRoles());
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> role.name().equalsIgnoreCase("ADMIN") || role.name().equalsIgnoreCase("ROLE_ADMIN"));
+
+        if (!isAdmin) {
+            throw new UnauthorisedException("UNAUTHORIZED", "User is not an admin.");
+        }
+
+        // 3️⃣ Load customer and check active accounts
+        Customer customer = customerRepository.findByCustomerIdAndDeletedAtIsNull(customerId)
+                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found"));
+
+        if (accountRepository.existsByCustomerCustomerIdAndDeletedAtIsNullAndStatus(customerId, AccountStatus.ACTIVE)) {
+            throw new ConflictException("CUSTOMER_HAS_ACTIVE_ACCOUNTS",
+                    "Customer has active accounts and cannot be deleted", null);
+        }
+
+        // 4️⃣ Soft delete
+        customer.setDeletedAt(Instant.now());
+        customerRepository.save(customer);
     }
 }

@@ -1,0 +1,26 @@
+$kind: http-request
+name: Delete Customer
+url: "{{baseUrl}}/api/customers/{{customerId}}"
+method: DELETE
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+body:
+  type: json
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyYTY0ZjI2Ni0zMDgzLTRhNzctOGQwMy0zMGQ3NDZiYTcyZmQiLCJyb2xlcyI6WyJBRE1JTiJdLCJpYXQiOjE3NzU3NjI0NTcsImV4cCI6MTc3NTc2NjA1N30.0mYF2SgW-UQehWhu0jiJLy6RcoQskiBmPD1xQ2SqXtw
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test('Status is 200', function () { pm.response.to.have.status(200);
+      });
+
+      const json = pm.response.json();
+
+      pm.test('Name updated', function () { pm.expect(json.name).to.eql('Jane
+      Smith'); });
+    language: text/javascript
+order: 5000

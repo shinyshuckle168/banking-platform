@@ -1,0 +1,17 @@
+name: Group1 Local
+values:
+  - key: baseUrl
+    value: 'http://localhost:8080'
+    enabled: true
+  - key: username
+    value: lalitha@example.com
+    enabled: true
+  - key: password
+    value: Secure@123
+    enabled: true
+  - key: accessToken
+    value: ''
+    enabled: true
+  - key: customerId
+    value: ''
+    enabled: true

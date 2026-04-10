@@ -1,0 +1,33 @@
+$kind: http-request
+name: 3 - Create Customer
+url: "{{baseUrl}}/api/customers"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+body:
+  type: json
+  content: |-
+    {
+      "name": "Kapilan",
+      "address": "508 Adellaide, Toronto, ON",
+      "type": "PERSON"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyYTY0ZjI2Ni0zMDgzLTRhNzctOGQwMy0zMGQ3NDZiYTcyZmQiLCJyb2xlcyI6WyJBRE1JTiJdLCJpYXQiOjE3NzU3NTc5MDcsImV4cCI6MTc3NTc2MTUwN30.tL2z_Rdl5C-j3qtzTsarsCijQ1Y_JDl65diSf7GGkPc
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test('Status is 201', function () { pm.response.to.have.status(201);
+      });
+
+      const json = pm.response.json();
+
+      pm.environment.set('customerId', json.customerId);
+
+      pm.test('accounts array starts empty', function () {
+      pm.expect(json.accounts).to.be.an('array'); });
+    language: text/javascript
+order: 3000

@@ -39,6 +39,7 @@ public class CustomUserPrincipal implements Principal {
                 result.add(new SimpleGrantedAuthority(Permission.CUSTOMER_CREATE.name()));
                 result.add(new SimpleGrantedAuthority(Permission.CUSTOMER_READ.name()));
                 result.add(new SimpleGrantedAuthority(Permission.CUSTOMER_UPDATE.name()));
+                result.add(new SimpleGrantedAuthority(Permission.CUSTOMER_DELETE.name()));
             }
         }
         return result;

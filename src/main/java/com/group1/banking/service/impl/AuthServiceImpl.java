@@ -1,9 +1,17 @@
 package com.group1.banking.service.impl;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.group1.banking.dto.auth.AuthResponse;
 import com.group1.banking.dto.auth.LoginRequest;
 import com.group1.banking.dto.auth.RegisterRequest;
 import com.group1.banking.dto.auth.UserResponse;
+import com.group1.banking.entity.Account;
 import com.group1.banking.entity.User;
 import com.group1.banking.enums.RoleName;
 import com.group1.banking.exception.ConflictException;
@@ -11,14 +19,9 @@ import com.group1.banking.exception.ForbiddenException;
 import com.group1.banking.exception.UnauthorisedException;
 import com.group1.banking.mapper.UserMapper;
 import com.group1.banking.repository.UserRepository;
+import com.group1.banking.security.AuthenticatedUser;
 import com.group1.banking.security.JwtService;
 import com.group1.banking.service.AuthService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -96,5 +99,21 @@ public class AuthServiceImpl implements AuthService {
 
         logger.info("Login successful for userId={}, username={}", user.getUserId(), user.getUsername());
         return new AuthResponse(accessToken, refreshToken, "Bearer", 3600);
+    }
+    
+    public void assertCanAccessCustomer(AuthenticatedUser user, Long customerId) {
+        if (user == null) {
+            throw new UnauthorisedException("UNAUTHORIZED", "Unauthorized.");
+        }
+        if (user.isAdmin()) {
+            return;
+        }
+        if (user.customerId() == null || !user.customerId().equals(customerId)) {
+            throw new UnauthorisedException("UNAUTHORIZED", "Unauthorized.");
+        }
+    }
+
+    public void assertCanAccessAccount(AuthenticatedUser user, Account account) {
+        assertCanAccessCustomer(user, account.getCustomer().getCustomerId());
     }
 }

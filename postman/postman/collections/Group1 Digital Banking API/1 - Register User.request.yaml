@@ -1,0 +1,26 @@
+$kind: http-request
+name: 1 - Register User
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "prithvi@gmail.com",
+      "password": "Prithvi@123",
+      "roles": ["ADMIN"]
+    }
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test('Status is 201 or 409', function () {
+      pm.expect([201,409]).to.include(pm.response.code); });
+
+      if (pm.response.code === 201) {
+        const json = pm.response.json();
+        pm.test('passwordHash is absent', function () { pm.expect(json.passwordHash).to.eql(undefined); });
+      }
+    language: text/javascript
+order: 1000

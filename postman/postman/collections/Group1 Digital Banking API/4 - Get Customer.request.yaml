@@ -1,0 +1,15 @@
+$kind: http-request
+name: 4 - Get Customer
+url: "{{baseUrl}}/api/customers/{{customerId}}"
+method: GET
+headers:
+  Authorization: Bearer {{accessToken}}
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzOTNjOGNkNS02NDU0LTQwMjctYTE3Yi01OWUzNzIyYTU1ZmMiLCJyb2xlcyI6WyJDVVNUT01FUiJdLCJpYXQiOjE3NzU3NjEzODEsImV4cCI6MTc3NTc2NDk4MX0.YG3X2ZuzMRYUIWzA3gD0Qm2b5AP5_g5fTmkVOFE6wbE
+scripts:
+  - type: afterResponse
+    code: pm.test('Status is 200', function () { pm.response.to.have.status(200); });
+    language: text/javascript
+order: 4000
