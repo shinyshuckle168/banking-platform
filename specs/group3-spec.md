@@ -171,8 +171,11 @@ source account to a named payee on a defined schedule.
 - `reference` — string, between 1 and 18 alphanumeric characters. A payment
   reference visible to the payee
 - `status` — string enum, one of ACTIVE, CANCELLED, LOCKED, or TERMINATED
-- `nextRunDate` — DateTime in UTC. The next scheduled execution date calculated
-  by the system based on frequency and holiday rules
+- `nextRunDate` — DateTime in UTC. The first scheduled execution date on or
+  after `startDate` accounting for weekends and Canadian Bank Holidays.
+  `startDate` is used directly if it falls on a business day. After initial
+  creation, updated by the system on each execution cycle
+  *(clarification 2026-04-09)*
 
 Relationships: Many standing orders may belong to one source account.
 
@@ -500,6 +503,11 @@ operation supplied an `Idempotency-Key` header.
 - `accountId` must be a valid long greater than `0`
 - `startDate` and `endDate` when supplied must be valid ISO-8601 UTC datetime
   values
+- `startDate` when provided must not be a future date. A future `startDate`
+  must be rejected with `400`, `field="startDate"` *(clarification 2026-04-09)*
+- `endDate` when provided must be after `startDate`. If `endDate` is before
+  `startDate` the request must be rejected with `400`, `field="endDate"`
+  *(clarification 2026-04-09)*
 - The difference between `endDate` and `startDate` must not exceed 366 days
 - If `endDate` is in the future the system overrides it silently without error
 - All monetary amounts in the response must use exactly two decimal places
@@ -510,7 +518,9 @@ operation supplied an `Idempotency-Key` header.
 
 - Invalid `accountId` format → `400`, `field="accountId"`
 - Invalid `startDate` format → `400`, `field="startDate"`
+- Future `startDate` supplied → `400`, `field="startDate"` *(clarification 2026-04-09)*
 - Invalid `endDate` format → `400`, `field="endDate"`
+- `endDate` before `startDate` → `400`, `field="endDate"` *(clarification 2026-04-09)*
 - Date range exceeds 366 days → `400`, `field="endDate"`
 - Caller unauthenticated or lacks `TRANSACTION:READ` permission → `401`
 - CUSTOMER caller does not own the account → `401`
@@ -637,6 +647,21 @@ operation supplied an `Idempotency-Key` header.
   the format error, `message` explains `accountId` must be a valid long greater
   than zero, and `field` is set to `accountId`
 
+### Negative Scenario 6 — Future startDate supplied *(clarification 2026-04-09)*
+
+- Given a CUSTOMER caller with `TRANSACTION:READ` who owns the account
+- When a GET request is submitted with `startDate` set to a future date
+- Then the API returns `400` with an `ErrorResponse` where `field` is set to
+  `startDate`
+
+### Negative Scenario 7 — endDate before startDate *(clarification 2026-04-09)*
+
+- Given a CUSTOMER caller with `TRANSACTION:READ` who owns the account
+- When a GET request is submitted with `endDate` set to a date before
+  `startDate`
+- Then the API returns `400` with an `ErrorResponse` where `field` is set to
+  `endDate`
+
 ---
 
 # US-09 — Standing Order Management
@@ -744,6 +769,11 @@ records.
   second payment
 - If `nextRunDate` falls on a weekend or Canadian Bank Holiday, execution is
   shifted to the next business day. The original frequency cycle is unchanged
+- `nextRunDate` at creation must be the first business day on or after
+  `startDate`. If `startDate` itself is a business day it must be used as
+  `nextRunDate`. The calculation must not unconditionally advance past
+  `startDate` before checking whether it is already a business day
+  *(clarification 2026-04-09)*
 - Standing order records are retained for 7 years per CRA and FINTRAC
   requirements
 
@@ -1171,7 +1201,11 @@ includes opening balance, closing balance, total money in, total money out, and
 all transactions for the period including both SUCCESS and FAILED outcomes.
 Corrections to previously issued statements are tracked through immutable
 versioning. Statement assembly from upstream period-end inputs is handled by an
-internal system process and is not part of this contract.
+internal system process and is not part of this contract. The
+`GET /accounts/{accountId}/statements/{period}` endpoint only retrieves already
+assembled statement records. It does not generate statements on the fly.
+Requests for periods with no assembled statement record return `404`.
+*(clarification 2026-04-09)*
 
 ---
 
@@ -1550,6 +1584,14 @@ One entry per calendar month. Always exactly six entries.
   `hasExcludedDisputes` to true
 - Account did not exist for some trend months → those months appear with zero
   spend and `accountExisted` set to false
+- The `accountExisted` flag is derived from the account `createdAt` timestamp
+  stored in the database. If test data transactions were seeded directly into
+  the database bypassing the normal account creation flow the `createdAt`
+  timestamp reflects actual account creation not when historical transactions
+  occurred. For accurate `accountExisted` behaviour in testing, set the account
+  `createdAt` to a date before the earliest test transaction:
+  `UPDATE accounts SET created_at = '2026-01-01T00:00:00' WHERE account_id = 1`
+  *(clarification 2026-04-09)*
 - Selected month still in progress → period marked as incomplete
 - DEPOSIT transaction manually recategorised → remains excluded from spending
   totals. Exclusion is based on transaction type not category
@@ -1703,3 +1745,70 @@ For general display:
 - When a GET request is submitted
 - Then the API returns `400` with `code` identifying the format error and
   `field` set to `accountId`
+
+---
+
+# Clarification Log
+
+## Session 2026-04-09
+
+The following clarifications were recorded based on integration testing findings.
+
+### GAP-1 — US-08: Future startDate not rejected
+
+**Spec sections updated**: Validation Rules, Error Mapping, Acceptance Criteria
+(Negative Scenario 6)
+**Finding**: The `startDate` parameter on
+`GET /accounts/{accountId}/transactions` was accepted even when set to a future
+date, producing an empty result rather than a validation error.
+**Resolution**: Added validation rule and error mapping entry. Future
+`startDate` is now rejected with `400`, `field="startDate"`.
+
+### GAP-2 — US-08: endDate before startDate not rejected
+
+**Spec sections updated**: Validation Rules, Error Mapping, Acceptance Criteria
+(Negative Scenario 7)
+**Finding**: When `endDate` was supplied before `startDate` the request was not
+rejected. The implementation lacked the guard.
+**Resolution**: Added validation rule: `endDate` when provided must be after
+`startDate`, rejected with `400`, `field="endDate"`. Error Mapping entry
+confirmed.
+
+### GAP-3 — US-09: endDate before startDate not enforced on standing order create
+
+**Spec sections updated**: None — rule already present in US-09 Validation
+Rules and Error Mapping.
+**Finding**: `StandingOrderService.create()` was missing the guard for
+`endDate` before `startDate` even though the spec required it.
+**Resolution**: Backend fix only. `create()` now rejects `endDate` before
+`startDate` with `400`, `field="endDate"`, `code="ERR_END_DATE_BEFORE_START"`.
+
+### GAP-4 — US-09: nextRunDate off by one when startDate is a business day
+
+**Spec sections updated**: Domain Objects (`nextRunDate` field description),
+Business Rules (nextRunDate calculation rule added)
+**Finding**: `CanadianHolidayService.nextBusinessDay()` unconditionally applied
+`plusDays(1)` before checking whether the input date was itself a business day.
+A `startDate` of Tuesday 2026-04-14 returned `nextRunDate=2026-04-15` instead
+of `2026-04-14`.
+**Resolution**: Spec updated to require `startDate` be used directly when it is
+already a business day. Backend fix applied: candidate starts from the input
+date with no offset.
+
+### GAP-5 — US-11: GET statement endpoint does not generate statements
+
+**Spec sections updated**: US-11 Description
+**Finding**: Testers expected the endpoint to generate a statement when none
+existed for the period. The spec implied this but did not state it explicitly.
+**Resolution**: Added explicit clarification to Description: the endpoint is
+retrieval-only; no on-the-fly generation occurs; `404` is returned when no
+assembled record exists.
+
+### GAP-6 — US-12: accountExisted false for directly seeded historical data
+
+**Spec sections updated**: US-12 Edge Cases (test data note added)
+**Finding**: Months with directly seeded transactions showed
+`accountExisted=false` because account `createdAt` was April 2026. The
+implementation is spec-correct; the issue is test data setup.
+**Resolution**: No logic change. Test data note added to Edge Cases directing
+testers to update `createdAt` before the earliest seeded transaction period.

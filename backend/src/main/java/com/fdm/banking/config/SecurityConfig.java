@@ -14,8 +14,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.util.Map;
-
 /**
  * Security configuration with two security filter chains. (T016)
  *
@@ -36,13 +34,12 @@ public class SecurityConfig {
     @Value("${banking.security.jwt.secret}")
     private String jwtSecret;
 
-    @Value("#{${banking.notifications.allowed-service-ids}}")
-    private Map<String, String> allowedServiceIds;
-
     private final UserRepository userRepository;
+    private final NotificationsProperties notificationsProperties;
 
-    public SecurityConfig(UserRepository userRepository) {
+    public SecurityConfig(UserRepository userRepository, NotificationsProperties notificationsProperties) {
         this.userRepository = userRepository;
+        this.notificationsProperties = notificationsProperties;
     }
 
     /**
@@ -54,7 +51,7 @@ public class SecurityConfig {
         http.securityMatcher("/notifications/**")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new ServiceApiKeyFilter(allowedServiceIds),
+                .addFilterBefore(new ServiceApiKeyFilter(notificationsProperties.getAllowedServiceIds()),
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authz -> authz.anyRequest().authenticated());
         return http.build();

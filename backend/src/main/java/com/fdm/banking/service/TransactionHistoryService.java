@@ -8,6 +8,8 @@ import com.fdm.banking.entity.ExportCacheEntity;
 import com.fdm.banking.entity.TransactionEntity;
 import com.fdm.banking.exception.BusinessStateException;
 import com.fdm.banking.exception.PermissionDeniedException;
+import com.fdm.banking.exception.ResourceNotFoundException;
+import com.fdm.banking.exception.RetentionWindowException;
 import com.fdm.banking.repository.AccountRepository;
 import com.fdm.banking.repository.ExportCacheRepository;
 import com.fdm.banking.repository.TransactionQueryRepository;
@@ -66,6 +68,18 @@ public class TransactionHistoryService {
 
         LocalDateTime now = LocalDateTime.now();
 
+        // Reject future startDate
+        if (startDate != null && startDate.isAfter(LocalDate.now())) {
+            throw new BusinessStateException(
+                    "startDate must not be in the future", "ERR_FUTURE_START_DATE", "startDate");
+        }
+
+        // Reject endDate before startDate
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new BusinessStateException(
+                    "endDate must be after startDate", "ERR_END_DATE_BEFORE_START", "endDate");
+        }
+
         // Apply defaults
         LocalDateTime effectiveStart = (startDate != null)
                 ? startDate.atStartOfDay()
@@ -97,8 +111,8 @@ public class TransactionHistoryService {
             if (closedAt != null && closedAt.plusDays(CLOSED_ACCOUNT_WINDOW_DAYS).isBefore(now)) {
                 auditService.log(caller.getUserId(), caller.getRole(),
                         "TRANSACTION_HISTORY_FAILED", "ACCOUNT", String.valueOf(accountId), "DENIED");
-                throw new BusinessStateException(
-                        "Account closed and 90-day window has expired", "ERR_ACC_003");
+                throw new RetentionWindowException(
+                        "Account closed and 90-day window has expired", "ERR_RETENTION_WINDOW");
             }
         }
 
@@ -134,10 +148,8 @@ public class TransactionHistoryService {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime effectiveStart = (startDate != null) ? startDate.atStartOfDay() : now.minusDays(28);
-        LocalDateTime effectiveEnd = (endDate != null) ? endDate.atTime(23, 59, 59) : now;
-        if (effectiveEnd.isAfter(now)) {
-            effectiveEnd = now;
-        }
+        LocalDateTime rawEffectiveEnd = (endDate != null) ? endDate.atTime(23, 59, 59) : now;
+        LocalDateTime effectiveEnd = rawEffectiveEnd.isAfter(now) ? now : rawEffectiveEnd;
 
         String paramHash = computeHash(accountId, effectiveStart, effectiveEnd);
 

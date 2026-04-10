@@ -1,6 +1,6 @@
 package com.fdm.banking.util;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.fdm.banking.config.BankingCategoriesProperties;
 import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,8 +16,8 @@ public class CategoryResolver {
 
     private final Map<String, List<String>> categories;
 
-    public CategoryResolver(@Value("#{${banking.categories}}") Map<String, List<String>> categories) {
-        this.categories = categories;
+    public CategoryResolver(BankingCategoriesProperties props) {
+        this.categories = props.getCategories() != null ? props.getCategories() : new LinkedHashMap<>();
     }
 
     /**

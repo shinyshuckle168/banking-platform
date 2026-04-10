@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InsightController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banking</a> &gt; <a href="index.source.html" class="el_package">com.fdm.banking.controller</a> &gt; <span class="el_source">InsightController.java</span></div><h1>InsightController.java</h1><pre class="source lang-java linenums">package com.fdm.banking.controller;
+
+import com.fdm.banking.dto.request.RecategoriseRequest;
+import com.fdm.banking.dto.response.RecategoriseResponse;
+import com.fdm.banking.dto.response.SpendingInsightResponse;
+import com.fdm.banking.exception.PermissionDeniedException;
+import com.fdm.banking.security.JwtAuthenticationToken;
+import com.fdm.banking.security.UserPrincipal;
+import com.fdm.banking.service.SpendingInsightService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * Spending insight controller. (T099)
+ */
+@RestController
+@RequestMapping(&quot;/accounts/{accountId}&quot;)
+public class InsightController {
+
+    private final SpendingInsightService spendingInsightService;
+
+<span class="fc" id="L24">    public InsightController(SpendingInsightService spendingInsightService) {</span>
+<span class="fc" id="L25">        this.spendingInsightService = spendingInsightService;</span>
+<span class="fc" id="L26">    }</span>
+
+    @GetMapping(&quot;/insights&quot;)
+    public ResponseEntity&lt;SpendingInsightResponse&gt; getInsights(
+            @PathVariable long accountId,
+            @RequestParam int year,
+            @RequestParam int month,
+            Authentication authentication) {
+<span class="fc" id="L34">        UserPrincipal caller = extractPrincipal(authentication);</span>
+<span class="fc" id="L35">        return ResponseEntity.ok(spendingInsightService.getInsights(accountId, year, month, caller));</span>
+    }
+
+    @PutMapping(&quot;/transactions/{transactionId}/category&quot;)
+    public ResponseEntity&lt;RecategoriseResponse&gt; recategorise(
+            @PathVariable long accountId,
+            @PathVariable long transactionId,
+            @RequestBody @Valid RecategoriseRequest request,
+            Authentication authentication) {
+<span class="nc" id="L44">        UserPrincipal caller = extractPrincipal(authentication);</span>
+<span class="nc" id="L45">        return ResponseEntity.ok(spendingInsightService.recategorise(</span>
+<span class="nc" id="L46">                accountId, transactionId, request.getCategory(), caller));</span>
+    }
+
+    private UserPrincipal extractPrincipal(Authentication authentication) {
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (authentication instanceof JwtAuthenticationToken jwtToken) {</span>
+<span class="fc" id="L51">            return jwtToken.getPrincipal();</span>
+        }
+<span class="nc" id="L53">        throw new PermissionDeniedException(&quot;JWT&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

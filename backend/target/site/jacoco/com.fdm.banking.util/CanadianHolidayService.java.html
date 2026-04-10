@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CanadianHolidayService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banking</a> &gt; <a href="index.source.html" class="el_package">com.fdm.banking.util</a> &gt; <span class="el_source">CanadianHolidayService.java</span></div><h1>CanadianHolidayService.java</h1><pre class="source lang-java linenums">package com.fdm.banking.util;
+
+import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.DayOfWeek;
+import java.util.Set;
+
+/**
+ * Canadian statutory holiday service. (T010)
+ * Provides holiday detection and business day calculation.
+ * Hard-coded federal statutory holidays (non-year-specific rules).
+ */
+@Service
+<span class="fc" id="L15">public class CanadianHolidayService {</span>
+
+    /**
+     * Returns true if the date falls on a Canadian federal statutory holiday.
+     * Hard-coded rules for annual recurring holidays.
+     */
+    public boolean isHoliday(LocalDate date) {
+<span class="fc" id="L22">        int month = date.getMonthValue();</span>
+<span class="fc" id="L23">        int day = date.getDayOfMonth();</span>
+<span class="fc" id="L24">        DayOfWeek dow = date.getDayOfWeek();</span>
+
+        // New Year's Day — January 1
+<span class="fc bfc" id="L27" title="All 4 branches covered.">        if (month == 1 &amp;&amp; day == 1) return true;</span>
+
+        // Good Friday — 2 days before Easter (computed dynamically)
+<span class="fc" id="L30">        LocalDate goodFriday = computeGoodFriday(date.getYear());</span>
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">        if (date.equals(goodFriday)) return true;</span>
+
+        // Victoria Day — last Monday before May 25
+<span class="pc bpc" id="L34" title="7 of 8 branches missed.">        if (month == 5 &amp;&amp; dow == DayOfWeek.MONDAY &amp;&amp; day &gt;= 18 &amp;&amp; day &lt;= 24) return true;</span>
+
+        // Canada Day — July 1
+<span class="pc bpc" id="L37" title="1 of 4 branches missed.">        if (month == 7 &amp;&amp; day == 1) return true;</span>
+
+        // Civic Holiday — first Monday in August
+<span class="pc bpc" id="L40" title="5 of 6 branches missed.">        if (month == 8 &amp;&amp; dow == DayOfWeek.MONDAY &amp;&amp; day &lt;= 7) return true;</span>
+
+        // Labour Day — first Monday in September
+<span class="pc bpc" id="L43" title="5 of 6 branches missed.">        if (month == 9 &amp;&amp; dow == DayOfWeek.MONDAY &amp;&amp; day &lt;= 7) return true;</span>
+
+        // Thanksgiving — second Monday in October
+<span class="pc bpc" id="L46" title="7 of 8 branches missed.">        if (month == 10 &amp;&amp; dow == DayOfWeek.MONDAY &amp;&amp; day &gt;= 8 &amp;&amp; day &lt;= 14) return true;</span>
+
+        // Remembrance Day — November 11
+<span class="pc bpc" id="L49" title="3 of 4 branches missed.">        if (month == 11 &amp;&amp; day == 11) return true;</span>
+
+        // Christmas Day — December 25
+<span class="pc bpc" id="L52" title="1 of 4 branches missed.">        if (month == 12 &amp;&amp; day == 25) return true;</span>
+
+        // Boxing Day — December 26
+<span class="pc bpc" id="L55" title="3 of 4 branches missed.">        if (month == 12 &amp;&amp; day == 26) return true;</span>
+
+<span class="fc" id="L57">        return false;</span>
+    }
+
+    /**
+     * Returns true if the date falls on a weekend.
+     */
+    public boolean isWeekend(LocalDate date) {
+<span class="fc" id="L64">        DayOfWeek dow = date.getDayOfWeek();</span>
+<span class="fc bfc" id="L65" title="All 4 branches covered.">        return dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY;</span>
+    }
+
+    /**
+     * Returns the next business day at or after the given datetime.
+     * Skips weekends and statutory holidays.
+     */
+    public LocalDateTime nextBusinessDay(LocalDateTime from) {
+<span class="fc" id="L73">        LocalDate candidate = from.toLocalDate().plusDays(1);</span>
+<span class="pc bpc" id="L74" title="1 of 4 branches missed.">        while (isWeekend(candidate) || isHoliday(candidate)) {</span>
+<span class="fc" id="L75">            candidate = candidate.plusDays(1);</span>
+        }
+<span class="fc" id="L77">        return candidate.atStartOfDay();</span>
+    }
+
+    /**
+     * Computes Good Friday for the given year using the Anonymous Gregorian algorithm.
+     */
+    private LocalDate computeGoodFriday(int year) {
+<span class="fc" id="L84">        int a = year % 19;</span>
+<span class="fc" id="L85">        int b = year / 100;</span>
+<span class="fc" id="L86">        int c = year % 100;</span>
+<span class="fc" id="L87">        int d = b / 4;</span>
+<span class="fc" id="L88">        int e = b % 4;</span>
+<span class="fc" id="L89">        int f = (b + 8) / 25;</span>
+<span class="fc" id="L90">        int g = (b - f + 1) / 3;</span>
+<span class="fc" id="L91">        int h = (19 * a + b - d - g + 15) % 30;</span>
+<span class="fc" id="L92">        int i = c / 4;</span>
+<span class="fc" id="L93">        int k = c % 4;</span>
+<span class="fc" id="L94">        int l = (32 + 2 * e + 2 * i - h - k) % 7;</span>
+<span class="fc" id="L95">        int m = (a + 11 * h + 22 * l) / 451;</span>
+<span class="fc" id="L96">        int month = (h + l - 7 * m + 114) / 31;</span>
+<span class="fc" id="L97">        int day = ((h + l - 7 * m + 114) % 31) + 1;</span>
+<span class="fc" id="L98">        LocalDate easter = LocalDate.of(year, month, day);</span>
+<span class="fc" id="L99">        return easter.minusDays(2); // Good Friday is 2 days before Easter</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

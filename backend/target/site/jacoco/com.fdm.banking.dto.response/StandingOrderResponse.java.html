@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StandingOrderResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banking</a> &gt; <a href="index.source.html" class="el_package">com.fdm.banking.dto.response</a> &gt; <span class="el_source">StandingOrderResponse.java</span></div><h1>StandingOrderResponse.java</h1><pre class="source lang-java linenums">package com.fdm.banking.dto.response;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * Standing order response DTO. (T048)
+ */
+<span class="nc" id="L9">public class StandingOrderResponse {</span>
+    private String standingOrderId;
+    private Long sourceAccountId;
+    private String payeeAccount;
+    private String payeeName;
+    private BigDecimal amount;
+    private String frequency;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private String reference;
+    private String status;
+    private LocalDateTime nextRunDate;
+    private String message;
+
+<span class="nc" id="L23">    public String getStandingOrderId() { return standingOrderId; }</span>
+<span class="nc" id="L24">    public void setStandingOrderId(String standingOrderId) { this.standingOrderId = standingOrderId; }</span>
+<span class="nc" id="L25">    public Long getSourceAccountId() { return sourceAccountId; }</span>
+<span class="nc" id="L26">    public void setSourceAccountId(Long sourceAccountId) { this.sourceAccountId = sourceAccountId; }</span>
+<span class="nc" id="L27">    public String getPayeeAccount() { return payeeAccount; }</span>
+<span class="nc" id="L28">    public void setPayeeAccount(String payeeAccount) { this.payeeAccount = payeeAccount; }</span>
+<span class="nc" id="L29">    public String getPayeeName() { return payeeName; }</span>
+<span class="nc" id="L30">    public void setPayeeName(String payeeName) { this.payeeName = payeeName; }</span>
+<span class="nc" id="L31">    public BigDecimal getAmount() { return amount; }</span>
+<span class="nc" id="L32">    public void setAmount(BigDecimal amount) { this.amount = amount; }</span>
+<span class="nc" id="L33">    public String getFrequency() { return frequency; }</span>
+<span class="nc" id="L34">    public void setFrequency(String frequency) { this.frequency = frequency; }</span>
+<span class="nc" id="L35">    public LocalDateTime getStartDate() { return startDate; }</span>
+<span class="nc" id="L36">    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }</span>
+<span class="nc" id="L37">    public LocalDateTime getEndDate() { return endDate; }</span>
+<span class="nc" id="L38">    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }</span>
+<span class="nc" id="L39">    public String getReference() { return reference; }</span>
+<span class="nc" id="L40">    public void setReference(String reference) { this.reference = reference; }</span>
+<span class="nc" id="L41">    public String getStatus() { return status; }</span>
+<span class="nc" id="L42">    public void setStatus(String status) { this.status = status; }</span>
+<span class="nc" id="L43">    public LocalDateTime getNextRunDate() { return nextRunDate; }</span>
+<span class="nc" id="L44">    public void setNextRunDate(LocalDateTime nextRunDate) { this.nextRunDate = nextRunDate; }</span>
+<span class="nc" id="L45">    public String getMessage() { return message; }</span>
+<span class="nc" id="L46">    public void setMessage(String message) { this.message = message; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

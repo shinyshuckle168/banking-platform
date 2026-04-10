@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecategoriseResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banking</a> &gt; <a href="index.source.html" class="el_package">com.fdm.banking.dto.response</a> &gt; <span class="el_source">RecategoriseResponse.java</span></div><h1>RecategoriseResponse.java</h1><pre class="source lang-java linenums">package com.fdm.banking.dto.response;
+
+import java.util.List;
+
+/**
+ * Recategorise transaction response DTO. (T096)
+ */
+<span class="nc" id="L8">public class RecategoriseResponse {</span>
+    private Long transactionId;
+    private String previousCategory;
+    private String updatedCategory;
+    private java.math.BigDecimal updatedTotalDebitSpend;
+    private List&lt;SpendingInsightResponse.CategoryBreakdownItem&gt; updatedCategoryBreakdown;
+
+<span class="nc" id="L15">    public Long getTransactionId() { return transactionId; }</span>
+<span class="nc" id="L16">    public void setTransactionId(Long transactionId) { this.transactionId = transactionId; }</span>
+<span class="nc" id="L17">    public String getPreviousCategory() { return previousCategory; }</span>
+<span class="nc" id="L18">    public void setPreviousCategory(String previousCategory) { this.previousCategory = previousCategory; }</span>
+<span class="nc" id="L19">    public String getUpdatedCategory() { return updatedCategory; }</span>
+<span class="nc" id="L20">    public void setUpdatedCategory(String updatedCategory) { this.updatedCategory = updatedCategory; }</span>
+<span class="nc" id="L21">    public java.math.BigDecimal getUpdatedTotalDebitSpend() { return updatedTotalDebitSpend; }</span>
+<span class="nc" id="L22">    public void setUpdatedTotalDebitSpend(java.math.BigDecimal updatedTotalDebitSpend) { this.updatedTotalDebitSpend = updatedTotalDebitSpend; }</span>
+<span class="nc" id="L23">    public List&lt;SpendingInsightResponse.CategoryBreakdownItem&gt; getUpdatedCategoryBreakdown() { return updatedCategoryBreakdown; }</span>
+<span class="nc" id="L24">    public void setUpdatedCategoryBreakdown(List&lt;SpendingInsightResponse.CategoryBreakdownItem&gt; updatedCategoryBreakdown) { this.updatedCategoryBreakdown = updatedCategoryBreakdown; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -29,11 +29,12 @@ public class OwnershipValidator {
             return; // ADMIN bypasses check
         }
         AccountEntity account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new com.fdm.banking.exception.ResourceNotFoundException(
-                        "Account not found: " + accountId, "ERR_ACC_NOT_FOUND"));
+                .orElseThrow(() -> new OwnershipException(
+                        "Caller does not own account: " + accountId));
         Long owningCustomerId = account.getCustomer().getCustomerId();
         if (!owningCustomerId.equals(caller.getCustomerId())) {
             throw new OwnershipException("Caller does not own account: " + accountId);
         }
+     
     }
 }

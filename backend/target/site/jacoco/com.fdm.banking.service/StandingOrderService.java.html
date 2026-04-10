@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StandingOrderService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banking</a> &gt; <a href="index.source.html" class="el_package">com.fdm.banking.service</a> &gt; <span class="el_source">StandingOrderService.java</span></div><h1>StandingOrderService.java</h1><pre class="source lang-java linenums">package com.fdm.banking.service;
+
+import com.fdm.banking.dto.request.CreateStandingOrderRequest;
+import com.fdm.banking.dto.response.CancelStandingOrderResponse;
+import com.fdm.banking.dto.response.StandingOrderListResponse;
+import com.fdm.banking.dto.response.StandingOrderResponse;
+import com.fdm.banking.entity.*;
+import com.fdm.banking.exception.*;
+import com.fdm.banking.mapper.StandingOrderMapper;
+import com.fdm.banking.repository.AccountRepository;
+import com.fdm.banking.repository.StandingOrderRepository;
+import com.fdm.banking.security.OwnershipValidator;
+import com.fdm.banking.security.UserPrincipal;
+import com.fdm.banking.util.CanadianHolidayService;
+import com.fdm.banking.util.Mod97Validator;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * Standing order management service. (T050, T051, T052)
+ */
+@Service
+public class StandingOrderService {
+
+    private final StandingOrderRepository standingOrderRepository;
+    private final AccountRepository accountRepository;
+    private final OwnershipValidator ownershipValidator;
+    private final CanadianHolidayService canadianHolidayService;
+    private final StandingOrderMapper mapper;
+    private final AuditService auditService;
+
+    public StandingOrderService(StandingOrderRepository standingOrderRepository,
+                                AccountRepository accountRepository,
+                                OwnershipValidator ownershipValidator,
+                                CanadianHolidayService canadianHolidayService,
+                                StandingOrderMapper mapper,
+<span class="fc" id="L42">                                AuditService auditService) {</span>
+<span class="fc" id="L43">        this.standingOrderRepository = standingOrderRepository;</span>
+<span class="fc" id="L44">        this.accountRepository = accountRepository;</span>
+<span class="fc" id="L45">        this.ownershipValidator = ownershipValidator;</span>
+<span class="fc" id="L46">        this.canadianHolidayService = canadianHolidayService;</span>
+<span class="fc" id="L47">        this.mapper = mapper;</span>
+<span class="fc" id="L48">        this.auditService = auditService;</span>
+<span class="fc" id="L49">    }</span>
+
+    /**
+     * Creates a new standing order. (T050)
+     */
+    @Transactional
+    public StandingOrderResponse create(long accountId, CreateStandingOrderRequest req,
+                                         UserPrincipal caller) {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (!caller.hasPermission(&quot;SO:CREATE&quot;)) {</span>
+<span class="fc" id="L58">            throw new PermissionDeniedException(&quot;SO:CREATE&quot;);</span>
+        }
+<span class="fc" id="L60">        ownershipValidator.assertOwnership(accountId, caller);</span>
+
+        // Defence-in-depth Modulo 97 check
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (!Mod97Validator.isValidMod97(req.getPayeeAccount())) {</span>
+<span class="fc" id="L64">            throw new SemanticValidationException(&quot;Invalid payee account checksum&quot;,</span>
+                    &quot;ERR_CHECKSUM_FAILURE&quot;, &quot;payeeAccount&quot;);
+        }
+
+        // Validate startDate &gt;= now + 24h
+<span class="fc" id="L69">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="pc bpc" id="L70" title="2 of 4 branches missed.">        if (req.getStartDate() == null || req.getStartDate().isBefore(now.plusHours(24))) {</span>
+<span class="fc" id="L71">            throw new SemanticValidationException(&quot;Start date must be at least 24 hours in the future&quot;,</span>
+                    &quot;ERR_START_DATE_TOO_SOON&quot;, &quot;startDate&quot;);
+        }
+
+<span class="nc" id="L75">        AccountEntity account = accountRepository.findById(accountId)</span>
+<span class="nc" id="L76">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Account not found&quot;, &quot;ERR_ACC_NOT_FOUND&quot;));</span>
+
+        // Validate amount &lt;= dailyTransferLimit
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (req.getAmount().compareTo(account.getDailyTransferLimit()) &gt; 0) {</span>
+<span class="nc" id="L80">            throw new SemanticValidationException(</span>
+<span class="nc" id="L81">                    &quot;Amount exceeds daily transfer limit of &quot; + account.getDailyTransferLimit(),</span>
+                    &quot;ERR_AMOUNT_EXCEEDS_LIMIT&quot;, &quot;amount&quot;);
+        }
+
+        // Parse frequency
+        Frequency frequency;
+        try {
+<span class="nc" id="L88">            frequency = Frequency.valueOf(req.getFrequency().toUpperCase());</span>
+<span class="nc" id="L89">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L90">            throw new SemanticValidationException(&quot;Invalid frequency value&quot;, &quot;ERR_INVALID_FREQUENCY&quot;, &quot;frequency&quot;);</span>
+<span class="nc" id="L91">        }</span>
+
+        // Check for duplicate ACTIVE order
+<span class="nc" id="L94">        standingOrderRepository.findBySourceAccountIdAndPayeeAccountAndAmountAndFrequencyAndStatus(</span>
+<span class="nc" id="L95">                accountId, req.getPayeeAccount(), req.getAmount(), frequency, StandingOrderStatus.ACTIVE)</span>
+<span class="nc" id="L96">                .ifPresent(dup -&gt; {</span>
+<span class="nc" id="L97">                    throw new BusinessStateException(&quot;Identical ACTIVE standing order already exists&quot;,</span>
+                            &quot;ERR_SO_DUPLICATE&quot;);
+                });
+
+        // Calculate nextRunDate
+<span class="nc" id="L102">        LocalDateTime nextRunDate = canadianHolidayService.nextBusinessDay(req.getStartDate());</span>
+
+        // Build entity
+<span class="nc" id="L105">        StandingOrderEntity entity = new StandingOrderEntity();</span>
+<span class="nc" id="L106">        entity.setStandingOrderId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L107">        entity.setSourceAccountId(accountId);</span>
+<span class="nc" id="L108">        entity.setPayeeAccount(req.getPayeeAccount());</span>
+<span class="nc" id="L109">        entity.setPayeeName(req.getPayeeName());</span>
+<span class="nc" id="L110">        entity.setAmount(req.getAmount());</span>
+<span class="nc" id="L111">        entity.setFrequency(frequency);</span>
+<span class="nc" id="L112">        entity.setStartDate(req.getStartDate());</span>
+<span class="nc" id="L113">        entity.setEndDate(req.getEndDate());</span>
+<span class="nc" id="L114">        entity.setReference(req.getReference());</span>
+<span class="nc" id="L115">        entity.setStatus(StandingOrderStatus.ACTIVE);</span>
+<span class="nc" id="L116">        entity.setNextRunDate(nextRunDate);</span>
+
+<span class="nc" id="L118">        standingOrderRepository.save(entity);</span>
+
+<span class="nc" id="L120">        auditService.log(caller.getUserId(), caller.getRole(),</span>
+<span class="nc" id="L121">                &quot;STANDING_ORDER_CREATE&quot;, &quot;STANDING_ORDER&quot;, entity.getStandingOrderId(), &quot;SUCCESS&quot;);</span>
+
+<span class="nc" id="L123">        StandingOrderResponse response = mapper.toResponse(entity);</span>
+<span class="nc" id="L124">        response.setMessage(&quot;Standing order created successfully.&quot;);</span>
+<span class="nc" id="L125">        return response;</span>
+    }
+
+    /**
+     * Lists standing orders for an account. (T051)
+     */
+    public StandingOrderListResponse list(long accountId, UserPrincipal caller) {
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        if (!caller.hasPermission(&quot;SO:READ&quot;)) {</span>
+<span class="fc" id="L133">            throw new PermissionDeniedException(&quot;SO:READ&quot;);</span>
+        }
+<span class="fc" id="L135">        ownershipValidator.assertOwnership(accountId, caller);</span>
+
+<span class="fc" id="L137">        List&lt;StandingOrderEntity&gt; orders = standingOrderRepository.findBySourceAccountId(accountId);</span>
+<span class="fc" id="L138">        List&lt;StandingOrderResponse&gt; items = orders.stream()</span>
+<span class="fc" id="L139">                .map(mapper::toResponse)</span>
+<span class="fc" id="L140">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L142">        auditService.log(caller.getUserId(), caller.getRole(),</span>
+<span class="fc" id="L143">                &quot;STANDING_ORDER_LIST&quot;, &quot;ACCOUNT&quot;, String.valueOf(accountId), &quot;SUCCESS&quot;);</span>
+
+<span class="fc" id="L145">        StandingOrderListResponse response = new StandingOrderListResponse();</span>
+<span class="fc" id="L146">        response.setAccountId(accountId);</span>
+<span class="fc" id="L147">        response.setStandingOrderCount(items.size());</span>
+<span class="fc" id="L148">        response.setStandingOrders(items);</span>
+<span class="fc" id="L149">        return response;</span>
+    }
+
+    /**
+     * Cancels a standing order. (T052)
+     */
+    @Transactional
+    public CancelStandingOrderResponse cancel(String standingOrderId, UserPrincipal caller) {
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        if (!caller.hasPermission(&quot;SO:CANCEL&quot;)) {</span>
+<span class="fc" id="L158">            throw new PermissionDeniedException(&quot;SO:CANCEL&quot;);</span>
+        }
+
+<span class="fc" id="L161">        StandingOrderEntity entity = standingOrderRepository.findById(standingOrderId)</span>
+<span class="pc" id="L162">                .orElseThrow(() -&gt; new ResourceNotFoundException(</span>
+                        &quot;Standing order not found: &quot; + standingOrderId, &quot;ERR_SO_NOT_FOUND&quot;));
+
+<span class="nc" id="L165">        ownershipValidator.assertOwnership(entity.getSourceAccountId(), caller);</span>
+
+        // Check lock window: within 24h of nextRunDate
+<span class="nc" id="L168">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc bnc" id="L169" title="All 4 branches missed.">        if (entity.getNextRunDate() != null &amp;&amp; entity.getNextRunDate().minusHours(24).isBefore(now)) {</span>
+<span class="nc" id="L170">            throw new LockException(&quot;Cannot cancel standing order within 24 hours of next run date&quot;,</span>
+                    &quot;ERR_SO_LOCKED&quot;);
+        }
+
+<span class="nc" id="L174">        entity.setStatus(StandingOrderStatus.CANCELLED);</span>
+<span class="nc" id="L175">        standingOrderRepository.save(entity);</span>
+
+<span class="nc" id="L177">        auditService.log(caller.getUserId(), caller.getRole(),</span>
+                &quot;STANDING_ORDER_CANCEL&quot;, &quot;STANDING_ORDER&quot;, standingOrderId, &quot;SUCCESS&quot;);
+
+<span class="nc" id="L180">        return new CancelStandingOrderResponse(standingOrderId, &quot;CANCELLED&quot;,</span>
+                &quot;Standing order cancelled successfully.&quot;);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

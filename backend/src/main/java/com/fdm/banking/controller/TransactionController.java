@@ -63,4 +63,13 @@ public class TransactionController {
         }
         throw new com.fdm.banking.exception.PermissionDeniedException("JWT");
     }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> test(Authentication authentication) {
+    if (authentication == null) {
+        return ResponseEntity.status(403).body("No authentication found");
+    }
+    return ResponseEntity.ok("Auth type: " + authentication.getClass().getSimpleName() 
+        + " | Principal: " + authentication.getPrincipal());
+    }
 }

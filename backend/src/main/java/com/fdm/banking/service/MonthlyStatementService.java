@@ -54,7 +54,7 @@ public class MonthlyStatementService {
             periodStart = LocalDate.parse(period + "-01",
                     DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } catch (DateTimeParseException e) {
-            throw new BusinessStateException("Invalid period format. Expected YYYY-MM",
+            throw new SemanticValidationException("Invalid period format. Expected YYYY-MM",
                     "ERR_INVALID_PERIOD_FORMAT", "period");
         }
 

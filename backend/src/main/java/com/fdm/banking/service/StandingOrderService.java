@@ -72,6 +72,12 @@ public class StandingOrderService {
                     "ERR_START_DATE_TOO_SOON", "startDate");
         }
 
+        // Validate endDate is after startDate when provided
+        if (req.getEndDate() != null && !req.getEndDate().isAfter(req.getStartDate())) {
+            throw new BusinessStateException("End date must be after start date",
+                    "ERR_END_DATE_BEFORE_START", "endDate");
+        }
+
         AccountEntity account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND"));
 

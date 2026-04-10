@@ -43,7 +43,7 @@ class Mod97ValidatorTest {
     @ParameterizedTest
     @ValueSource(strings = {
         "DE89370400440532013000",
-        "FR7614508711001411943361170"
+        "FR7630006000011234567890189"
     })
     void validEuropeanIbans_returnTrue(String iban) {
         assertThat(validator.isValid(iban, null)).isTrue();

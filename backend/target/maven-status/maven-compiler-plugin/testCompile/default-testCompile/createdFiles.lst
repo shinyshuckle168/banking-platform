@@ -1,0 +1,10 @@
+com\fdm\banking\util\CategoryResolverTest.class
+com\fdm\banking\util\CanadianHolidayServiceTest.class
+com\fdm\banking\controller\StatementControllerTest.class
+com\fdm\banking\security\OwnershipValidatorTest.class
+com\fdm\banking\controller\NotificationControllerTest.class
+com\fdm\banking\contract\ContractValidationTest.class
+com\fdm\banking\controller\InsightControllerTest.class
+com\fdm\banking\util\Mod97ValidatorTest.class
+com\fdm\banking\service\MonthlyStatementServiceTest.class
+com\fdm\banking\service\SpendingInsightServiceTest.class

@@ -74,9 +74,6 @@ public class CanadianHolidayService {
         while (isWeekend(candidate) || isHoliday(candidate)) {
             candidate = candidate.plusDays(1);
         }
-        if (candidate.equals(from.toLocalDate())) {
-            return from;
-        }
         return candidate.atStartOfDay();
     }
 

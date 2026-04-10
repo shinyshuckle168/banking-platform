@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuditService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banking</a> &gt; <a href="index.source.html" class="el_package">com.fdm.banking.service</a> &gt; <span class="el_source">AuditService.java</span></div><h1>AuditService.java</h1><pre class="source lang-java linenums">package com.fdm.banking.service;
+
+import com.fdm.banking.entity.AuditLogEntity;
+import com.fdm.banking.repository.AuditLogRepository;
+import org.springframework.stereotype.Service;
+
+/**
+ * Audit service for logging all significant operations. (T012)
+ */
+@Service
+public class AuditService {
+
+    private final AuditLogRepository auditLogRepository;
+
+<span class="nc" id="L15">    public AuditService(AuditLogRepository auditLogRepository) {</span>
+<span class="nc" id="L16">        this.auditLogRepository = auditLogRepository;</span>
+<span class="nc" id="L17">    }</span>
+
+    public void log(Long actorId, String actorRole, String action,
+                    String resourceType, String resourceId, String outcome) {
+<span class="nc" id="L21">        AuditLogEntity entry = new AuditLogEntity();</span>
+<span class="nc" id="L22">        entry.setActorId(actorId);</span>
+<span class="nc" id="L23">        entry.setActorRole(actorRole);</span>
+<span class="nc" id="L24">        entry.setAction(action);</span>
+<span class="nc" id="L25">        entry.setResourceType(resourceType);</span>
+<span class="nc" id="L26">        entry.setResourceId(resourceId);</span>
+<span class="nc" id="L27">        entry.setOutcome(outcome);</span>
+<span class="nc" id="L28">        auditLogRepository.save(entry);</span>
+<span class="nc" id="L29">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
