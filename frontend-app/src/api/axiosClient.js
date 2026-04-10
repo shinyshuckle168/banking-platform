@@ -1,8 +1,11 @@
 import axios from 'axios';
 import { readStoredAuthState } from '../auth/authState';
 
-const loginApiBaseUrl = import.meta.env.VITE_LOGIN_API_BASE_URL || (import.meta.env.DEV ? '/login-api' : 'http://localhost:8081');
-const accountServiceBaseUrl = import.meta.env.VITE_ACCOUNT_SERVICE_BASE_URL || (import.meta.env.DEV ? '/account-api' : 'http://localhost:8080');
+const mergedBackendBaseUrl =
+  import.meta.env.VITE_BANKING_API_BASE_URL ||
+  import.meta.env.VITE_LOGIN_API_BASE_URL ||
+  import.meta.env.VITE_ACCOUNT_SERVICE_BASE_URL ||
+  (import.meta.env.DEV ? '/' : 'http://localhost:8080');
 
 function attachAuthInterceptor(client) {
   client.interceptors.request.use((config) => {
@@ -21,11 +24,11 @@ function attachAuthInterceptor(client) {
 }
 
 export const loginApiClient = attachAuthInterceptor(axios.create({
-  baseURL: loginApiBaseUrl
+  baseURL: mergedBackendBaseUrl
 }));
 
 export const accountApiClient = attachAuthInterceptor(axios.create({
-  baseURL: accountServiceBaseUrl
+  baseURL: mergedBackendBaseUrl
 }));
 
 function firstValidationError(errors) {

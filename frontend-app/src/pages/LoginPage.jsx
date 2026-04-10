@@ -6,10 +6,24 @@ import { useAuth } from '../auth/AuthContext';
 import { mapAxiosError } from '../api/axiosClient';
 import { emptyLoginForm, isEmailLike } from '../types';
 
+function getPostLoginRoute(authState) {
+  const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
+
+  if (isAdmin) {
+    return '/customer';
+  }
+
+  if (authState.customerId) {
+    return `/customer/${authState.customerId}`;
+  }
+
+  return '/';
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { authState, completeLogin } = useAuth();
+  const { completeLogin } = useAuth();
   const [formState, setFormState] = useState(emptyLoginForm);
   const [error, setError] = useState(null);
   const mutation = useMutation({ mutationFn: loginUser });
@@ -30,8 +44,8 @@ export function LoginPage() {
 
     try {
       const response = await mutation.mutateAsync(formState);
-      completeLogin(response, formState.username);
-      const fallbackRoute = authState.customerId ? `/customer/${authState.customerId}` : '/customer/create';
+      const nextAuthState = completeLogin(response, formState.username);
+      const fallbackRoute = getPostLoginRoute(nextAuthState);
       const nextRoute = location.state?.from?.pathname || fallbackRoute;
       navigate(nextRoute, { replace: true });
     } catch (requestError) {
@@ -42,9 +56,9 @@ export function LoginPage() {
   return (
     <section className="panel stack auth-panel-page">
       <div>
-        <p className="eyebrow">login-api</p>
+        <p className="eyebrow">Merged Backend</p>
         <h2>Login</h2>
-        <p className="muted">Authenticate with login-api and store the access token for protected requests.</p>
+        <p className="muted">Authenticate with the merged backend and store the access token for protected requests.</p>
       </div>
       {location.state?.registered ? <div className="banner success">Registration complete. You can now sign in.</div> : null}
       {error ? <div className="banner error">{error.message}</div> : null}

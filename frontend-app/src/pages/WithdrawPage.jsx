@@ -6,16 +6,17 @@ import { createIdempotencyKey, emptyMoneyMovementForm } from '../types';
 
 export function WithdrawPage() {
   const { accountId } = useParams();
-  const [form, setForm] = useState({ ...emptyMoneyMovementForm, accountId: accountId || '', amount: '10.00' });
+  const withdraw = useWithdraw();
+  const [form, setForm] = useState({ ...emptyMoneyMovementForm, accountId: accountId || '' });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const withdraw = useWithdraw();
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError(null);
+
     try {
-      const response = await withdraw.mutateAsync(form);
+      const response = await withdraw.mutateAsync({ ...form, accountId: accountId || form.accountId });
       setResult(response);
     } catch (requestError) {
       setResult(null);
@@ -28,17 +29,13 @@ export function WithdrawPage() {
       <section className="panel stack">
         <div>
           <p className="eyebrow">POST /accounts/{'{accountId}'}/withdraw</p>
-          <h2>Withdraw</h2>
-          <p className="muted">Debit funds from an active account while preserving the original result for duplicate retries.</p>
+          <h2>Withdraw Funds</h2>
+          <p className="muted">Submit a withdrawal with an idempotency key and inspect the updated account plus resulting transaction.</p>
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="withdraw-account-id">Account ID</label>
-            <input
-              id="withdraw-account-id"
-              value={form.accountId}
-              onChange={(event) => setForm((current) => ({ ...current, accountId: event.target.value }))}
-            />
+            <input id="withdraw-account-id" value={accountId || form.accountId} readOnly />
           </div>
           <div className="field">
             <label htmlFor="withdraw-amount">Amount</label>
@@ -87,7 +84,7 @@ export function WithdrawPage() {
               <pre className="code">{JSON.stringify(result.account, null, 2)}</pre>
             </div>
             <div className="result-block">
-              <p className="muted">Recorded Transaction</p>
+              <p className="muted">Transaction</p>
               <pre className="code">{JSON.stringify(result.transaction, null, 2)}</pre>
             </div>
           </div>

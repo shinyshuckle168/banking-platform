@@ -3,23 +3,28 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const loginApiTarget = env.VITE_LOGIN_API_PROXY_TARGET || 'http://localhost:8081';
-  const accountServiceTarget = env.VITE_ACCOUNT_SERVICE_PROXY_TARGET || 'http://localhost:8080';
+  const backendTarget =
+    env.VITE_BANKING_API_PROXY_TARGET ||
+    env.VITE_ACCOUNT_SERVICE_PROXY_TARGET ||
+    env.VITE_LOGIN_API_PROXY_TARGET ||
+    'http://localhost:8080';
 
   return {
     plugins: [react()],
     server: {
       port: 5173,
       proxy: {
-        '/login-api': {
-          target: loginApiTarget,
+        '/api': {
+          target: backendTarget,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/login-api/, '')
         },
-        '/account-api': {
-          target: accountServiceTarget,
+        '/accounts': {
+          target: backendTarget,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/account-api/, '')
+        },
+        '/customers': {
+          target: backendTarget,
+          changeOrigin: true,
         }
       }
     }

@@ -41,7 +41,7 @@ export async function deleteAccount(accountId) {
 }
 
 export async function deleteCustomer(customerId) {
-  const response = await accountApiClient.delete(`/customers/${customerId}`);
+  const response = await accountApiClient.delete(`/api/customers/${customerId}`);
   return response.data;
 }
 
@@ -65,24 +65,6 @@ export async function withdrawFromAccount(payload) {
   const response = await accountApiClient.post(
     `/accounts/${payload.accountId}/withdraw`,
     {
-      amount: payload.amount,
-      description: payload.description || null
-    },
-    {
-      headers: {
-        'Idempotency-Key': payload.idempotencyKey
-      }
-    }
-  );
-  return response.data;
-}
-
-export async function transferFunds(payload) {
-  const response = await accountApiClient.post(
-    '/accounts/transfer',
-    {
-      fromAccountId: Number(payload.fromAccountId),
-      toAccountId: Number(payload.toAccountId),
       amount: payload.amount,
       description: payload.description || null
     },

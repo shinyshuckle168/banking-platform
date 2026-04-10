@@ -10,7 +10,10 @@ export const emptyCreateAccountForm = {
 
 export const emptyRegisterForm = {
   username: '',
-  password: ''
+  password: '',
+  name: '',
+  address: '',
+  type: 'PERSON'
 };
 
 export const emptyLoginForm = {
@@ -43,14 +46,6 @@ export function createIdempotencyKey() {
 
 export const emptyMoneyMovementForm = {
   accountId: '',
-  amount: '25.00',
-  description: '',
-  idempotencyKey: createIdempotencyKey()
-};
-
-export const emptyTransferForm = {
-  fromAccountId: '',
-  toAccountId: '',
   amount: '25.00',
   description: '',
   idempotencyKey: createIdempotencyKey()

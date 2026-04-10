@@ -12,15 +12,20 @@ import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { PasswordResetPage } from './pages/PasswordResetPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { TransferPage } from './pages/TransferPage';
 import { WithdrawPage } from './pages/WithdrawPage';
 
 function getDefaultAuthenticatedRoute(authState) {
+  const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
+
+  if (isAdmin) {
+    return '/customer';
+  }
+
   if (authState.customerId) {
     return `/customer/${authState.customerId}`;
   }
 
-  return '/customer/create';
+  return '/';
 }
 
 function PublicOnlyRoute({ children }) {
@@ -44,7 +49,7 @@ function AppLayout() {
           <p className="eyebrow">Banking Platform</p>
           <h1>Digital Banking Frontend</h1>
           <p className="lede">
-            React client for login-api and account-service, including customer setup, account management, and money movement.
+            React client for the merged banking backend, including authentication, customer management, accounts, deposits, and withdrawals.
           </p>
         </div>
         <section className="panel stack tight-gap auth-summary">
@@ -69,11 +74,9 @@ function AppLayout() {
           {!isAuthenticated ? <NavLink to="/login">Login</NavLink> : null}
           {!isAuthenticated ? <NavLink to="/register">Register</NavLink> : null}
           {!isAuthenticated ? <NavLink to="/password-reset">Password Reset</NavLink> : null}
-          {isAuthenticated ? <NavLink to="/customer/create">Create Customer</NavLink> : null}
-          {isAuthenticated && customerId ? <NavLink to={`/customer/${customerId}`}>Customer Profile</NavLink> : null}
+          {isAuthenticated && !customerId ? <NavLink to="/customer/create">Create Customer</NavLink> : null}
+          {isAuthenticated && (isAdmin || customerId) ? <NavLink to={isAdmin ? '/customer' : `/customer/${customerId}`} end>Customer Profile</NavLink> : null}
           {isAuthenticated && customerId ? <NavLink to={`/customer/${customerId}/accounts`}>Customer Accounts</NavLink> : null}
-          {isAuthenticated && customerId ? <NavLink to={`/customer/${customerId}/accounts/create`}>Create Account</NavLink> : null}
-          {isAuthenticated ? <NavLink to="/accounts/transfer">Transfer Funds</NavLink> : null}
           {isAuthenticated && isAdmin ? <p className="nav-hint">Admin delete actions are available inside customer and account details.</p> : null}
         </nav>
       </aside>
@@ -98,6 +101,7 @@ export default function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/customer/create" element={<CustomerCreatePage />} />
+          <Route path="/customer" element={<CustomerDetailPage />} />
           <Route path="/customer/:customerId" element={<CustomerDetailPage />} />
           <Route path="/customer/:customerId/edit" element={<CustomerEditPage />} />
           <Route path="/customer/:customerId/accounts" element={<AccountListPage />} />
@@ -106,7 +110,7 @@ export default function App() {
           <Route path="/accounts/:accountId/edit" element={<AccountDetailPage />} />
           <Route path="/accounts/:accountId/deposit" element={<DepositPage />} />
           <Route path="/accounts/:accountId/withdraw" element={<WithdrawPage />} />
-          <Route path="/accounts/transfer" element={<TransferPage />} />
+          <Route path="/accounts/transfer" element={<Navigate to="/" replace />} />
         </Route>
 
         <Route path="*" element={<Navigate to={authState.accessToken ? defaultAuthenticatedRoute : '/'} replace />} />

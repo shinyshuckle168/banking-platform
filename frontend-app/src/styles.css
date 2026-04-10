@@ -305,7 +305,7 @@ button:disabled {
 }
 
 .table-shell {
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .table-shell table {
@@ -332,6 +332,18 @@ button:disabled {
 
 .table-link:hover {
   text-decoration: underline;
+}
+
+.account-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.compact-link {
+  min-height: 36px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.9rem;
 }
 
 .result-grid {

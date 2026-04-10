@@ -31,7 +31,7 @@ export function CustomerCreatePage() {
       <div>
         <p className="eyebrow">POST /api/customers</p>
         <h2>Create Customer Profile</h2>
-        <p className="muted">Create the authenticated user&apos;s customer profile in login-api.</p>
+        <p className="muted">Create the authenticated user&apos;s customer profile in the merged backend.</p>
       </div>
       {error ? <div className="banner error">{error.message}</div> : null}
       <form className="stack" onSubmit={handleSubmit}>

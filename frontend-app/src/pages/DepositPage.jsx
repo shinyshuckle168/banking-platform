@@ -6,16 +6,17 @@ import { createIdempotencyKey, emptyMoneyMovementForm } from '../types';
 
 export function DepositPage() {
   const { accountId } = useParams();
+  const deposit = useDeposit();
   const [form, setForm] = useState({ ...emptyMoneyMovementForm, accountId: accountId || '' });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const deposit = useDeposit();
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError(null);
+
     try {
-      const response = await deposit.mutateAsync(form);
+      const response = await deposit.mutateAsync({ ...form, accountId: accountId || form.accountId });
       setResult(response);
     } catch (requestError) {
       setResult(null);
@@ -28,17 +29,13 @@ export function DepositPage() {
       <section className="panel stack">
         <div>
           <p className="eyebrow">POST /accounts/{'{accountId}'}/deposit</p>
-          <h2>Deposit</h2>
-          <p className="muted">Credit funds into an active account with an explicit idempotency key.</p>
+          <h2>Deposit Funds</h2>
+          <p className="muted">Submit a deposit with an idempotency key and inspect the updated account plus resulting transaction.</p>
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="deposit-account-id">Account ID</label>
-            <input
-              id="deposit-account-id"
-              value={form.accountId}
-              onChange={(event) => setForm((current) => ({ ...current, accountId: event.target.value }))}
-            />
+            <input id="deposit-account-id" value={accountId || form.accountId} readOnly />
           </div>
           <div className="field">
             <label htmlFor="deposit-amount">Amount</label>
@@ -87,7 +84,7 @@ export function DepositPage() {
               <pre className="code">{JSON.stringify(result.account, null, 2)}</pre>
             </div>
             <div className="result-block">
-              <p className="muted">Recorded Transaction</p>
+              <p className="muted">Transaction</p>
               <pre className="code">{JSON.stringify(result.transaction, null, 2)}</pre>
             </div>
           </div>

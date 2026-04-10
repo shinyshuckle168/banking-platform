@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'banking-app-auth';
+const CUSTOMER_CONTEXT_KEY = 'banking-app-customer-contexts';
 
 export const emptyAuthState = {
   accessToken: '',
@@ -11,6 +12,14 @@ export const emptyAuthState = {
   roles: [],
   customerId: ''
 };
+
+function normalizeCustomerId(customerId) {
+  if (customerId == null) {
+    return '';
+  }
+
+  return String(customerId);
+}
 
 function decodeBase64Url(value) {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
@@ -61,6 +70,71 @@ export function readStoredAuthState() {
   }
 }
 
+function readStoredCustomerContexts() {
+  const saved = window.localStorage.getItem(CUSTOMER_CONTEXT_KEY);
+  if (!saved) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(saved);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(parsed)
+        .filter(([subject, customerId]) => Boolean(subject) && typeof customerId === 'string' && customerId.length > 0)
+    );
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredCustomerContexts(contexts) {
+  const entries = Object.entries(contexts).filter(([subject, customerId]) => Boolean(subject) && Boolean(customerId));
+
+  if (entries.length === 0) {
+    window.localStorage.removeItem(CUSTOMER_CONTEXT_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(CUSTOMER_CONTEXT_KEY, JSON.stringify(Object.fromEntries(entries)));
+}
+
+export function rememberCustomerContext(subject, customerId) {
+  if (!subject) {
+    return;
+  }
+
+  const normalizedCustomerId = normalizeCustomerId(customerId);
+  if (!normalizedCustomerId) {
+    return;
+  }
+
+  const contexts = readStoredCustomerContexts();
+  contexts[subject] = normalizedCustomerId;
+  writeStoredCustomerContexts(contexts);
+}
+
+export function clearRememberedCustomerContext(subject) {
+  if (!subject) {
+    return;
+  }
+
+  const contexts = readStoredCustomerContexts();
+  delete contexts[subject];
+  writeStoredCustomerContexts(contexts);
+}
+
+export function getRememberedCustomerContext(subject) {
+  if (!subject) {
+    return '';
+  }
+
+  return normalizeCustomerId(readStoredCustomerContexts()[subject]);
+}
+
 export function writeStoredAuthState(state) {
   if (!state.accessToken) {
     window.localStorage.removeItem(STORAGE_KEY);
@@ -78,6 +152,7 @@ export function buildAuthenticatedState(authResponse, username) {
   const expiresIn = Number(authResponse.expiresIn || 0) || null;
   const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : null;
   const canReuseCustomerContext = existingState.subject && existingState.subject === subject;
+  const rememberedCustomerId = getRememberedCustomerContext(subject);
 
   return {
     accessToken: authResponse.accessToken,
@@ -88,6 +163,6 @@ export function buildAuthenticatedState(authResponse, username) {
     username,
     subject,
     roles,
-    customerId: canReuseCustomerContext ? existingState.customerId : ''
+    customerId: rememberedCustomerId || (canReuseCustomerContext ? normalizeCustomerId(existingState.customerId) : '')
   };
 }

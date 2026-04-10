@@ -24,7 +24,7 @@ export function CustomerEditPage() {
       setFormState({
         name: query.data.name || '',
         address: query.data.address || '',
-        type: query.data.type || 'PERSON'
+        type: query.data.type || 'INDIVIDUAL'
       });
     }
   }, [query.data]);

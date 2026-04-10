@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { deleteCustomer } from '../api/accounts';
-import { getCustomer } from '../api/customers';
+import { getCustomer, listCustomers } from '../api/customers';
 import { mapAxiosError } from '../api/axiosClient';
 import { useAuth } from '../auth/AuthContext';
 
@@ -16,15 +16,39 @@ export function CustomerDetailPage() {
     queryFn: () => getCustomer(customerId),
     enabled: Boolean(customerId)
   });
+  const customerListQuery = useQuery({
+    queryKey: ['customers'],
+    queryFn: listCustomers,
+    enabled: isAdmin
+  });
   const deleteMutation = useMutation({ mutationFn: deleteCustomer });
 
+  if (!isAdmin && !customerId && authState.customerId) {
+    return <Navigate to={`/customer/${authState.customerId}`} replace />;
+  }
+
   useEffect(() => {
-    if (query.data && (!authState.customerId || authState.customerId === String(customerId))) {
+    if (query.data && (isAdmin || !authState.customerId || authState.customerId === String(customerId))) {
       rememberCustomerId(customerId);
     }
-  }, [authState.customerId, customerId, query.data, rememberCustomerId]);
+  }, [authState.customerId, customerId, isAdmin, query.data, rememberCustomerId]);
+
+  function handleCustomerSwitch(event) {
+    const nextCustomerId = event.target.value;
+    if (!nextCustomerId) {
+      return;
+    }
+
+    setError(null);
+    rememberCustomerId(nextCustomerId);
+    navigate(`/customer/${nextCustomerId}`);
+  }
 
   async function handleDelete() {
+    if (!customerId) {
+      return;
+    }
+
     setError(null);
 
     if (!window.confirm('Delete this customer? This succeeds only when there are no active accounts.')) {
@@ -43,24 +67,36 @@ export function CustomerDetailPage() {
   }
 
   const customer = query.data;
+  const showAdminSelectionOnly = isAdmin && !customerId;
 
   return (
     <div className="stack">
       <section className="panel stack">
         <div className="section-header">
           <div>
-            <p className="eyebrow">GET /api/customers/{'{customerId}'}</p>
+            <p className="eyebrow">{customerId ? 'GET /api/customers/{customerId}' : 'GET /api/customers'}</p>
             <h2>Customer Profile</h2>
-            <p className="muted">View the stored customer profile and branch into the account flows.</p>
-          </div>
-          <div className="actions">
-            <Link className="button-link subtle" to={`/customer/${customerId}/edit`}>Edit Customer</Link>
-            <Link className="button-link" to={`/customer/${customerId}/accounts`}>View Accounts</Link>
+            <p className="muted">{showAdminSelectionOnly ? 'Select a customer to open that profile.' : 'View the stored customer profile and branch into the account flows.'}</p>
           </div>
         </div>
+        {isAdmin ? (
+          <div className="field">
+            <label htmlFor="customer-switcher">Admin Customer Switcher</label>
+            <select id="customer-switcher" value={customerId || ''} onChange={handleCustomerSwitch}>
+              <option value="">Select customer</option>
+              {(customerListQuery.data || []).map((customerOption) => (
+                <option key={customerOption.customerId} value={customerOption.customerId}>
+                  {customerOption.customerId} - {customerOption.name}
+                </option>
+              ))}
+            </select>
+            {customerListQuery.error ? <p className="field-hint">{mapAxiosError(customerListQuery.error).message}</p> : null}
+          </div>
+        ) : null}
         {query.isLoading ? <div className="banner success">Loading customer profile...</div> : null}
         {error ? <div className="banner error">{error.message}</div> : null}
         {query.error ? <div className="banner error">{mapAxiosError(query.error).message}</div> : null}
+        {showAdminSelectionOnly ? <div className="banner success">Choose a customer from the switcher to load their profile.</div> : null}
       </section>
 
       {customer ? (
@@ -84,8 +120,8 @@ export function CustomerDetailPage() {
             </article>
           </div>
           <div className="actions">
-            <Link className="button-link" to={`/customer/${customerId}/accounts/create`}>Create Account</Link>
-            <Link className="button-link subtle" to={`/customer/${customerId}/accounts`}>Account List</Link>
+            <Link className="button-link subtle" to={`/customer/${customerId}/edit`}>Edit Customer</Link>
+            <Link className="button-link" to={`/customer/${customerId}/accounts`}>Accounts</Link>
             {isAdmin ? <button type="button" className="danger" onClick={handleDelete} disabled={deleteMutation.isPending}>Delete Customer</button> : null}
           </div>
           <pre className="code">{JSON.stringify(customer, null, 2)}</pre>

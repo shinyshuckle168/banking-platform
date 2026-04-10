@@ -1,5 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { buildAuthenticatedState, emptyAuthState, readStoredAuthState, writeStoredAuthState } from './authState';
+import {
+  buildAuthenticatedState,
+  clearRememberedCustomerContext,
+  emptyAuthState,
+  readStoredAuthState,
+  rememberCustomerContext,
+  writeStoredAuthState
+} from './authState';
 
 const AuthContext = createContext(null);
 
@@ -10,18 +17,36 @@ export function AuthProvider({ children }) {
     writeStoredAuthState(authState);
   }, [authState]);
 
+  useEffect(() => {
+    if (authState.subject && authState.customerId) {
+      rememberCustomerContext(authState.subject, authState.customerId);
+    }
+  }, [authState.customerId, authState.subject]);
+
   const value = useMemo(() => ({
     authState,
     isAuthenticated: Boolean(authState.accessToken),
     isAdmin: authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN'),
     completeLogin(authResponse, username) {
-      setAuthState(buildAuthenticatedState(authResponse, username));
+      const nextState = buildAuthenticatedState(authResponse, username);
+      setAuthState(nextState);
+      return nextState;
     },
     rememberCustomerId(customerId) {
-      setAuthState((current) => ({ ...current, customerId: String(customerId) }));
+      setAuthState((current) => {
+        const normalizedCustomerId = String(customerId);
+
+        return { ...current, customerId: normalizedCustomerId };
+      });
     },
     clearCustomerId() {
-      setAuthState((current) => ({ ...current, customerId: '' }));
+      setAuthState((current) => {
+        if (current.subject) {
+          clearRememberedCustomerContext(current.subject);
+        }
+
+        return { ...current, customerId: '' };
+      });
     },
     logout() {
       setAuthState(emptyAuthState);

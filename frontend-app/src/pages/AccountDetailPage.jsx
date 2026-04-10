@@ -4,14 +4,12 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { deleteAccount, updateAccount } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
 import { useGetAccount } from '../hooks/useGetAccount';
-import { useAuth } from '../auth/AuthContext';
 import { emptyAccountUpdateForm } from '../types';
 
 export function AccountDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { accountId } = useParams();
-  const { isAdmin } = useAuth();
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
   const [updateForm, setUpdateForm] = useState(emptyAccountUpdateForm);
@@ -62,8 +60,11 @@ export function AccountDetailPage() {
       }
 
       const result = await deleteAccountMutation.mutateAsync(query.data.accountId);
-      setActionMessage(result.message);
-      navigate(query.data.customerId ? `/customer/${query.data.customerId}/accounts` : '/');
+      navigate(query.data.customerId ? `/customer/${query.data.customerId}/accounts` : '/', {
+        state: {
+          deletedAccountMessage: result.message || `Account ${query.data.accountId} has been deleted.`
+        }
+      });
     } catch (mutationError) {
       setError(mapAxiosError(mutationError));
     }
@@ -71,6 +72,8 @@ export function AccountDetailPage() {
 
   const account = query.data;
   const showInterestRate = account?.accountType === 'SAVINGS';
+  const canDeleteAccount = Number(account?.balance) === 0;
+  const queryError = query.error ? mapDeletedAccountError(query.error) : null;
 
   return (
     <div className="stack">
@@ -83,7 +86,7 @@ export function AccountDetailPage() {
         {query.isLoading ? <div className="banner success">Loading account...</div> : null}
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
         {error ? <div className="banner error">{error.message}</div> : null}
-        {query.error ? <div className="banner error">{mapAxiosError(query.error).message}</div> : null}
+        {queryError ? <div className="banner error">{queryError.message}</div> : null}
       </section>
       {account ? (
         <section className="panel stack">
@@ -108,8 +111,8 @@ export function AccountDetailPage() {
           </div>
           <div className="actions">
             <Link className="button-link subtle" to={`/customer/${account.customerId}/accounts`}>Back to Account List</Link>
-            <Link className="button-link" to={`/accounts/${account.accountId}/deposit`}>Deposit</Link>
-            <Link className="button-link" to={`/accounts/${account.accountId}/withdraw`}>Withdraw</Link>
+            <Link className="button-link subtle" to={`/accounts/${account.accountId}/deposit`}>Deposit</Link>
+            <Link className="button-link subtle" to={`/accounts/${account.accountId}/withdraw`}>Withdraw</Link>
             <Link className="button-link" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer</Link>
           </div>
           <div className="form-grid">
@@ -129,12 +132,27 @@ export function AccountDetailPage() {
             {showInterestRate ? <button type="button" onClick={handleUpdate} disabled={updateAccountMutation.isPending}>Update Account</button> : null}
             {showInterestRate ? <span className="inline-note">Savings accounts currently expose `interestRate` as the only mutable field in the running backend.</span> : null}
             {!showInterestRate ? <p className="muted compact-text">Checking accounts have no mutable fields in the current backend implementation.</p> : null}
-            {isAdmin ? <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending}>Delete Account</button> : null}
+            <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending || !canDeleteAccount}>Delete Account</button>
           </div>
+          {!canDeleteAccount ? <p className="muted compact-text">The merged backend only allows account deletion when the balance is exactly zero.</p> : null}
+          <p className="muted compact-text">Deposit, withdraw, and transfer all require a valid idempotency key and remain subject to backend ownership checks.</p>
           {location.pathname.endsWith('/edit') ? <div className="banner success">You are viewing the edit route for this account.</div> : null}
           <pre className="code">{JSON.stringify(account, null, 2)}</pre>
         </section>
       ) : null}
     </div>
   );
+}
+
+function mapDeletedAccountError(error) {
+  const mapped = mapAxiosError(error);
+
+  if (mapped.code === 'ACCOUNT_NOT_FOUND' || mapped.message === 'Account not found') {
+    return {
+      ...mapped,
+      message: 'This account may have been deleted or is no longer accessible.'
+    };
+  }
+
+  return mapped;
 }

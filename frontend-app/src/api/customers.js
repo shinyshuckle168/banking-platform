@@ -1,7 +1,16 @@
 import { loginApiClient } from './axiosClient';
 
-export async function createCustomer(payload) {
-  const response = await loginApiClient.post('/api/customers', payload);
+export async function createCustomer(payload, accessToken) {
+  const response = await loginApiClient.post('/api/customers', payload, accessToken ? {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  } : undefined);
+  return response.data;
+}
+
+export async function listCustomers() {
+  const response = await loginApiClient.get('/api/customers');
   return response.data;
 }
 
