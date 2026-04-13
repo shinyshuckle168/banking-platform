@@ -25,7 +25,7 @@ import lombok.Setter;
 @Table(name = "customers")
 @Getter
 @Setter
-public class Customer extends BaseAuditEntity {
+public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,7 +40,7 @@ public class Customer extends BaseAuditEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CustomerType type;
-    
+
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private List<Account> accounts = new ArrayList<>();
 
@@ -54,7 +54,7 @@ public class Customer extends BaseAuditEntity {
     private Instant updatedAt;
 
     @PrePersist
-	public void onCreate() {
+    public void onCreate() {
         Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;

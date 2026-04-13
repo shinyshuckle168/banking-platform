@@ -22,7 +22,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.List;
@@ -68,10 +68,10 @@ public class TransactionHistoryService {
         }
         ownershipValidator.assertOwnership(accountId, caller);
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // Reject future startDate
-        if (startDate != null && startDate.isAfter(LocalDate.now())) {
+        if (startDate != null && startDate.isAfter(LocalDate.now(ZoneOffset.UTC))) {
             throw new BusinessStateException(
                     "startDate must not be in the future", "ERR_FUTURE_START_DATE", "startDate");
         }
@@ -83,12 +83,12 @@ public class TransactionHistoryService {
         }
 
         // Apply defaults
-    Instant effectiveStart = (startDate != null)
-        ? startDate.atStartOfDay().toInstant(java.time.ZoneOffset.UTC)
-        : now.minus(28, ChronoUnit.DAYS);
-    Instant effectiveEnd = (endDate != null)
-        ? endDate.atTime(23, 59, 59).toInstant(java.time.ZoneOffset.UTC)
-        : now;
+        Instant effectiveStart = (startDate != null)
+                ? startDate.atStartOfDay().toInstant(ZoneOffset.UTC)
+                : now.minus(28, ChronoUnit.DAYS);
+        Instant effectiveEnd = (endDate != null)
+                ? endDate.atTime(23, 59, 59).toInstant(ZoneOffset.UTC)
+                : now;
 
         // Override future endDate silently
         if (effectiveEnd.isAfter(now)) {
@@ -96,9 +96,9 @@ public class TransactionHistoryService {
         }
 
         // Validate range <= 366 days
-        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(
-        startDate != null ? startDate : Instant.ofEpochMilli(effectiveStart.toEpochMilli()).atZone(java.time.ZoneOffset.UTC).toLocalDate(),
-        endDate != null ? endDate : Instant.ofEpochMilli(effectiveEnd.toEpochMilli()).atZone(java.time.ZoneOffset.UTC).toLocalDate());
+        LocalDate startLocalDate = effectiveStart.atZone(ZoneOffset.UTC).toLocalDate();
+        LocalDate endLocalDate = effectiveEnd.atZone(ZoneOffset.UTC).toLocalDate();
+        long daysBetween = ChronoUnit.DAYS.between(startLocalDate, endLocalDate);
         if (daysBetween > MAX_RANGE_DAYS) {
             throw new BusinessStateException(
                     "Date range must not exceed 366 days", "ERR_DATE_RANGE_EXCEEDED", "endDate");
@@ -106,13 +106,13 @@ public class TransactionHistoryService {
 
         // Check account status
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new com.fdm.banking.exception.ResourceNotFoundException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Account not found", "ERR_ACC_NOT_FOUND"));
 
         if (account.getStatus() == AccountStatus.CLOSED) {
             Instant closedAt = account.getClosedAt();
-            if (closedAt != null && closedAt.isBefore(Instant.now().minus(CLOSED_ACCOUNT_WINDOW_DAYS, ChronoUnit.DAYS))) {
-                auditService.log(caller.getUserId(), caller.getRole(),
+            if (closedAt != null && closedAt.isBefore(now.minus(CLOSED_ACCOUNT_WINDOW_DAYS, ChronoUnit.DAYS))) {
+                auditService.log(caller.getUserId(), resolveRole(caller),
                         "TRANSACTION_HISTORY_FAILED", "ACCOUNT", String.valueOf(accountId), "DENIED");
                 throw new RetentionWindowException(
                         "Account closed and 90-day window has expired", "ERR_RETENTION_WINDOW");
@@ -127,7 +127,7 @@ public class TransactionHistoryService {
                 .map(this::toItemResponse)
                 .collect(Collectors.toList());
 
-        auditService.log(caller.getUserId(), caller.getRole(),
+        auditService.log(caller.getUserId(), resolveRole(caller),
                 "TRANSACTION_HISTORY", "ACCOUNT", String.valueOf(accountId), "SUCCESS");
 
         TransactionHistoryResponse response = new TransactionHistoryResponse();
@@ -149,10 +149,14 @@ public class TransactionHistoryService {
         }
         ownershipValidator.assertOwnership(accountId, caller);
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime effectiveStart = (startDate != null) ? startDate.atStartOfDay() : now.minusDays(28);
-        LocalDateTime rawEffectiveEnd = (endDate != null) ? endDate.atTime(23, 59, 59) : now;
-        LocalDateTime effectiveEnd = rawEffectiveEnd.isAfter(now) ? now : rawEffectiveEnd;
+        Instant now = Instant.now();
+        Instant effectiveStart = (startDate != null)
+                ? startDate.atStartOfDay().toInstant(ZoneOffset.UTC)
+                : now.minus(28, ChronoUnit.DAYS);
+        Instant rawEffectiveEnd = (endDate != null)
+                ? endDate.atTime(23, 59, 59).toInstant(ZoneOffset.UTC)
+                : now;
+        Instant effectiveEnd = rawEffectiveEnd.isAfter(now) ? now : rawEffectiveEnd;
 
         String paramHash = computeHash(accountId, effectiveStart, effectiveEnd);
 
@@ -161,10 +165,14 @@ public class TransactionHistoryService {
                 .map(ExportCacheEntity::getPdfData)
                 .orElseGet(() -> {
                     List<Transaction> txns =
-                            transactionQueryRepository.findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(
-                                    accountId, effectiveStart, effectiveEnd);
-                    byte[] pdfBytes = pdfStatementService.buildPdf(accountId, effectiveStart.toLocalDate(),
-                            effectiveEnd.toLocalDate(), txns);
+                            transactionQueryRepository
+                                    .findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(
+                                            accountId, effectiveStart, effectiveEnd);
+                    byte[] pdfBytes = pdfStatementService.buildPdf(
+                            accountId,
+                            effectiveStart.atZone(ZoneOffset.UTC).toLocalDate(),
+                            effectiveEnd.atZone(ZoneOffset.UTC).toLocalDate(),
+                            txns);
 
                     ExportCacheEntity cache = new ExportCacheEntity();
                     cache.setAccountId(accountId);
@@ -175,8 +183,10 @@ public class TransactionHistoryService {
                 });
     }
 
-    private String computeHash(long accountId, LocalDateTime start, LocalDateTime end) {
-        String input = accountId + "|" + start.toLocalDate() + "|" + end.toLocalDate();
+    private String computeHash(long accountId, Instant start, Instant end) {
+        String input = accountId
+                + "|" + start.atZone(ZoneOffset.UTC).toLocalDate()
+                + "|" + end.atZone(ZoneOffset.UTC).toLocalDate();
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
@@ -186,11 +196,19 @@ public class TransactionHistoryService {
         }
     }
 
+    private String resolveRole(UserPrincipal caller) {
+        List<String> roles = caller.getRoles();
+        if (roles != null && !roles.isEmpty()) {
+            return roles.get(0);
+        }
+        return "UNKNOWN";
+    }
+
     private TransactionItemResponse toItemResponse(Transaction t) {
         TransactionItemResponse item = new TransactionItemResponse();
         item.setTransactionId(t.getTransactionId());
         item.setAmount(t.getAmount());
-    item.setDirection(t.getDirection() != null ? t.getDirection().name() : null);
+        item.setDirection(t.getDirection() != null ? t.getDirection().name() : null);
         item.setStatus(t.getStatus().name());
         item.setTimestamp(t.getTimestamp());
         item.setDescription(t.getDescription());

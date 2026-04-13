@@ -67,12 +67,9 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setName(request.getName().trim());
         customer.setAddress(request.getAddress().trim());
         customer.setType(request.getType());
-
+        customer.setCreatedAt(Instant.now());
+        customer.setUpdatedAt(Instant.now());
         Customer savedCustomer = customerRepository.save(customer);
-
-        user.setCustomerId(savedCustomer.getCustomerId());
-        userRepository.save(user);
-
         return customerMapper.toResponse(savedCustomer);
     }
 
@@ -111,14 +108,15 @@ public class CustomerServiceImpl implements CustomerService {
                 .toList();
 
         return CustomerResponse.builder()
-                .customerId(customer.getCustomerId())
-                .name(customer.getName())
-                .address(customer.getAddress())
-                .type(customer.getType())
-                .accounts(accounts)
-                .createdAt(customer.getCreatedAt())
-                .updatedAt(customer.getUpdatedAt())
-                .build();
+            .customerId(customer.getCustomerId())
+            .name(customer.getName())
+            .address(customer.getAddress())
+            .type(customer.getType())
+            .accounts(accounts)
+            .createdAt(customer.getCreatedAt())
+            .updatedAt(customer.getUpdatedAt())
+            .deletedAt(customer.getDeletedAt())
+            .build();
     }
 
     @Override
@@ -135,7 +133,7 @@ public class CustomerServiceImpl implements CustomerService {
                             .map(AccountResponse::from)
                             .toList();
 
-                    return CustomerResponse.builder()
+                        return CustomerResponse.builder()
                             .customerId(customer.getCustomerId())
                             .name(customer.getName())
                             .address(customer.getAddress())
@@ -143,6 +141,7 @@ public class CustomerServiceImpl implements CustomerService {
                             .accounts(accounts)
                             .createdAt(customer.getCreatedAt())
                             .updatedAt(customer.getUpdatedAt())
+                            .deletedAt(customer.getDeletedAt())
                             .build();
                 })
                 .toList();

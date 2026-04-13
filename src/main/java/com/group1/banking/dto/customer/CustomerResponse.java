@@ -17,4 +17,5 @@ public class CustomerResponse {
     private List<AccountResponse> accounts;
     private Instant createdAt;
     private Instant updatedAt;
+    private Instant deletedAt;
 }

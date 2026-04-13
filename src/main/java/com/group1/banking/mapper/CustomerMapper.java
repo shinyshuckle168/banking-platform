@@ -15,13 +15,14 @@ import lombok.Data;
 public class CustomerMapper {
     public CustomerResponse toResponse(Customer customer) {
         return CustomerResponse.builder()
-                .customerId(customer.getCustomerId())
-                .name(customer.getName())
-                .address(customer.getAddress())
-                .type(customer.getType())
-                .accounts(Collections.emptyList())
-                .createdAt(customer.getCreatedAt())
-                .updatedAt(customer.getUpdatedAt())
-                .build();
+            .customerId(customer.getCustomerId())
+            .name(customer.getName())
+            .address(customer.getAddress())
+            .type(customer.getType())
+            .accounts(Collections.emptyList())
+            .createdAt(customer.getCreatedAt())
+            .updatedAt(customer.getUpdatedAt())
+            .deletedAt(customer.getDeletedAt())
+            .build();
     }
 }
