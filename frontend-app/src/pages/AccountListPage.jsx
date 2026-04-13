@@ -169,6 +169,7 @@ export function AccountListPage() {
                 <th>Type</th>
                 <th>Status</th>
                 <th>Balance</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -178,6 +179,17 @@ export function AccountListPage() {
                   <td>{account.accountType}</td>
                   <td>{account.status}</td>
                   <td>{account.balance}</td>
+                  <td className="actions-cell">
+                    <div className="action-buttons">
+                      <Link className="button-mini" to={`/accounts/${account.accountId}/deposit`} title="Deposit Funds">Deposit</Link>
+                      <Link className="button-mini" to={`/accounts/${account.accountId}/withdraw`} title="Withdraw Funds">Withdraw</Link>
+                      <Link className="button-mini" to={`/accounts/transfer?fromAccountId=${account.accountId}`} title="Transfer Funds">Transfer Funds</Link>
+                      <Link className="button-mini" to={`/accounts/${account.accountId}/transactions`} title="View Transaction History">Transaction History</Link>
+                      <Link className="button-mini" to={`/accounts/${account.accountId}/standing-orders`} title="Manage Standing Orders">Standing Orders</Link>
+                      <Link className="button-mini" to={`/accounts/${account.accountId}/statements`} title="View Monthly Statement">Monthly Statement</Link>
+                      <Link className="button-mini" to={`/accounts/${account.accountId}/insights`} title="View Spending Insights">Spending Insights</Link>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

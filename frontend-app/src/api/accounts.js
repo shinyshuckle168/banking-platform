@@ -76,3 +76,21 @@ export async function withdrawFromAccount(payload) {
   );
   return response.data;
 }
+
+export async function transferBetweenAccounts(payload) {
+  const response = await accountApiClient.post(
+    '/accounts/transfer',
+    {
+      fromAccountId: payload.fromAccountId,
+      toAccountId: payload.toAccountId,
+      amount: payload.amount,
+      description: payload.description || null
+    },
+    {
+      headers: {
+        'Idempotency-Key': payload.idempotencyKey
+      }
+    }
+  );
+  return response.data;
+}

@@ -1,0 +1,149 @@
+import { useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { mapAxiosError } from '../api/axiosClient';
+import { exportTransactionHistoryPdf } from '../api/group3';
+import { TransactionsTable } from '../components/TransactionsTable';
+import { useTransactionHistory } from '../hooks/useGroup3';
+import { emptyTransactionHistoryFilters } from '../types';
+
+function validateDateRange(startDate, endDate) {
+  if (!startDate || !endDate) {
+    return 'Select both a start date and an end date.';
+  }
+
+  const start = new Date(`${startDate}T00:00:00Z`);
+  const end = new Date(`${endDate}T23:59:59Z`);
+
+  if (start > end) {
+    return 'Start date must be on or before the end date.';
+  }
+
+  const millisecondsInDay = 1000 * 60 * 60 * 24;
+  const spanInDays = Math.floor((end - start) / millisecondsInDay);
+
+  if (spanInDays > 366) {
+    return 'Transaction history can only cover up to 366 days.';
+  }
+
+  return null;
+}
+
+export function TransactionHistoryPage() {
+  const { accountId } = useParams();
+  const [filters, setFilters] = useState(emptyTransactionHistoryFilters);
+  const [submittedFilters, setSubmittedFilters] = useState(null);
+  const [localError, setLocalError] = useState(null);
+  const [exportError, setExportError] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const query = useTransactionHistory({
+    accountId,
+    startDate: submittedFilters?.startDate,
+    endDate: submittedFilters?.endDate
+  });
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    const validationMessage = validateDateRange(filters.startDate, filters.endDate);
+    if (validationMessage) {
+      setLocalError(validationMessage);
+      return;
+    }
+
+    setLocalError(null);
+    setSubmittedFilters(filters);
+  }
+
+  async function handleExport() {
+    const validationMessage = validateDateRange(filters.startDate, filters.endDate);
+    if (validationMessage) {
+      setLocalError(validationMessage);
+      return;
+    }
+
+    setLocalError(null);
+    setExportError(null);
+    setIsExporting(true);
+
+    try {
+      const blob = await exportTransactionHistoryPdf({ accountId, ...filters });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = downloadUrl;
+      anchor.download = `account-${accountId}-transactions-${filters.startDate}-to-${filters.endDate}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      setExportError(mapAxiosError(error));
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  const queryError = query.error ? mapAxiosError(query.error) : null;
+  const history = query.data;
+
+  return (
+    <div className="stack">
+      <section className="panel stack">
+        <div>
+          <p className="eyebrow">GET /accounts/{'{accountId}'}/transactions</p>
+          <h2>Transaction History</h2>
+          <p className="muted">Filter account activity by date range, then export the same slice as PDF when the future Group 3 backend is available.</p>
+        </div>
+        <div className="banner info">This page is scaffolded against the future Group 3 backend contract. Until that merge lands, live requests from this screen may fail.</div>
+        <form className="form-grid" onSubmit={handleSubmit}>
+          <div className="field">
+            <label htmlFor="history-start-date">Start Date</label>
+            <input
+              id="history-start-date"
+              type="date"
+              value={filters.startDate}
+              onChange={(event) => setFilters((current) => ({ ...current, startDate: event.target.value }))}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="history-end-date">End Date</label>
+            <input
+              id="history-end-date"
+              type="date"
+              value={filters.endDate}
+              onChange={(event) => setFilters((current) => ({ ...current, endDate: event.target.value }))}
+            />
+          </div>
+          <div className="actions">
+            <button type="submit" disabled={query.isFetching}>Apply Range</button>
+            <button type="button" className="secondary" onClick={handleExport} disabled={isExporting}>Export PDF</button>
+            <Link className="button-link subtle" to={`/accounts/${accountId}`}>Back to Account</Link>
+          </div>
+        </form>
+        {query.isLoading || query.isFetching ? <div className="banner success">Loading transaction history...</div> : null}
+        {localError ? <div className="banner error">{localError}</div> : null}
+        {queryError ? <div className="banner error">{queryError.message}</div> : null}
+        {exportError ? <div className="banner error">{exportError.message}</div> : null}
+      </section>
+
+      <section className="panel stack">
+        <div className="section-header">
+          <div>
+            <h3>Selected Range</h3>
+            <p className="muted">
+              {submittedFilters ? `${submittedFilters.startDate} to ${submittedFilters.endDate}` : 'No range applied yet'}
+            </p>
+          </div>
+          <div className="detail-item">
+            <p className="muted">Transactions Returned</p>
+            <strong>{history?.transactionCount ?? 0}</strong>
+          </div>
+        </div>
+        {!submittedFilters ? <div className="banner info">Choose a range and click Apply Range to load transaction history.</div> : null}
+        <TransactionsTable
+          transactions={history?.transactions}
+          emptyTitle="No transactions in this range"
+          emptyMessage="The selected range returned no account activity, or the backend contract is not available yet."
+        />
+      </section>
+    </div>
+  );
+}

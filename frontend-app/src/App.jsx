@@ -7,11 +7,16 @@ import { CustomerCreatePage } from './pages/CustomerCreatePage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { CustomerEditPage } from './pages/CustomerEditPage';
 import { DepositPage } from './pages/DepositPage';
+import { MonthlyStatementPage } from './pages/MonthlyStatementPage';
 import { CreateAccountPage } from './pages/CreateAccountPage';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { PasswordResetPage } from './pages/PasswordResetPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { SpendingInsightsPage } from './pages/SpendingInsightsPage';
+import { StandingOrdersPage } from './pages/StandingOrdersPage';
+import { TransactionHistoryPage } from './pages/TransactionHistoryPage';
+import { TransferPage } from './pages/TransferPage';
 import { WithdrawPage } from './pages/WithdrawPage';
 
 function getDefaultAuthenticatedRoute(authState) {
@@ -110,7 +115,11 @@ export default function App() {
           <Route path="/accounts/:accountId/edit" element={<AccountDetailPage />} />
           <Route path="/accounts/:accountId/deposit" element={<DepositPage />} />
           <Route path="/accounts/:accountId/withdraw" element={<WithdrawPage />} />
-          <Route path="/accounts/transfer" element={<Navigate to="/" replace />} />
+          <Route path="/accounts/:accountId/transactions" element={<TransactionHistoryPage />} />
+          <Route path="/accounts/:accountId/standing-orders" element={<StandingOrdersPage />} />
+          <Route path="/accounts/:accountId/statements" element={<MonthlyStatementPage />} />
+          <Route path="/accounts/:accountId/insights" element={<SpendingInsightsPage />} />
+          <Route path="/accounts/transfer" element={<TransferPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to={authState.accessToken ? defaultAuthenticatedRoute : '/'} replace />} />

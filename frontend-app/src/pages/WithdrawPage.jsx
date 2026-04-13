@@ -4,6 +4,20 @@ import { mapAxiosError } from '../api/axiosClient';
 import { useWithdraw } from '../hooks/useWithdraw';
 import { createIdempotencyKey, emptyMoneyMovementForm } from '../types';
 
+function mapMoneyMovementError(error) {
+  const mapped = mapAxiosError(error);
+  const message = String(mapped.message || '').toLowerCase();
+
+  if (message.includes('authenticated user not found') || message.includes('authentication required')) {
+    return {
+      ...mapped,
+      message: 'Backend authentication failed for this money movement request. Please log out, log back in, and retry. If the issue persists, this matches the current known backend limitation for deposit/withdraw.'
+    };
+  }
+
+  return mapped;
+}
+
 export function WithdrawPage() {
   const { accountId } = useParams();
   const withdraw = useWithdraw();
@@ -20,7 +34,7 @@ export function WithdrawPage() {
       setResult(response);
     } catch (requestError) {
       setResult(null);
-      setError(mapAxiosError(requestError));
+      setError(mapMoneyMovementError(requestError));
     }
   }
 

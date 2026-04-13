@@ -6,6 +6,10 @@ import { mapAxiosError } from '../api/axiosClient';
 import { useGetAccount } from '../hooks/useGetAccount';
 import { emptyAccountUpdateForm } from '../types';
 
+function getCurrentMonthValue() {
+  return new Date().toISOString().slice(0, 7);
+}
+
 export function AccountDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -13,6 +17,7 @@ export function AccountDetailPage() {
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
   const [updateForm, setUpdateForm] = useState(emptyAccountUpdateForm);
+  const [statementMonth, setStatementMonth] = useState(getCurrentMonthValue);
   const query = useGetAccount(accountId);
   const updateAccountMutation = useMutation({ mutationFn: updateAccount });
   const deleteAccountMutation = useMutation({ mutationFn: deleteAccount });
@@ -113,7 +118,29 @@ export function AccountDetailPage() {
             <Link className="button-link subtle" to={`/customer/${account.customerId}/accounts`}>Back to Account List</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/deposit`}>Deposit</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/withdraw`}>Withdraw</Link>
-            <Link className="button-link" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer</Link>
+            <Link className="button-link" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link>
+          </div>
+          <div className="section-divider" />
+          <div>
+            <p className="eyebrow">Future Group 3 Features</p>
+            <p className="muted">The following pages use the future Group 3 backend contract. They may return errors until that service is available.</p>
+          </div>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="account-detail-statement-month">Statement Month</label>
+              <input
+                id="account-detail-statement-month"
+                type="month"
+                value={statementMonth}
+                onChange={(event) => setStatementMonth(event.target.value)}
+              />
+            </div>
+          </div>
+          <div className="actions">
+            <Link className="button-link subtle" to={`/accounts/${account.accountId}/transactions`}>Transaction History</Link>
+            <Link className="button-link subtle" to={`/accounts/${account.accountId}/standing-orders`}>Standing Orders</Link>
+            <Link className="button-link subtle" to={`/accounts/${account.accountId}/statements?period=${statementMonth}`}>Monthly Statement</Link>
+            <Link className="button-link subtle" to={`/accounts/${account.accountId}/insights`}>Spending Insights</Link>
           </div>
           <div className="form-grid">
             {showInterestRate ? (
@@ -131,7 +158,6 @@ export function AccountDetailPage() {
           <div className="actions">
             {showInterestRate ? <button type="button" onClick={handleUpdate} disabled={updateAccountMutation.isPending}>Update Account</button> : null}
             {showInterestRate ? <span className="inline-note">Savings accounts currently expose `interestRate` as the only mutable field in the running backend.</span> : null}
-            {!showInterestRate ? <p className="muted compact-text">Checking accounts have no mutable fields in the current backend implementation.</p> : null}
             <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending || !canDeleteAccount}>Delete Account</button>
           </div>
           {!canDeleteAccount ? <p className="muted compact-text">The merged backend only allows account deletion when the balance is exactly zero.</p> : null}
