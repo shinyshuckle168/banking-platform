@@ -67,13 +67,26 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getCode(), ex.getMessage(), null));
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex) {
-    logger.warn("Access denied.");
+    @ExceptionHandler(OwnershipException.class)
+    public ResponseEntity<ErrorResponse> handleOwnership(OwnershipException ex) {
+        logger.warn("Ownership check failed: {}", ex.getMessage());
+        return ResponseEntity.status(403)
+                .body(new ErrorResponse("FORBIDDEN", "Access denied.", null));
+    }
 
-    return ResponseEntity.status(403)
-            .body(new ErrorResponse("FORBIDDEN", "Access denied.", null));
-}
+    @ExceptionHandler(PermissionDeniedException.class)
+    public ResponseEntity<ErrorResponse> handlePermissionDenied(PermissionDeniedException ex) {
+        logger.warn("Permission denied: {}", ex.getPermission());
+        return ResponseEntity.status(403)
+                .body(new ErrorResponse("FORBIDDEN", "Access denied.", null));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex) {
+        logger.warn("Access denied.");
+        return ResponseEntity.status(403)
+                .body(new ErrorResponse("FORBIDDEN", "Access denied.", null));
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
