@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
-import { TransactionsTable } from '../components/TransactionsTable';
 import { useMonthlyStatement } from '../hooks/useGroup3';
 import { emptyMonthlyStatementLookup } from '../types';
 
@@ -33,6 +32,46 @@ function joinPeriod(year, month) {
   return `${year}-${month}`;
 }
 
+function parseYearMonth(period) {
+  const match = String(period || '').match(/^(\d{4})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    year: Number(match[1]),
+    month: Number(match[2])
+  };
+}
+
+function isFuturePeriod(period) {
+  const parsed = parseYearMonth(period);
+  if (!parsed) {
+    return false;
+  }
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  return parsed.year > currentYear || (parsed.year === currentYear && parsed.month > currentMonth);
+}
+
+function resolveStatementErrorMessage(queryError, submittedPeriod) {
+  if (!queryError) {
+    return null;
+  }
+
+  if (isFuturePeriod(submittedPeriod)) {
+    return 'Statement month cannot be in the future. Please choose the current month or an earlier month.';
+  }
+
+  if (queryError.code === 'HTTP_500' || queryError.code === 'INTERNAL_SERVER_ERROR') {
+    return 'Statement is not available for the selected month. Please choose a month when this account was already open.';
+  }
+
+  return queryError.message;
+}
+
 export function MonthlyStatementPage() {
   const { accountId } = useParams();
   const [searchParams] = useSearchParams();
@@ -53,8 +92,24 @@ export function MonthlyStatementPage() {
     setSubmittedPeriod(period);
   }
 
-  const statement = query.data;
+  const statementPdf = query.data;
   const queryError = query.error ? mapAxiosError(query.error) : null;
+  const errorMessage = resolveStatementErrorMessage(queryError, submittedPeriod);
+
+  function handleDownloadStatement() {
+    if (!statementPdf || !submittedPeriod) {
+      return;
+    }
+
+    const downloadUrl = window.URL.createObjectURL(statementPdf);
+    const anchor = document.createElement('a');
+    anchor.href = downloadUrl;
+    anchor.download = `statement-${accountId}-${submittedPeriod}.pdf`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  }
 
   return (
     <div className="stack">
@@ -62,9 +117,8 @@ export function MonthlyStatementPage() {
         <div>
           <p className="eyebrow">GET /accounts/{'{accountId}'}/statements/{'{period}'}</p>
           <h2>Monthly Statement</h2>
-          <p className="muted">Request the latest statement version for a specific year and month, then review it in a transaction-history-style layout.</p>
+          <p className="muted">Request a monthly statement PDF for a specific year and month.</p>
         </div>
-        <div className="banner info">This page is scaffolded against the future Group 3 backend contract. Until that merge lands, live requests from this screen may fail.</div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="statement-year">Statement Year</label>
@@ -100,46 +154,24 @@ export function MonthlyStatementPage() {
           </div>
         </form>
         {query.isLoading || query.isFetching ? <div className="banner success">Loading monthly statement...</div> : null}
-        {queryError ? <div className="banner error">{queryError.message}</div> : null}
+        {errorMessage ? <div className="banner error">{errorMessage}</div> : null}
         {!submittedPeriod ? <div className="banner info">Pick a statement month and click Load Statement to request data.</div> : null}
       </section>
 
       <section className="panel stack">
         <div className="section-header">
           <div>
-            <h3>Statement Summary</h3>
+            <h3>Statement File</h3>
             <p className="muted">Requested period: {submittedPeriod || 'None selected'}</p>
           </div>
-          <div className="detail-item">
-            <p className="muted">Version</p>
-            <strong>{statement?.versionNumber ?? 'Latest'}</strong>
+        </div>
+        {statementPdf ? (
+          <div className="actions">
+            <button type="button" onClick={handleDownloadStatement}>Download Statement PDF</button>
           </div>
-        </div>
-        <div className="card-grid">
-          <article className="metric">
-            <p className="muted">Opening Balance</p>
-            <strong>{statement?.openingBalance ?? '0.00'}</strong>
-          </article>
-          <article className="metric">
-            <p className="muted">Closing Balance</p>
-            <strong>{statement?.closingBalance ?? '0.00'}</strong>
-          </article>
-          <article className="metric">
-            <p className="muted">Total Money In</p>
-            <strong>{statement?.totalMoneyIn ?? '0.00'}</strong>
-          </article>
-          <article className="metric">
-            <p className="muted">Total Money Out</p>
-            <strong>{statement?.totalMoneyOut ?? '0.00'}</strong>
-          </article>
-        </div>
-        {statement?.correctionSummary ? <div className="banner success">Correction Summary: {statement.correctionSummary}</div> : null}
-        {statement?.generatedAt ? <p className="muted compact-text">Generated at: {new Date(statement.generatedAt).toLocaleString()}</p> : null}
-        <TransactionsTable
-          transactions={statement?.transactions}
-          emptyTitle="No statement transactions returned"
-          emptyMessage="The selected statement may have no activity, may not exist yet, or the future backend contract may still be unavailable."
-        />
+        ) : (
+          <div className="banner info">Load a statement period to generate a downloadable PDF.</div>
+        )}
       </section>
     </div>
   );

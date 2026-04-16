@@ -33,28 +33,92 @@ function joinPeriod(year, month) {
   return `${year}-${month}`;
 }
 
-const MOCK_SPENDING_INSIGHTS = {
-  totalDebitSpend: '624.75',
-  transactionCount: 12,
-  dataFresh: false,
-  hasUncategorised: true,
-  hasExcludedDisputes: false,
-  sixMonthTrend: [
-    { year: 2025, month: 11, totalDebitSpend: '410.20' },
-    { year: 2025, month: 12, totalDebitSpend: '455.90' },
-    { year: 2026, month: 1, totalDebitSpend: '498.35' },
-    { year: 2026, month: 2, totalDebitSpend: '552.10' },
-    { year: 2026, month: 3, totalDebitSpend: '624.75' },
-    { year: 2026, month: 4, totalDebitSpend: '571.40' }
-  ],
-  categoryBreakdown: [
-    { category: 'Food & Drink', totalAmount: '210.00', percentage: '33.61' },
-    { category: 'Bills & Utilities', totalAmount: '155.25', percentage: '24.85' },
-    { category: 'Transport', totalAmount: '92.50', percentage: '14.81' },
-    { category: 'Shopping', totalAmount: '101.00', percentage: '16.17' },
-    { category: 'Uncategorised', totalAmount: '66.00', percentage: '10.56' }
-  ]
-};
+const INSIGHT_CATEGORIES = [
+  'Housing',
+  'Transport',
+  'Food & Drink',
+  'Entertainment',
+  'Shopping',
+  'Utilities',
+  'Health',
+  'Income'
+];
+
+function parsePeriod(period) {
+  const [yearText, monthText] = String(period || '').split('-');
+  const year = Number.parseInt(yearText, 10);
+  const month = Number.parseInt(monthText, 10);
+
+  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  }
+
+  return { year, month };
+}
+
+function buildEmptySixMonthTrend(period) {
+  const { year, month } = parsePeriod(period);
+  const current = new Date();
+  const currentYear = current.getFullYear();
+  const currentMonth = current.getMonth() + 1;
+  const entries = [];
+
+  for (let offset = 5; offset >= 0; offset -= 1) {
+    const date = new Date(Date.UTC(year, month - 1, 1));
+    date.setUTCMonth(date.getUTCMonth() - offset);
+
+    const entryYear = date.getUTCFullYear();
+    const entryMonth = date.getUTCMonth() + 1;
+    const isComplete = entryYear < currentYear || (entryYear === currentYear && entryMonth < currentMonth);
+
+    entries.push({
+      year: entryYear,
+      month: entryMonth,
+      totalSpend: '0.00',
+      isComplete,
+      accountExisted: true
+    });
+  }
+
+  return entries;
+}
+
+function buildEmptyBreakdown() {
+  return INSIGHT_CATEGORIES.map((category) => ({
+    category,
+    totalAmount: '0.00',
+    percentage: '0.00',
+    transactionCount: 0
+  }));
+}
+
+function normalizeInsights(data, period) {
+  const empty = {
+    totalDebitSpend: '0.00',
+    transactionCount: 0,
+    hasUncategorised: false,
+    hasExcludedDisputes: false,
+    dataFresh: true,
+    categoryBreakdown: buildEmptyBreakdown(),
+    sixMonthTrend: buildEmptySixMonthTrend(period)
+  };
+
+  if (!data) {
+    return empty;
+  }
+
+  return {
+    ...empty,
+    ...data,
+    categoryBreakdown: Array.isArray(data.categoryBreakdown) && data.categoryBreakdown.length > 0
+      ? data.categoryBreakdown
+      : empty.categoryBreakdown,
+    sixMonthTrend: Array.isArray(data.sixMonthTrend) && data.sixMonthTrend.length > 0
+      ? data.sixMonthTrend
+      : empty.sixMonthTrend
+  };
+}
 
 export function SpendingInsightsPage() {
   const { accountId } = useParams();
@@ -74,8 +138,12 @@ export function SpendingInsightsPage() {
   }
 
   const insights = query.data;
-  const chartData = insights || MOCK_SPENDING_INSIGHTS;
+  const chartData = normalizeInsights(insights, submittedPeriod);
   const queryError = query.error ? mapAxiosError(query.error) : null;
+  const noTransactions = Boolean(submittedPeriod)
+    && !query.isFetching
+    && !queryError
+    && (chartData.transactionCount ?? 0) === 0;
 
   return (
     <div className="stack">
@@ -85,7 +153,6 @@ export function SpendingInsightsPage() {
           <h2>Spending Insights</h2>
           <p className="muted">Review debit-spend totals for a selected month as a pie chart plus a six-month bar chart trend.</p>
         </div>
-        <div className="banner info">This page is scaffolded against the future Group 3 backend contract. Until that merge lands, live requests from this screen may fail.</div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="insights-year">Insight Year</label>
@@ -123,14 +190,14 @@ export function SpendingInsightsPage() {
         {query.isLoading || query.isFetching ? <div className="banner success">Loading spending insights...</div> : null}
         {queryError ? <div className="banner error">{queryError.message}</div> : null}
         {!submittedPeriod ? <div className="banner info">Pick a month and click Load Insights to request backend data.</div> : null}
-        {!insights ? <div className="banner info">Showing mock preview data so you can review the chart layout before Group 3 backend integration is available.</div> : null}
+        {noTransactions ? <div className="banner info">No eligible spending transactions were found for this month. Showing a zero-value category breakdown and trend.</div> : null}
       </section>
 
       <section className="panel stack">
         <div className="card-grid">
           <article className="metric">
             <p className="muted">Selected Period</p>
-            <strong>{submittedPeriod || 'None'}</strong>
+            <strong>{submittedPeriod || 'None selected'}</strong>
           </article>
           <article className="metric">
             <p className="muted">Total Debit Spend</p>

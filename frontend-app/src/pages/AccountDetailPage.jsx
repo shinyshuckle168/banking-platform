@@ -118,13 +118,9 @@ export function AccountDetailPage() {
             <Link className="button-link subtle" to={`/customer/${account.customerId}/accounts`}>Back to Account List</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/deposit`}>Deposit</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/withdraw`}>Withdraw</Link>
-            <Link className="button-link" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link>
+            <Link className="button-link subtle" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link>
           </div>
           <div className="section-divider" />
-          <div>
-            <p className="eyebrow">Future Group 3 Features</p>
-            <p className="muted">The following pages use the future Group 3 backend contract. They may return errors until that service is available.</p>
-          </div>
           <div className="form-grid">
             <div className="field">
               <label htmlFor="account-detail-statement-month">Statement Month</label>
@@ -161,6 +157,7 @@ export function AccountDetailPage() {
             <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending || !canDeleteAccount}>Delete Account</button>
           </div>
           {!canDeleteAccount ? <p className="muted compact-text">The merged backend only allows account deletion when the balance is exactly zero.</p> : null}
+
           <p className="muted compact-text">Deposit, withdraw, and transfer all require a valid idempotency key and remain subject to backend ownership checks.</p>
           {location.pathname.endsWith('/edit') ? <div className="banner success">You are viewing the edit route for this account.</div> : null}
           <pre className="code">{JSON.stringify(account, null, 2)}</pre>

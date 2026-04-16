@@ -6,9 +6,22 @@ import { TransactionsTable } from '../components/TransactionsTable';
 import { useTransactionHistory } from '../hooks/useGroup3';
 import { emptyTransactionHistoryFilters } from '../types';
 
+function todayDateInputValue() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function validateDateRange(startDate, endDate) {
   if (!startDate || !endDate) {
     return 'Select both a start date and an end date.';
+  }
+
+  const today = todayDateInputValue();
+  if (startDate > today || endDate > today) {
+    return 'Date range cannot include future dates.';
   }
 
   const start = new Date(`${startDate}T00:00:00Z`);
@@ -90,15 +103,15 @@ export function TransactionHistoryPage() {
         <div>
           <p className="eyebrow">GET /accounts/{'{accountId}'}/transactions</p>
           <h2>Transaction History</h2>
-          <p className="muted">Filter account activity by date range, then export the same slice as PDF when the future Group 3 backend is available.</p>
+          <p className="muted">Filter account activity by date range and export the same slice as PDF.</p>
         </div>
-        <div className="banner info">This page is scaffolded against the future Group 3 backend contract. Until that merge lands, live requests from this screen may fail.</div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="history-start-date">Start Date</label>
             <input
               id="history-start-date"
               type="date"
+              max={todayDateInputValue()}
               value={filters.startDate}
               onChange={(event) => setFilters((current) => ({ ...current, startDate: event.target.value }))}
             />
@@ -108,6 +121,7 @@ export function TransactionHistoryPage() {
             <input
               id="history-end-date"
               type="date"
+              max={todayDateInputValue()}
               value={filters.endDate}
               onChange={(event) => setFilters((current) => ({ ...current, endDate: event.target.value }))}
             />
@@ -138,10 +152,13 @@ export function TransactionHistoryPage() {
           </div>
         </div>
         {!submittedFilters ? <div className="banner info">Choose a range and click Apply Range to load transaction history.</div> : null}
+        {submittedFilters && !query.isFetching && !queryError && (history?.transactionCount ?? 0) === 0 ? (
+          <div className="banner info">No transactions were found for the selected date range. Try widening the range.</div>
+        ) : null}
         <TransactionsTable
           transactions={history?.transactions}
           emptyTitle="No transactions in this range"
-          emptyMessage="The selected range returned no account activity, or the backend contract is not available yet."
+          emptyMessage="The selected range returned no account activity."
         />
       </section>
     </div>

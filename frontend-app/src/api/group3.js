@@ -1,11 +1,17 @@
 import { accountApiClient } from './axiosClient';
 
-function toStartOfDayIso(value) {
-  return `${value}T00:00:00.000Z`;
-}
+function toLocalDateTime(value) {
+  if (!value) {
+    return value;
+  }
 
-function toEndOfDayIso(value) {
-  return `${value}T23:59:59.999Z`;
+  // Backend expects LocalDateTime without timezone designator.
+  // If date-only (10 chars: YYYY-MM-DD), append T00:00:00
+  // If datetime-local (16 chars: YYYY-MM-DDTHH:MM), append :00
+  if (value.length === 10) {
+    return `${value}T00:00:00`;
+  }
+  return value.length === 16 ? `${value}:00` : value;
 }
 
 function splitPeriod(period) {
@@ -13,11 +19,28 @@ function splitPeriod(period) {
   return { year, month };
 }
 
+function parseJsonFromArrayBuffer(buffer) {
+  if (!(buffer instanceof ArrayBuffer)) {
+    return null;
+  }
+
+  try {
+    const text = new TextDecoder('utf-8').decode(buffer).trim();
+    if (!text) {
+      return null;
+    }
+
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export async function getTransactionHistory({ accountId, startDate, endDate }) {
   const response = await accountApiClient.get(`/accounts/${accountId}/transactions`, {
     params: {
-      startDate: startDate ? toStartOfDayIso(startDate) : undefined,
-      endDate: endDate ? toEndOfDayIso(endDate) : undefined
+      startDate: startDate || undefined,
+      endDate: endDate || undefined
     }
   });
 
@@ -27,8 +50,8 @@ export async function getTransactionHistory({ accountId, startDate, endDate }) {
 export async function exportTransactionHistoryPdf({ accountId, startDate, endDate }) {
   const response = await accountApiClient.get(`/accounts/${accountId}/transactions/export`, {
     params: {
-      startDate: toStartOfDayIso(startDate),
-      endDate: toEndOfDayIso(endDate)
+      startDate: startDate || undefined,
+      endDate: endDate || undefined
     },
     responseType: 'blob'
   });
@@ -42,8 +65,8 @@ export async function createStandingOrder(payload) {
     payeeName: payload.payeeName,
     amount: payload.amount,
     frequency: payload.frequency,
-    startDate: new Date(payload.startDate).toISOString(),
-    endDate: payload.endDate ? new Date(payload.endDate).toISOString() : null,
+    startDate: toLocalDateTime(payload.startDate),
+    endDate: payload.endDate ? toLocalDateTime(payload.endDate) : null,
     reference: payload.reference
   });
 
@@ -61,8 +84,21 @@ export async function cancelStandingOrder(standingOrderId) {
 }
 
 export async function getMonthlyStatement({ accountId, period }) {
-  const response = await accountApiClient.get(`/accounts/${accountId}/statements/${period}`);
-  return response.data;
+  try {
+    const response = await accountApiClient.get(`/accounts/${accountId}/statements/${period}`, {
+      responseType: 'arraybuffer'
+    });
+
+    return new Blob([response.data], {
+      type: response.headers?.['content-type'] || 'application/pdf'
+    });
+  } catch (error) {
+    const parsedErrorBody = parseJsonFromArrayBuffer(error?.response?.data);
+    if (parsedErrorBody && error?.response) {
+      error.response.data = parsedErrorBody;
+    }
+    throw error;
+  }
 }
 
 export async function getSpendingInsights({ accountId, period }) {

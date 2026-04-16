@@ -6,6 +6,7 @@ import { AccountListPage } from './pages/AccountListPage';
 import { CustomerCreatePage } from './pages/CustomerCreatePage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { CustomerEditPage } from './pages/CustomerEditPage';
+
 import { DepositPage } from './pages/DepositPage';
 import { MonthlyStatementPage } from './pages/MonthlyStatementPage';
 import { CreateAccountPage } from './pages/CreateAccountPage';

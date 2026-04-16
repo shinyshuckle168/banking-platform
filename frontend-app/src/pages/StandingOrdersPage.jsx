@@ -106,7 +106,6 @@ export function StandingOrdersPage() {
           <h2>Standing Orders</h2>
           <p className="muted">Create a recurring payment instruction above the current list of orders for this account.</p>
         </div>
-        <div className="banner info">This page is scaffolded against the future Group 3 backend contract. Until that merge lands, live requests from this screen may fail.</div>
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
         {localError ? <div className="banner error">{localError.message || localError}</div> : null}
         {queryError ? <div className="banner error">{queryError.message}</div> : null}
@@ -152,7 +151,7 @@ export function StandingOrdersPage() {
             <label htmlFor="standing-order-start-date">Start Date</label>
             <input
               id="standing-order-start-date"
-              type="datetime-local"
+              type="date"
               value={form.startDate}
               onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))}
               required
@@ -163,7 +162,7 @@ export function StandingOrdersPage() {
             <label htmlFor="standing-order-end-date">End Date</label>
             <input
               id="standing-order-end-date"
-              type="datetime-local"
+              type="date"
               value={form.endDate}
               onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))}
             />
@@ -239,7 +238,7 @@ export function StandingOrdersPage() {
         ) : (
           <div className="panel empty-state stack tight-gap">
             <h3>No standing orders returned</h3>
-            <p className="muted">This can be a valid empty state, or a sign that the future backend slice is not merged yet.</p>
+            <p className="muted">There are currently no standing orders for this account.</p>
           </div>
         )}
       </section>

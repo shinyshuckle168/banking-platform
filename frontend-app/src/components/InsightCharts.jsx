@@ -14,12 +14,12 @@ export function SpendingBarChart({ entries }) {
     return (
       <div className="chart-card empty-state stack tight-gap">
         <h3>Six-Month Trend</h3>
-        <p className="muted">The future backend has not returned trend data for this period yet.</p>
+        <p className="muted">No trend data returned for this period yet.</p>
       </div>
     );
   }
 
-  const amounts = entries.map((entry) => toAmount(entry.totalDebitSpend));
+  const amounts = entries.map((entry) => toAmount(entry.totalSpend ?? entry.totalDebitSpend));
   const maxAmount = Math.max(...amounts, 0);
 
   return (
@@ -27,7 +27,7 @@ export function SpendingBarChart({ entries }) {
       <h3>Six-Month Trend</h3>
       <div className="bar-chart">
         {entries.map((entry) => {
-          const amount = toAmount(entry.totalDebitSpend);
+          const amount = toAmount(entry.totalSpend ?? entry.totalDebitSpend);
           const height = maxAmount > 0 ? `${(amount / maxAmount) * 100}%` : '0%';
 
           return (
@@ -52,10 +52,13 @@ export function SpendingPieChart({ categories }) {
     return (
       <div className="chart-card empty-state stack tight-gap">
         <h3>Category Breakdown</h3>
-        <p className="muted">The future backend has not returned category data for this month yet.</p>
+        <p className="muted">No category data returned for this month yet.</p>
       </div>
     );
   }
+
+  const totalPercentage = categories.reduce((sum, category) => sum + toAmount(category.percentage), 0);
+  const isEmpty = totalPercentage <= 0;
 
   let runningTotal = 0;
   const segments = categories.map((category, index) => {
@@ -66,15 +69,17 @@ export function SpendingPieChart({ categories }) {
     return `${PIE_COLORS[index % PIE_COLORS.length]} ${start}% ${end}%`;
   });
 
-  const chartStyle = {
-    background: `conic-gradient(${segments.join(', ')})`
-  };
+  const chartStyle = isEmpty
+    ? { background: 'conic-gradient(#d8d1c7 0 100%)' }
+    : { background: `conic-gradient(${segments.join(', ')})` };
 
   return (
     <div className="chart-card stack">
       <h3>Category Breakdown</h3>
       <div className="pie-layout">
-        <div className="pie-chart" style={chartStyle} aria-hidden="true" />
+        <div className={`pie-chart${isEmpty ? ' empty' : ''}`} style={chartStyle} aria-hidden="true">
+          {isEmpty ? <span className="pie-empty-label">No spend</span> : null}
+        </div>
         <div className="pie-legend">
           {categories.map((category, index) => (
             <div className="legend-row" key={category.category}>

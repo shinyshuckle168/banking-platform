@@ -27,6 +27,12 @@ function getDaysAgo(days) {
   return toDateInputValue(date);
 }
 
+function getFutureDate(daysAhead) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return toDateInputValue(date);
+}
+
 function getFutureDateTime(daysAhead) {
   const date = new Date();
   date.setDate(date.getDate() + daysAhead);
@@ -84,7 +90,7 @@ export const emptyStandingOrderForm = {
   payeeName: '',
   amount: '50.00',
   frequency: 'MONTHLY',
-  startDate: getFutureDateTime(2),
+  startDate: getFutureDate(2),
   endDate: '',
   reference: ''
 };

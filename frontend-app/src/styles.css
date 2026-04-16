@@ -475,7 +475,7 @@ button:disabled {
 
 .chart-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 1rem;
 }
 
@@ -525,16 +525,28 @@ button:disabled {
 
 .pie-layout {
   display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 1rem;
-  align-items: center;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
 }
 
 .pie-chart {
-  width: 180px;
-  height: 180px;
+  width: min(100%, 260px);
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   border: 1px solid var(--border);
+  margin-inline: auto;
+}
+
+.pie-chart.empty {
+  display: grid;
+  place-items: center;
+}
+
+.pie-empty-label {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .pie-legend {

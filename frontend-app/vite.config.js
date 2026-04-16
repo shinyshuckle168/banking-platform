@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const backendTarget =
+    env.VITE_GROUP123_BACKEND_PROXY_TARGET ||
     env.VITE_BANKING_API_PROXY_TARGET ||
     env.VITE_ACCOUNT_SERVICE_PROXY_TARGET ||
     env.VITE_LOGIN_API_PROXY_TARGET ||
@@ -23,6 +24,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
         '/customers': {
+          target: backendTarget,
+          changeOrigin: true,
+        },
+        '/standing-orders': {
           target: backendTarget,
           changeOrigin: true,
         }

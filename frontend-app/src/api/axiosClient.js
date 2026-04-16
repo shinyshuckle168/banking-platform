@@ -2,6 +2,7 @@ import axios from 'axios';
 import { readStoredAuthState } from '../auth/authState';
 
 const mergedBackendBaseUrl =
+  import.meta.env.VITE_GROUP123_BACKEND_BASE_URL ||
   import.meta.env.VITE_BANKING_API_BASE_URL ||
   import.meta.env.VITE_LOGIN_API_BASE_URL ||
   import.meta.env.VITE_ACCOUNT_SERVICE_BASE_URL ||
