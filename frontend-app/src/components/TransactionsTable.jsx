@@ -15,6 +15,11 @@ function isCreditTransaction(transaction) {
   return String(transaction.direction || '').toUpperCase() === 'CREDIT';
 }
 
+function toTimestampValue(value) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? Number.NEGATIVE_INFINITY : parsed.getTime();
+}
+
 function supportsCategoryEditing(transaction) {
   return !isCreditTransaction(transaction);
 }
@@ -36,6 +41,10 @@ export function TransactionsTable({
     );
   }
 
+  const sortedTransactions = [...transactions].sort(
+    (left, right) => toTimestampValue(right.timestamp) - toTimestampValue(left.timestamp)
+  );
+
   return (
     <div className="table-shell">
       <table>
@@ -51,8 +60,8 @@ export function TransactionsTable({
           </tr>
         </thead>
         <tbody>
-          {transactions.map((transaction) => {
-            const currentCategory = transaction.category || '';
+          {sortedTransactions.map((transaction) => {
+            const currentCategory = String(transaction.category || '').trim();
             const isCredit = isCreditTransaction(transaction);
             const canEditCategory = typeof onSaveCategory === 'function' && supportsCategoryEditing(transaction);
             const isSaving = savingTransactionId === transaction.transactionId;

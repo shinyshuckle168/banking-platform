@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { transferBetweenAccounts } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
+import { useRecategoriseTransaction } from '../hooks/useGroup3';
 import { TRANSACTION_CATEGORIES, createIdempotencyKey } from '../types';
 
 const emptyTransferForm = {
@@ -70,6 +71,7 @@ export function TransferPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const transferMutation = useMutation({ mutationFn: transferBetweenAccounts });
+  const recategoriseTransaction = useRecategoriseTransaction();
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -91,7 +93,31 @@ export function TransferPage() {
 
     try {
       const response = await transferMutation.mutateAsync(payload);
-      setResult(response);
+      const category = String(form.category || '').trim();
+      let nextResult = response;
+
+      if (category && response?.debitTransaction?.transactionId) {
+        try {
+          await recategoriseTransaction.mutateAsync({
+            accountId: payload.fromAccountId,
+            transactionId: response.debitTransaction.transactionId,
+            category
+          });
+          nextResult = {
+            ...response,
+            debitTransaction: {
+              ...response.debitTransaction,
+              category
+            }
+          };
+        } catch (categoryError) {
+          setError({
+            message: `Transfer completed, but the selected category could not be saved. ${mapAxiosError(categoryError).message}`
+          });
+        }
+      }
+
+      setResult(nextResult);
     } catch (requestError) {
       setResult(null);
       setError(mapTransferError(requestError));

@@ -106,7 +106,8 @@ export const emptyStandingOrderForm = {
   frequency: 'MONTHLY',
   startDate: getFutureDate(2),
   endDate: '',
-  reference: ''
+  reference: '',
+  category: ''
 };
 
 export const emptyMonthlyStatementLookup = {
@@ -133,6 +134,7 @@ export const emptyMoneyMovementForm = {
   accountId: '',
   amount: '25.00',
   description: '',
+  category: '',
   idempotencyKey: createIdempotencyKey()
 };
 

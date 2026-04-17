@@ -67,7 +67,8 @@ export async function createStandingOrder(payload) {
     frequency: payload.frequency,
     startDate: toLocalDateTime(payload.startDate),
     endDate: payload.endDate ? toLocalDateTime(payload.endDate) : null,
-    reference: payload.reference
+    reference: payload.reference,
+    category: payload.category || null
   });
 
   return response.data;

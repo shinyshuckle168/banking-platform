@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
 import { useWithdraw } from '../hooks/useWithdraw';
+import { useRecategoriseTransaction } from '../hooks/useGroup3';
 import { TRANSACTION_CATEGORIES, createIdempotencyKey, emptyMoneyMovementForm } from '../types';
 
 function mapMoneyMovementError(error) {
@@ -21,6 +22,7 @@ function mapMoneyMovementError(error) {
 export function WithdrawPage() {
   const { accountId } = useParams();
   const withdraw = useWithdraw();
+  const recategoriseTransaction = useRecategoriseTransaction();
   const [form, setForm] = useState({ ...emptyMoneyMovementForm, accountId: accountId || '' });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -31,7 +33,31 @@ export function WithdrawPage() {
 
     try {
       const response = await withdraw.mutateAsync({ ...form, accountId: accountId || form.accountId });
-      setResult(response);
+      const category = String(form.category || '').trim();
+      let nextResult = response;
+
+      if (category && response?.transaction?.transactionId) {
+        try {
+          await recategoriseTransaction.mutateAsync({
+            accountId: accountId || form.accountId,
+            transactionId: response.transaction.transactionId,
+            category
+          });
+          nextResult = {
+            ...response,
+            transaction: {
+              ...response.transaction,
+              category
+            }
+          };
+        } catch (categoryError) {
+          setError({
+            message: `Withdrawal completed, but the selected category could not be saved. ${mapAxiosError(categoryError).message}`
+          });
+        }
+      }
+
+      setResult(nextResult);
     } catch (requestError) {
       setResult(null);
       setError(mapMoneyMovementError(requestError));
