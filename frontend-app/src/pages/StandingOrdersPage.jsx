@@ -6,7 +6,7 @@ import {
   useCreateStandingOrder,
   useStandingOrders
 } from '../hooks/useGroup3';
-import { STANDING_ORDER_FREQUENCIES, emptyStandingOrderForm } from '../types';
+import { STANDING_ORDER_FREQUENCIES, TRANSACTION_CATEGORIES, emptyStandingOrderForm } from '../types';
 
 function validateStandingOrderForm(form) {
   if (!form.payeeAccount?.trim()) {
@@ -177,6 +177,18 @@ export function StandingOrdersPage() {
               required
             />
             <p className="field-hint">1 to 18 alphanumeric characters (letters and numbers only).</p>
+          </div>
+          <div className="field">
+            <label htmlFor="standing-order-category">Category</label>
+            <select
+              id="standing-order-category"
+              value={form.category}
+              onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
+            >
+              <option value="">No category</option>
+              {TRANSACTION_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+            <p className="field-hint">Optional. Selected category is applied to executed standing-order transactions and included in spending insights.</p>
           </div>
           <div className="actions">
             <button type="submit" disabled={createMutation.isPending}>Create Standing Order</button>

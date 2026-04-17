@@ -112,3 +112,12 @@ export async function getSpendingInsights({ accountId, period }) {
 
   return response.data;
 }
+
+export async function recategoriseTransaction({ accountId, transactionId, category }) {
+  const response = await accountApiClient.put(
+    `/accounts/${accountId}/transactions/${transactionId}/category`,
+    { category }
+  );
+
+  return response.data;
+}

@@ -3,13 +3,14 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { transferBetweenAccounts } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
-import { createIdempotencyKey } from '../types';
+import { TRANSACTION_CATEGORIES, createIdempotencyKey } from '../types';
 
 const emptyTransferForm = {
   fromAccountId: '',
   toAccountId: '',
   amount: '25.00',
   description: '',
+  category: '',
   idempotencyKey: createIdempotencyKey()
 };
 
@@ -140,6 +141,18 @@ export function TransferPage() {
               value={form.description}
               onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
             />
+          </div>
+          <div className="field">
+            <label htmlFor="transfer-category">Category</label>
+            <select
+              id="transfer-category"
+              value={form.category}
+              onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
+            >
+              <option value="">No category</option>
+              {TRANSACTION_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+            <p className="field-hint">Optional. Category for this transaction.</p>
           </div>
           <div className="field full">
             <label htmlFor="transfer-idempotency-key">Idempotency Key</label>

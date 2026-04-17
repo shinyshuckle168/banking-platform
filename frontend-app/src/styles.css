@@ -525,13 +525,15 @@ button:disabled {
 
 .pie-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-  gap: 1.25rem;
-  align-items: start;
+  grid-template-columns: min(260px, 40%) 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  width: 100%;
 }
 
 .pie-chart {
-  width: min(100%, 260px);
+  width: 100%;
+  max-width: 260px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   border: 1px solid var(--border);
@@ -552,6 +554,7 @@ button:disabled {
 .pie-legend {
   display: grid;
   gap: 0.75rem;
+  align-content: start;
 }
 
 .legend-row {

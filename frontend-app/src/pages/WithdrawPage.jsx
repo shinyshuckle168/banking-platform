@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
 import { useWithdraw } from '../hooks/useWithdraw';
-import { createIdempotencyKey, emptyMoneyMovementForm } from '../types';
+import { TRANSACTION_CATEGORIES, createIdempotencyKey, emptyMoneyMovementForm } from '../types';
 
 function mapMoneyMovementError(error) {
   const mapped = mapAxiosError(error);
@@ -66,6 +66,18 @@ export function WithdrawPage() {
               value={form.description}
               onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
             />
+          </div>
+          <div className="field">
+            <label htmlFor="withdraw-category">Category</label>
+            <select
+              id="withdraw-category"
+              value={form.category}
+              onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
+            >
+              <option value="">No category</option>
+              {TRANSACTION_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+            <p className="field-hint">Optional. Category for this transaction.</p>
           </div>
           <div className="field full">
             <label htmlFor="withdraw-idempotency-key">Idempotency Key</label>

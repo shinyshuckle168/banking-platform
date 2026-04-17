@@ -3,8 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
 import { exportTransactionHistoryPdf } from '../api/group3';
 import { TransactionsTable } from '../components/TransactionsTable';
-import { useTransactionHistory } from '../hooks/useGroup3';
-import { emptyTransactionHistoryFilters } from '../types';
+import { useRecategoriseTransaction, useTransactionHistory } from '../hooks/useGroup3';
+import { TRANSACTION_CATEGORIES, emptyTransactionHistoryFilters } from '../types';
 
 function todayDateInputValue() {
   const now = new Date();
@@ -47,7 +47,11 @@ export function TransactionHistoryPage() {
   const [submittedFilters, setSubmittedFilters] = useState(null);
   const [localError, setLocalError] = useState(null);
   const [exportError, setExportError] = useState(null);
+  const [categoryError, setCategoryError] = useState(null);
+  const [categoryMessage, setCategoryMessage] = useState(null);
+  const [savingTransactionId, setSavingTransactionId] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
+  const recategoriseMutation = useRecategoriseTransaction();
   const query = useTransactionHistory({
     accountId,
     startDate: submittedFilters?.startDate,
@@ -59,10 +63,14 @@ export function TransactionHistoryPage() {
     const validationMessage = validateDateRange(filters.startDate, filters.endDate);
     if (validationMessage) {
       setLocalError(validationMessage);
+      setCategoryError(null);
+      setCategoryMessage(null);
       return;
     }
 
     setLocalError(null);
+    setCategoryError(null);
+    setCategoryMessage(null);
     setSubmittedFilters(filters);
   }
 
@@ -91,6 +99,26 @@ export function TransactionHistoryPage() {
       setExportError(mapAxiosError(error));
     } finally {
       setIsExporting(false);
+    }
+  }
+
+  async function handleSaveCategory(transactionId, category) {
+    if (!transactionId || category == null) {
+      return;
+    }
+
+    setCategoryError(null);
+    setCategoryMessage(null);
+    setSavingTransactionId(transactionId);
+
+    try {
+      await recategoriseMutation.mutateAsync({ accountId, transactionId, category });
+      setCategoryMessage('Transaction category updated successfully.');
+      await query.refetch();
+    } catch (error) {
+      setCategoryError(mapAxiosError(error));
+    } finally {
+      setSavingTransactionId(null);
     }
   }
 
@@ -136,6 +164,8 @@ export function TransactionHistoryPage() {
         {localError ? <div className="banner error">{localError}</div> : null}
         {queryError ? <div className="banner error">{queryError.message}</div> : null}
         {exportError ? <div className="banner error">{exportError.message}</div> : null}
+        {categoryError ? <div className="banner error">{categoryError.message}</div> : null}
+        {categoryMessage ? <div className="banner success">{categoryMessage}</div> : null}
       </section>
 
       <section className="panel stack">
@@ -159,6 +189,9 @@ export function TransactionHistoryPage() {
           transactions={history?.transactions}
           emptyTitle="No transactions in this range"
           emptyMessage="The selected range returned no account activity."
+          categoryOptions={TRANSACTION_CATEGORIES}
+          onSaveCategory={handleSaveCategory}
+          savingTransactionId={savingTransactionId}
         />
       </section>
     </div>

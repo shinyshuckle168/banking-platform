@@ -1,4 +1,15 @@
-const PIE_COLORS = ['#046c4e', '#ad6a3b', '#1a759f', '#c1666b', '#ffb703', '#6c757d', '#588157', '#b56576'];
+const CATEGORY_COLORS = {
+  'Housing': '#005f73',
+  'Transport': '#9b2226',
+  'Food & Drink': '#0a9396',
+  'Entertainment': '#ca6702',
+  'Shopping': '#3a86ff',
+  'Utilities': '#ff006e',
+  'Health': '#6d597a',
+  'Income': '#2b9348',
+  'Other': '#ee9b00',
+  'No category': '#111827'
+};
 
 function toAmount(value) {
   const amount = Number.parseFloat(value ?? 0);
@@ -57,16 +68,23 @@ export function SpendingPieChart({ categories }) {
     );
   }
 
-  const totalPercentage = categories.reduce((sum, category) => sum + toAmount(category.percentage), 0);
-  const isEmpty = totalPercentage <= 0;
+  const totalAmount = categories.reduce((sum, category) => sum + toAmount(category.totalAmount), 0);
+  const isEmpty = totalAmount <= 0;
+  const visibleCategories = categories.filter((category) => toAmount(category.totalAmount) > 0);
 
   let runningTotal = 0;
-  const segments = categories.map((category, index) => {
-    const percentage = toAmount(category.percentage);
+  const segments = [];
+
+  visibleCategories.forEach((category, index) => {
+    const percentage = totalAmount > 0 ? (toAmount(category.totalAmount) / totalAmount) * 100 : 0;
     const start = runningTotal;
-    runningTotal += percentage;
-    const end = runningTotal;
-    return `${PIE_COLORS[index % PIE_COLORS.length]} ${start}% ${end}%`;
+    runningTotal = Math.min(100, runningTotal + percentage);
+    const end = index === visibleCategories.length - 1 ? 100 : runningTotal;
+    const color = CATEGORY_COLORS[category.category] || '#475569';
+
+    if (end > start) {
+      segments.push(`${color} ${start}% ${end}%`);
+    }
   });
 
   const chartStyle = isEmpty
@@ -82,8 +100,8 @@ export function SpendingPieChart({ categories }) {
         </div>
         <div className="pie-legend">
           {categories.map((category, index) => (
-            <div className="legend-row" key={category.category}>
-              <span className="legend-swatch" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+            <div className="legend-row" key={`${category.category}-${index}`}>
+              <span className="legend-swatch" style={{ backgroundColor: CATEGORY_COLORS[category.category] || '#475569' }} />
               <div>
                 <strong>{category.category}</strong>
                 <p className="muted compact-text">{category.totalAmount} ({category.percentage}%)</p>

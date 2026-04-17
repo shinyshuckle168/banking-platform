@@ -11,11 +11,22 @@ function formatTimestamp(value) {
   return parsed.toLocaleString();
 }
 
-function getProcessingState(transaction) {
-  return transaction.processingState || transaction.postingState || transaction.clearingState || transaction.lifecycleState || null;
+function isCreditTransaction(transaction) {
+  return String(transaction.direction || '').toUpperCase() === 'CREDIT';
 }
 
-export function TransactionsTable({ transactions, emptyTitle, emptyMessage }) {
+function supportsCategoryEditing(transaction) {
+  return !isCreditTransaction(transaction);
+}
+
+export function TransactionsTable({
+  transactions,
+  emptyTitle,
+  emptyMessage,
+  categoryOptions = [],
+  onSaveCategory,
+  savingTransactionId
+}) {
   if (!Array.isArray(transactions) || transactions.length === 0) {
     return (
       <div className="panel empty-state stack tight-gap">
@@ -34,33 +45,45 @@ export function TransactionsTable({ transactions, emptyTitle, emptyMessage }) {
             <th>Description</th>
             <th>Type</th>
             <th>Outcome</th>
-            <th>Progress</th>
             <th>Amount</th>
+            <th>Category</th>
             <th>Idempotency Key</th>
           </tr>
         </thead>
         <tbody>
           {transactions.map((transaction) => {
-            const processingState = getProcessingState(transaction);
+            const currentCategory = transaction.category || '';
+            const isCredit = isCreditTransaction(transaction);
+            const canEditCategory = typeof onSaveCategory === 'function' && supportsCategoryEditing(transaction);
+            const isSaving = savingTransactionId === transaction.transactionId;
 
             return (
               <tr key={transaction.transactionId}>
                 <td>{formatTimestamp(transaction.timestamp)}</td>
                 <td>{transaction.description || 'No description'}</td>
-                <td>{transaction.type || 'Unknown'}</td>
+                <td>{transaction.direction || 'Unknown'}</td>
                 <td>
                   <span className={`status-pill ${String(transaction.status || '').toLowerCase() || 'neutral'}`}>
                     {transaction.status || 'Unknown'}
                   </span>
                 </td>
+                <td>{transaction.amount ?? '0.00'}</td>
                 <td>
-                  {processingState ? (
-                    <span className="status-pill pending">{processingState}</span>
+                  {canEditCategory ? (
+                    <select
+                      value={currentCategory}
+                      disabled={isSaving}
+                      onChange={(event) => onSaveCategory(transaction.transactionId, event.target.value)}
+                    >
+                      <option value="No category">No category</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
                   ) : (
-                    <span className="muted compact-text">Not provided</span>
+                    currentCategory || (isCredit ? 'Not applicable for credits' : 'No category')
                   )}
                 </td>
-                <td>{transaction.amount ?? '0.00'}</td>
                 <td>{transaction.idempotencyKey || 'None'}</td>
               </tr>
             );

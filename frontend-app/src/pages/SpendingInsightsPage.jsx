@@ -41,8 +41,63 @@ const INSIGHT_CATEGORIES = [
   'Shopping',
   'Utilities',
   'Health',
-  'Income'
+  'Income',
+  'Other',
+  'No category'
 ];
+
+function toAmount(value) {
+  const amount = Number.parseFloat(value ?? 0);
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function toFixedAmount(value) {
+  return toAmount(value).toFixed(2);
+}
+
+function toPercentageStrings(items) {
+  const total = items.reduce((sum, item) => sum + toAmount(item.totalAmount), 0);
+  if (total <= 0) {
+    return items.map((item) => ({ ...item, percentage: '0.00' }));
+  }
+
+  let runningPercentage = 0;
+  return items.map((item, index) => {
+    if (index === items.length - 1) {
+      return { ...item, percentage: Math.max(0, 100 - runningPercentage).toFixed(2) };
+    }
+
+    const percentage = Number(((toAmount(item.totalAmount) / total) * 100).toFixed(2));
+    runningPercentage += percentage;
+    return { ...item, percentage: percentage.toFixed(2) };
+  });
+}
+
+function applyNoCategoryFallback(items, totalDebitSpend, hasUncategorised) {
+  const totalSpend = toAmount(totalDebitSpend);
+  if (totalSpend <= 0) {
+    return items;
+  }
+
+  const namedSpend = items
+    .filter((item) => item.category !== 'No category')
+    .reduce((sum, item) => sum + toAmount(item.totalAmount), 0);
+  const noCategoryAmount = items
+    .filter((item) => item.category === 'No category')
+    .reduce((sum, item) => sum + toAmount(item.totalAmount), 0);
+  const remainder = Number((totalSpend - namedSpend).toFixed(2));
+
+  if ((!hasUncategorised && remainder <= 0) || remainder <= 0 || remainder === noCategoryAmount) {
+    return items;
+  }
+
+  return items.map((item) => item.category === 'No category'
+    ? {
+        ...item,
+        totalAmount: remainder.toFixed(2)
+      }
+    : item);
+}
 
 function parsePeriod(period) {
   const [yearText, monthText] = String(period || '').split('-');
@@ -93,12 +148,57 @@ function buildEmptyBreakdown() {
   }));
 }
 
+function normalizeCategoryLabel(value) {
+  const text = String(value ?? '').trim();
+  if (!text || text === 'Uncategorised') {
+    return 'No category';
+  }
+
+  return text;
+}
+
+function normalizeCategoryBreakdown(items, totalDebitSpend, hasUncategorised) {
+  const source = Array.isArray(items) ? items : [];
+  const totals = new Map();
+
+  INSIGHT_CATEGORIES.forEach((category) => {
+    totals.set(category, {
+      category,
+      totalAmount: 0,
+      transactionCount: 0
+    });
+  });
+
+  source.forEach((item) => {
+    const category = normalizeCategoryLabel(item.category);
+    const existing = totals.get(category) || {
+      category,
+      totalAmount: 0,
+      transactionCount: 0
+    };
+
+    existing.totalAmount += toAmount(item.totalAmount);
+    existing.transactionCount += Number.parseInt(item.transactionCount ?? 0, 10) || 0;
+    totals.set(category, existing);
+  });
+
+  const normalized = INSIGHT_CATEGORIES.map((category) => {
+    const item = totals.get(category);
+    return {
+      category,
+      totalAmount: toFixedAmount(item?.totalAmount ?? 0),
+      percentage: '0.00',
+      transactionCount: item?.transactionCount ?? 0
+    };
+  });
+
+  return toPercentageStrings(applyNoCategoryFallback(normalized, totalDebitSpend, hasUncategorised));
+}
+
 function normalizeInsights(data, period) {
   const empty = {
     totalDebitSpend: '0.00',
     transactionCount: 0,
-    hasUncategorised: false,
-    hasExcludedDisputes: false,
     dataFresh: true,
     categoryBreakdown: buildEmptyBreakdown(),
     sixMonthTrend: buildEmptySixMonthTrend(period)
@@ -112,7 +212,7 @@ function normalizeInsights(data, period) {
     ...empty,
     ...data,
     categoryBreakdown: Array.isArray(data.categoryBreakdown) && data.categoryBreakdown.length > 0
-      ? data.categoryBreakdown
+      ? normalizeCategoryBreakdown(data.categoryBreakdown, data.totalDebitSpend, data.hasUncategorised)
       : empty.categoryBreakdown,
     sixMonthTrend: Array.isArray(data.sixMonthTrend) && data.sixMonthTrend.length > 0
       ? data.sixMonthTrend
@@ -215,16 +315,6 @@ export function SpendingInsightsPage() {
         <div className="chart-grid">
           <SpendingBarChart entries={chartData.sixMonthTrend} />
           <SpendingPieChart categories={chartData.categoryBreakdown} />
-        </div>
-        <div className="detail-grid">
-          <article className="detail-item">
-            <p className="muted">Uncategorised Transactions</p>
-            <strong>{chartData.hasUncategorised ? 'Yes' : 'No'}</strong>
-          </article>
-          <article className="detail-item">
-            <p className="muted">Excluded Disputes</p>
-            <strong>{chartData.hasExcludedDisputes ? 'Yes' : 'No'}</strong>
-          </article>
         </div>
       </section>
     </div>

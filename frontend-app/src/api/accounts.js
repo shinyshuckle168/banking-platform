@@ -50,7 +50,8 @@ export async function depositToAccount(payload) {
     `/accounts/${payload.accountId}/deposit`,
     {
       amount: payload.amount,
-      description: payload.description || null
+      description: payload.description || null,
+      category: payload.category || null
     },
     {
       headers: {
@@ -66,7 +67,8 @@ export async function withdrawFromAccount(payload) {
     `/accounts/${payload.accountId}/withdraw`,
     {
       amount: payload.amount,
-      description: payload.description || null
+      description: payload.description || null,
+      category: payload.category || null
     },
     {
       headers: {
@@ -84,7 +86,8 @@ export async function transferBetweenAccounts(payload) {
       fromAccountId: payload.fromAccountId,
       toAccountId: payload.toAccountId,
       amount: payload.amount,
-      description: payload.description || null
+      description: payload.description || null,
+      category: payload.category || null
     },
     {
       headers: {

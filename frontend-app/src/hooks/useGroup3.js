@@ -5,7 +5,8 @@ import {
   getMonthlyStatement,
   getSpendingInsights,
   getTransactionHistory,
-  listStandingOrders
+  listStandingOrders,
+  recategoriseTransaction
 } from '../api/group3';
 
 export function useTransactionHistory(filters) {
@@ -51,5 +52,12 @@ export function useSpendingInsights(filters) {
     queryKey: ['spending-insights', filters.accountId, filters.period],
     queryFn: () => getSpendingInsights(filters),
     enabled: Boolean(filters.accountId && filters.period)
+  });
+}
+
+export function useRecategoriseTransaction() {
+  return useMutation({
+    mutationFn: recategoriseTransaction,
+    throwOnError: false
   });
 }
