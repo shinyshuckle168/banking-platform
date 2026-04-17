@@ -36,11 +36,19 @@ export function AuthProvider({ children }) {
       setAuthState((current) => {
         const normalizedCustomerId = String(customerId);
 
+        if (current.customerId === normalizedCustomerId) {
+          return current;
+        }
+
         return { ...current, customerId: normalizedCustomerId };
       });
     },
     clearCustomerId() {
       setAuthState((current) => {
+        if (!current.customerId) {
+          return current;
+        }
+
         if (current.subject) {
           clearRememberedCustomerContext(current.subject);
         }

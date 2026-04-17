@@ -28,7 +28,12 @@ export function CustomerDetailPage() {
   }
 
   useEffect(() => {
-    if (query.data && (isAdmin || !authState.customerId || authState.customerId === String(customerId))) {
+    if (
+      query.data &&
+      customerId &&
+      authState.customerId !== String(customerId) &&
+      (isAdmin || !authState.customerId || authState.customerId === String(customerId))
+    ) {
       rememberCustomerId(customerId);
     }
   }, [authState.customerId, customerId, isAdmin, query.data, rememberCustomerId]);
