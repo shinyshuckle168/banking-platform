@@ -1,695 +1,797 @@
 # Frontend Specification
 
 **Project:** Digital Banking Platform  
+**Contributors:** Lalitha, Sheheyar, Tarunjeet  
 **Frontend Stack:** React 18 · JavaScript · React Router · Axios · React Query  
-**Backend Dependency:** merged banking backend  
-**Current Backend Location:** `/home/kap/fdm_skills_lab/Sprint6/banking-platform/merged-backend`
+**Backend Dependencies:** Unified Banking Backend  
+**Out of Scope for This Spec:** A later standalone transactions microservice, native mobile clients, and non-essential back-office dashboards
+
+---
+
+## Table of Contents
+
+1. [Purpose](#1-purpose)
+2. [Frontend Scope](#2-frontend-scope)
+3. [Supported Backend Capabilities](#3-supported-backend-capabilities)
+4. [User Flows](#4-user-flows)
+5. [Application Routes](#5-application-routes)
+6. [Page Specifications](#6-page-specifications)
+7. [API Integration Contract](#7-api-integration-contract)
+8. [State Management](#8-state-management)
+9. [Validation and Error Handling](#9-validation-and-error-handling)
+10. [Authentication and Authorization Behaviour](#10-authentication-and-authorization-behaviour)
+11. [UI and UX Requirements](#11-ui-and-ux-requirements)
+12. [Testing Expectations](#12-testing-expectations)
+13. [Definition of Done](#13-definition-of-done)
 
 ---
 
 ## 1. Purpose
 
-This document defines the frontend requirements for the standalone React app in `frontend-app`.
+This document defines the frontend requirements for the React application. It is separate from the backend developer specifications and describes how the UI must expose and coordinate:
 
-It reflects two realities that the frontend must support:
+- authentication and customer profile endpoints
+- account, money-movement, transaction history, standing order, statement, and insights endpoints
 
-- the merged backend that is available now for auth, customer, account, deposit, and withdraw journeys
-- the future Group 3 backend contract in `group3-spec.md` on branch `spec/group3-spec`, which the frontend should scaffold against now so those pages can be wired quickly after the backend merge
-
-The currently available merged backend is a single Spring Boot service exposing:
-
-- authentication endpoints under `/api/auth`
-- customer endpoints under `/api/customers`
-- account endpoints under `/customers/*` and `/accounts/*`
-
-This specification replaces the earlier assumption that the frontend would call separate `login-api` and `account-service` applications, and adds frontend scaffolding requirements for these future Group 3 journeys:
-
-- transaction history
-- standing orders
-- monthly statements
-- spending insights
-
-Notifications are explicitly out of scope for this frontend iteration.
+This frontend must provide a coherent authenticated banking experience now, while still leaving room for a future standalone transactions microservice later.
 
 ---
 
-## 2. Current Scope
+## 2. Frontend Scope
 
 ### In Scope
 
-- Public registration and login screens
-- Placeholder password-reset screen
-- Authenticated customer create, read, update, and delete flows
-- Registration-driven customer bootstrap flow that creates the initial customer profile immediately after user registration
-- Account create, read, list, update, delete, deposit, and withdraw flows
-- JWT-based route protection and persisted session state
-- Local customer-context memory in the browser because the backend does not expose a "get my current customer" endpoint
-- Admin-only customer switching on customer profile and customer accounts pages
-- Combined account listing and account creation page per customer
-- Quick account-ID navigation from the overview page for account detail, deposit, and withdraw pages
-- Frontend scaffolding for transaction history with date-range filters, chronological display, status display, inline PDF availability, and export action
-- Frontend scaffolding for standing order list and create flow on an account
-- Frontend scaffolding for monthly statements with year-month input and statement-style transaction rendering
-- Frontend scaffolding for spending insights with a period filter, bar-chart view, and one-month pie-chart view
+- Public authentication screens for registration and login
+- Placeholder-capable screens for password reset request and token refresh support
+- Authenticated customer profile screens for create, read, and update
+- Account screens for create, read, list, update, and delete flows
+- Money movement screens for deposit, withdraw, and transfer
+- JWT-aware route protection and centralized API client behavior
+- Role-aware UI differences for `CUSTOMER` and `ADMIN`
+- Transaction history view with date filtering, category display, and PDF export
+- Transaction recategorisation for DEBIT and TRANSFER transactions
+- Standing order create, list, and cancel flows
+- Monthly statement download (PDF)
+- Spending insights view with category breakdown pie chart and six-month trend bar chart
 
 ### Out of Scope
 
-- Separate microservice targeting for auth and account calls
-- Token refresh API integration because the backend does not expose a refresh endpoint
-- Notifications UI and notification-event evaluation flow for now
-- Production charting/reporting polish beyond the initial scaffolded experience
-- Live Group 3 backend integration before the backend merge exists
+- Native mobile clients
+- Rich internal-admin analytics features unrelated to the documented endpoints
+- Any backend capabilities not documented in the current unified backend API contract
 
 ---
 
-## 3. Backend Reality
+## 3. Supported Backend Capabilities
 
-### Base URL
+The frontend must support these backend capabilities.
 
-- Development backend URL: `http://localhost:8080`
-- Frontend development URL: `http://localhost:5173`
+### Authentication and Customer
 
-### Service Layout
+- User Registration
+- User Login
+- Password Reset Request
+- Token Refresh
+- Create Customer
+- Update Customer Profile
+- Get Customer Details
 
-- Single backend application
-- No separate auth service port
-- No separate account service port
+### Accounts and Money Movement
 
-### Public Endpoints
+- Delete Customer
+- Create Account
+- Retrieve Account Details
+- List Customer Accounts
+- Update Account
+- Delete Account
+- Deposit
+- Withdraw
+- Transfer Funds
 
-| Method | Path | Purpose |
+### Transactions, Standing Orders, Statements, and Insights
+
+- Get Transaction History (with optional date range filter)
+- Export Transaction History as PDF
+- Recategorise Transaction (DEBIT/TRANSFER only)
+- Create Standing Order
+- List Standing Orders
+- Cancel Standing Order
+- Download Monthly Statement (PDF)
+- Get Spending Insights (category breakdown + six-month trend)
+
+---
+
+## 4. User Flows
+
+### Flow A — Register then Log In
+
+1. User opens the registration page.
+2. User enters email and password.
+3. Frontend validates required fields before submitting.
+4. Backend returns `201` on success.
+5. On success, user is redirected to login.
+
+### Flow B — Log In and Route to Banking Home
+
+1. User opens the login page.
+2. User enters email and password.
+3. Frontend stores `accessToken`, `refreshToken`, `tokenType`, and `expiresIn`.
+4. Frontend determines whether the user already has a customer profile.
+5. If no customer profile exists, route to customer creation.
+6. If a customer profile exists, route to customer overview and account list.
+
+### Flow C — Create Customer Profile
+
+1. Authenticated user without a customer profile opens the create customer page.
+2. User submits name, address, and customer type.
+3. Backend returns the created customer including `customerId`.
+4. On success, frontend routes to the customer overview.
+
+### Flow D — View and Update Customer Profile
+
+1. Authenticated user opens the customer details page.
+2. Frontend fetches customer data with Bearer authentication.
+3. User may navigate to edit allowed fields.
+4. On successful update, customer data is refreshed.
+
+### Flow E — List Customer Accounts
+
+1. Authenticated user opens the customer banking home.
+2. Frontend calls list accounts for the current `customerId`.
+3. UI renders zero-state, list-state, or error-state.
+
+### Flow F — Create Account
+
+1. Authenticated user opens create account.
+2. User selects `CHECKING` or `SAVINGS`.
+3. User provides initial `balance` plus the account-type-specific field required by the backend contract: `interestRate` for `SAVINGS` or `nextCheckNumber` for `CHECKING`.
+4. On success, frontend routes to account details.
+
+### Flow G — View Account Details
+
+1. Authenticated user opens an account details page.
+2. Frontend fetches account data and surfaces allowed actions based on role and account type.
+
+### Flow H — Update Account
+
+1. Authenticated user opens account edit.
+2. For `SAVINGS`, frontend exposes `interestRate`.
+3. For `CHECKING`, frontend exposes only fields that the current backend contract allows.
+4. On success, frontend refreshes account details.
+
+### Flow I — Delete Account
+
+1. `ADMIN` user opens account details.
+2. If balance is `0.00`, UI allows delete confirmation.
+3. On success, frontend removes the account from active views and refreshes the account list.
+
+### Flow J — Deposit Funds
+
+1. Authenticated user opens deposit action for an eligible account.
+2. User submits `amount` and optional `description`.
+3. Frontend generates and sends an `Idempotency-Key`.
+4. On success, balance and relevant account queries refresh.
+
+### Flow K — Withdraw Funds
+
+1. Authenticated user opens withdraw action.
+2. User submits `amount` and optional `description`.
+3. Frontend sends an `Idempotency-Key`.
+4. Success or failure is shown without duplicate client re-submission side effects.
+
+### Flow L — Transfer Funds
+
+1. Authenticated user opens transfer action.
+2. User enters `fromAccountId`, `toAccountId`, `amount`, and optional `description`.
+3. Frontend sends an `Idempotency-Key`.
+4. On success, source and destination balances are refreshed.
+
+### Flow M — Delete Customer
+
+1. `ADMIN` user opens customer details.
+2. UI allows delete only as an admin action.
+3. If the customer has active accounts, the backend returns `409` and the UI shows the business constraint.
+
+### Flow N — Password Reset Request
+
+1. User opens the password reset request page.
+2. User enters email.
+3. Frontend submits the request when the backend endpoint becomes available.
+4. UI shows a generic success response regardless of whether the email exists.
+
+### Flow O — Token Refresh
+
+1. Frontend detects an expired access token.
+2. Frontend attempts a refresh using the refresh token.
+3. If refresh succeeds, the original request may be retried once.
+4. If refresh fails, the user is logged out and redirected to login.
+
+---
+
+## 5. Application Routes
+
+The React application should provide at least these routes.
+
+| Route | Access | Purpose |
 |---|---|---|
-| `POST` | `/api/auth/register` | Register a user |
-| `POST` | `/api/auth/login` | Log in and receive JWT tokens |
+| `/` | Public | Landing page or auth redirect |
+| `/register` | Public | User registration |
+| `/login` | Public | User login |
+| `/password-reset` | Public | Password reset request |
+| `/customer/create` | Authenticated | Create customer profile |
+| `/customer/:customerId` | Authenticated | Customer details |
+| `/customer/:customerId/edit` | Authenticated | Update customer profile |
+| `/customer/:customerId/accounts` | Authenticated | List customer accounts |
+| `/customer/:customerId/accounts/create` | Authenticated | Create account |
+| `/accounts/:accountId` | Authenticated | Account details |
+| `/accounts/:accountId/edit` | Authenticated | Update account |
+| `/accounts/:accountId/deposit` | Authenticated | Deposit funds |
+| `/accounts/:accountId/withdraw` | Authenticated | Withdraw funds |
+| `/accounts/transfer` | Authenticated | Transfer funds |
+| `/accounts/:accountId/transactions` | Authenticated | Transaction history |
+| `/accounts/:accountId/standing-orders` | Authenticated | Standing orders |
+| `/accounts/:accountId/statements` | Authenticated | Monthly statement download |
+| `/accounts/:accountId/insights` | Authenticated | Spending insights |
 
-### Protected Customer Endpoints
+Notes:
 
-| Method | Path | Purpose |
+- Customer users should land on their own customer overview or account list after login.
+- Admin users may navigate across customer and account resources beyond their own ownership scope.
+- Admin-only delete actions may be surfaced inside the relevant details pages rather than separate routes.
+
+---
+
+## 6. Page Specifications
+
+## 6.1 Registration Page
+
+### Purpose
+
+Collect email and password and register a new user.
+
+### Fields
+
+- `username`
+- `password`
+
+### Success Behaviour
+
+- Show confirmation and redirect to login.
+
+### Error Behaviour
+
+- Show duplicate-user error for `USER_ALREADY_EXISTS`.
+
+---
+
+## 6.2 Login Page
+
+### Purpose
+
+Authenticate the user and obtain JWT tokens.
+
+### Fields
+
+- `username`
+- `password`
+
+### Success Behaviour
+
+- Persist tokens.
+- Bootstrap authenticated application state.
+- Route user into customer/account area.
+
+### Error Behaviour
+
+- Show generic invalid credentials messaging.
+
+---
+
+## 6.3 Password Reset Request Page
+
+### Purpose
+
+Support the future password reset endpoint without requiring route redesign later.
+
+### Fields
+
+- `username`
+
+---
+
+## 6.4 Customer Create Page
+
+### Fields
+
+- `name`
+- `address`
+- `type` with values `PERSON` or `COMPANY`
+
+### Success Behaviour
+
+- Redirect to customer details or customer banking home.
+
+---
+
+## 6.5 Customer Details Page
+
+### Data Display
+
+- `customerId`
+- `name`
+- `address`
+- `type`
+- `createdAt`
+- `updatedAt`
+- summary entry point to customer accounts
+
+### Actions
+
+- Edit customer
+- View accounts
+- Admin-only delete customer
+- Log out
+
+---
+
+## 6.6 Customer Edit Page
+
+### Editable Fields
+
+- `name`
+- `address`
+
+### Non-Editable Fields
+
+- `customerId`
+- `type` if the backend does not permit change
+- system timestamps
+
+---
+
+## 6.7 Account List Page
+
+### Purpose
+
+Show all active accounts for a customer.
+
+### Data Display
+
+- `accountId`
+- `accountType`
+- `status`
+- `balance`
+- `interestRate` when relevant
+- `nextCheckNumber` when relevant
+- `updatedAt`
+
+### States
+
+- Empty-state when customer has zero accounts
+- Standard list-state
+- Auth or ownership failure state
+
+---
+
+## 6.8 Account Create Page
+
+### Fields
+
+- `accountType`
+- `balance`
+- `interestRate` for `SAVINGS` only
+- `nextCheckNumber` for `CHECKING` only
+
+### Dynamic Behaviour
+
+- If `accountType=CHECKING`, `interestRate` must be hidden or disabled and `nextCheckNumber` must be required.
+- If `accountType=SAVINGS`, `interestRate` must be required and `nextCheckNumber` must be hidden or disabled.
+
+---
+
+## 6.9 Account Details Page
+
+### Data Display
+
+- `accountId`
+- `accountType`
+- `status`
+- `balance`
+- `interestRate` when present
+- `nextCheckNumber` when present
+- `createdAt`
+- `updatedAt`
+
+### Actions
+
+- Edit account when allowed
+- Deposit
+- Withdraw
+- Transfer
+- Admin-only delete account
+
+---
+
+## 6.10 Account Edit Page
+
+### Purpose
+
+Expose only fields that are mutable for the existing account type.
+
+### Editable Fields
+
+- `interestRate` for `SAVINGS`
+- `nextCheckNumber` for `CHECKING`
+
+### Non-Editable Fields
+
+- `accountId`
+- `customerId`
+- `accountType`
+- `balance`
+- timestamps
+
+### Dynamic Behaviour
+
+- For `CHECKING`, the page must expose `nextCheckNumber` only.
+- For `SAVINGS`, the page must expose `interestRate` only.
+- The frontend must not submit unsupported fields.
+
+---
+
+## 6.11 Deposit Page or Modal
+
+### Fields
+
+- `amount`
+- `description`
+
+### Behaviour
+
+- Generate a fresh `Idempotency-Key` for each new logical submit.
+- Disable duplicate submit while request is in flight.
+
+---
+
+## 6.12 Withdraw Page or Modal
+
+### Fields
+
+- `amount`
+- `description`
+
+### Behaviour
+
+- Generate and send `Idempotency-Key`.
+- Surface insufficient funds as a business conflict, not a generic crash.
+
+---
+
+## 6.13 Transfer Page
+
+### Fields
+
+- `fromAccountId`
+- `toAccountId`
+- `amount`
+- `description`
+
+### Behaviour
+
+- Prevent obviously invalid same-account submissions on the client.
+- Send `Idempotency-Key` with the request.
+
+---
+
+## 6.14 Admin Delete Actions
+
+### Customer Delete
+
+- Available only to `ADMIN`.
+- Confirm destructive action before submit.
+- If active accounts exist, show the backend `409` constraint message.
+
+### Account Delete
+
+- Available only to `ADMIN`.
+- Warn that only zero-balance accounts can be deleted.
+
+---
+
+## 7. API Integration Contract
+
+The frontend must integrate with the unified backend service.
+
+| Method | Endpoint | Frontend Use |
 |---|---|---|
+| `POST` | `/api/auth/register` | Registration submit |
+| `POST` | `/api/auth/login` | Login submit |
+| `POST` | `/api/auth/password-reset` | Password reset request |
+| `POST` | `/api/auth/refresh` | Token refresh |
 | `POST` | `/api/customers` | Create customer profile |
-| `GET` | `/api/customers/{customerId}` | Get customer |
-| `PATCH` | `/api/customers/{customerId}` | Update customer |
-| `GET` | `/api/customers` | Admin-only customer list |
-| `DELETE` | `/api/customers/{customerId}` | Admin-only customer delete |
-
-### Protected Account Endpoints
-
-| Method | Path | Purpose |
-|---|---|---|
+| `PATCH` | `/api/customers/{customerId}` | Update customer profile |
+| `GET` | `/api/customers/{customerId}` | Get customer details |
+| `DELETE` | `/customers/{customerId}` | Admin delete customer |
 | `POST` | `/customers/{customerId}/accounts` | Create account |
+| `GET` | `/accounts/{accountId}` | Get account details |
 | `GET` | `/customers/{customerId}/accounts` | List customer accounts |
-| `GET` | `/accounts/{accountId}` | Get account |
 | `PUT` | `/accounts/{accountId}` | Update account |
-| `DELETE` | `/accounts/{accountId}` | Delete account if balance is zero |
-| `POST` | `/accounts/{accountId}/deposit` | Deposit funds with idempotency support |
-| `POST` | `/accounts/{accountId}/withdraw` | Withdraw funds with idempotency support |
-
-### Planned Group 3 Endpoints For Future Merge
-
-These routes are not available from the current merged backend yet, but the frontend scaffold should be designed around them.
-
-| Method | Path | Purpose |
-|---|---|---|
-| `GET` | `/accounts/{accountId}/transactions` | Retrieve transaction history for a date range |
-| `GET` | `/accounts/{accountId}/transactions/export` | Export transaction history PDF |
+| `DELETE` | `/accounts/{accountId}` | Admin delete account |
+| `POST` | `/accounts/{accountId}/deposit` | Deposit funds |
+| `POST` | `/accounts/{accountId}/withdraw` | Withdraw funds |
+| `POST` | `/accounts/transfer` | Transfer funds |
+| `GET` | `/accounts/{accountId}/transactions` | Transaction history |
+| `GET` | `/accounts/{accountId}/transactions/export` | Export transactions as PDF |
+| `PUT` | `/accounts/{accountId}/transactions/{transactionId}/category` | Recategorise transaction |
 | `POST` | `/accounts/{accountId}/standing-orders` | Create standing order |
 | `GET` | `/accounts/{accountId}/standing-orders` | List standing orders |
 | `DELETE` | `/standing-orders/{standingOrderId}` | Cancel standing order |
-| `GET` | `/accounts/{accountId}/statements/{period}` | Retrieve monthly statement |
-| `GET` | `/accounts/{accountId}/insights` | Retrieve spending insights |
-| `PUT` | `/accounts/{accountId}/transactions/{transactionId}/category` | Recategorise a transaction |
+| `GET` | `/accounts/{accountId}/statements/{period}` | Download monthly statement PDF |
+| `GET` | `/accounts/{accountId}/insights` | Get spending insights |
 
-### Known Runtime Limitation In The Current Merged Backend
+### Base Rules
 
-- Freshly authenticated deposit and withdraw requests are currently rejected by the backend with `Authenticated user not found` or `Authentication required`.
-- The frontend should surface that failure clearly rather than presenting a vague generic error.
+- Protected requests must include `Authorization: Bearer <accessToken>`.
+- Public auth requests must not require a Bearer token.
+- The API client must be centralized.
+- The frontend must support a configurable base URL per environment.
+- Money-movement requests must include an `Idempotency-Key` header.
 
-### Disabled or Missing Backend Capabilities
+### Expected Response Models
 
-| Capability | Status | Frontend Handling |
-|---|---|---|
-| Password reset API | Not implemented | Placeholder page only |
-| Refresh token API | Not implemented | No automatic refresh flow |
-| Next check number | Not implemented | No UI support |
-| Current-customer lookup by token | Not implemented | Browser stores last known `customerId` |
-
----
-
-## 4. Data Contracts
-
-### Registration Request
-
-Frontend registration is a two-step orchestration:
-
-1. `POST /api/auth/register` with credentials
-2. `POST /api/auth/login` with the same credentials
-3. `POST /api/customers` with the collected customer profile using the returned access token
-
-The registration form therefore collects both auth fields and the initial customer profile fields.
+#### Login
 
 ```json
 {
-  "username": "user@example.com",
-  "password": "PassWord123!",
-  "name": "Jane Doe",
-  "address": "123 Main St",
-  "type": "PERSON"
-}
-```
-
-### Register API Request
-
-```json
-{
-  "username": "user@example.com",
-  "password": "PassWord123!"
-}
-```
-
-### Registration Response
-
-```json
-{
-  "userId": "uuid",
-  "username": "user@example.com",
-  "roles": ["CUSTOMER"],
-  "externalSubjectId": null,
-  "customerId": null,
-  "isActive": true,
-  "createdAt": "2026-04-09T12:00:00Z"
-}
-```
-
-### Login Response
-
-```json
-{
-  "accessToken": "jwt",
-  "refreshToken": "jwt",
+  "accessToken": "string",
+  "refreshToken": "string",
   "tokenType": "Bearer",
   "expiresIn": 3600
 }
 ```
 
-### Customer Request
+#### Customer
 
 ```json
 {
+  "customerId": 42,
   "name": "Jane Doe",
-  "address": "123 Main St",
-  "type": "PERSON"
-}
-```
-
-### Customer Response
-
-```json
-{
-  "customerId": 1,
-  "name": "Jane Doe",
-  "address": "123 Main St",
+  "address": "123 Main St, Toronto, ON",
   "type": "PERSON",
   "accounts": [],
-  "createdAt": "2026-04-09T12:00:00Z",
-  "updatedAt": "2026-04-09T12:00:00Z"
+  "createdAt": "2026-04-07T10:00:00Z",
+  "updatedAt": "2026-04-07T10:00:00Z"
 }
 ```
 
-### Account Create Request
+#### Account
 
 ```json
 {
-  "accountType": "SAVINGS",
-  "balance": "100.00",
-  "interestRate": "0.0500"
-}
-```
-
-### Account Response
-
-```json
-{
-  "accountId": 100001,
-  "customerId": 1,
-  "accountType": "SAVINGS",
+  "accountId": 1001,
+  "accountType": "CHECKING",
   "status": "ACTIVE",
-  "balance": "100.00",
-  "interestRate": "0.0500",
-  "createdAt": "2026-04-09T12:00:00Z",
-  "updatedAt": "2026-04-09T12:00:00Z"
+  "balance": "125.00",
+  "interestRate": null,
+  "nextCheckNumber": 1201,
+  "createdAt": "2026-04-07T10:00:00Z",
+  "updatedAt": "2026-04-07T10:00:00Z"
 }
 ```
 
-### Error Response
+#### Error
 
 ```json
 {
-  "code": "ERROR_CODE",
-  "message": "Human-readable message",
-  "field": null
-}
-```
-
-### Planned Transaction History Response
-
-```json
-{
-  "accountId": 100001,
-  "startDate": "2026-03-01T00:00:00Z",
-  "endDate": "2026-03-31T23:59:59Z",
-  "transactionCount": 3,
-  "transactions": [
-    {
-      "transactionId": 901,
-      "amount": "45.50",
-      "type": "WITHDRAW",
-      "status": "SUCCESS",
-      "timestamp": "2026-03-04T09:30:00Z",
-      "description": "Groceries",
-      "idempotencyKey": "uuid"
-    }
-  ]
-}
-```
-
-### Planned Standing Order Create Request
-
-```json
-{
-  "payeeAccount": "GB82WEST12345698765432",
-  "payeeName": "Hydro Utility",
-  "amount": "120.00",
-  "frequency": "MONTHLY",
-  "startDate": "2026-05-01T09:00:00Z",
-  "endDate": "2026-12-01T09:00:00Z",
-  "reference": "HYDRO2026"
-}
-```
-
-### Planned Standing Order Response
-
-```json
-{
-  "standingOrderId": "uuid",
-  "sourceAccountId": 100001,
-  "payeeAccount": "GB82WEST12345698765432",
-  "payeeName": "Hydro Utility",
-  "amount": "120.00",
-  "frequency": "MONTHLY",
-  "startDate": "2026-05-01T09:00:00Z",
-  "endDate": "2026-12-01T09:00:00Z",
-  "reference": "HYDRO2026",
-  "status": "ACTIVE",
-  "nextRunDate": "2026-05-01T09:00:00Z",
-  "message": "Standing order created"
-}
-```
-
-### Planned Monthly Statement Response
-
-```json
-{
-  "accountId": 100001,
-  "period": "2026-03",
-  "openingBalance": "1000.00",
-  "closingBalance": "875.25",
-  "totalMoneyIn": "500.00",
-  "totalMoneyOut": "624.75",
-  "transactions": [],
-  "versionNumber": 1,
-  "correctionSummary": null,
-  "generatedAt": "2026-04-01T00:30:00Z"
-}
-```
-
-### Planned Spending Insights Response
-
-```json
-{
-  "accountId": 100001,
-  "period": {
-    "year": 2026,
-    "month": 3,
-    "isComplete": true
-  },
-  "totalDebitSpend": "624.75",
-  "transactionCount": 12,
-  "hasUncategorised": false,
-  "hasExcludedDisputes": false,
-  "dataFresh": true,
-  "categoryBreakdown": [
-    {
-      "category": "Food & Drink",
-      "totalAmount": "210.00",
-      "percentage": "33.61"
-    }
-  ],
-  "topTransactions": [],
-  "sixMonthTrend": []
+  "code": "string",
+  "message": "string",
+  "field": "string | null"
 }
 ```
 
 ---
 
-## 5. Frontend Routes
+## 8. State Management
 
-| Route | Access | Status | Notes |
-|---|---|---|---|
-| `/` | Public | Active | Landing page and authenticated jump-off page |
-| `/register` | Public | Active | Register against `/api/auth/register` |
-| `/login` | Public | Active | Login against `/api/auth/login` |
-| `/password-reset` | Public | Placeholder | No backend endpoint yet |
-| `/customer/create` | Authenticated | Fallback | Only needed when an authenticated user still has no linked customer |
-| `/customer` | Authenticated | Active | Admin customer-selection entry for the customer profile page |
-| `/customer/:customerId` | Authenticated | Active | View customer |
-| `/customer/:customerId/edit` | Authenticated | Active | Edit customer |
-| `/customer/:customerId/accounts` | Authenticated | Active | List accounts and create account on one page |
-| `/customer/:customerId/accounts/create` | Authenticated | Redirect | Redirects to the combined accounts page |
-| `/accounts/:accountId` | Authenticated | Active | View account |
-| `/accounts/:accountId/edit` | Authenticated | Active | Alternate route for account edit context |
-| `/accounts/:accountId/deposit` | Authenticated | Active | Deposit funds with idempotency key |
-| `/accounts/:accountId/withdraw` | Authenticated | Active | Withdraw funds with idempotency key |
-| `/accounts/:accountId/transactions` | Authenticated | Planned scaffold | Transaction history with date pickers, status display, and export action |
-| `/accounts/:accountId/standing-orders` | Authenticated | Planned scaffold | Standing order list with create form above it |
-| `/accounts/:accountId/statements` | Authenticated | Planned scaffold | Monthly statement lookup by year and month |
-| `/accounts/:accountId/insights` | Authenticated | Planned scaffold | Spending insights charts for a selected period |
-| `/accounts/transfer` | Authenticated | Deprecated redirect | Redirects to `/` because the dedicated transfer page is no longer exposed in this frontend |
+### Transaction and Insights Behaviour
 
----
+- Transaction category display follows these rules:
+  - CREDIT transactions display "Not applicable for credits" and are not editable.
+  - DEBIT and TRANSFER transactions with no category display "No category" and may be recategorised via a dropdown.
+  - Valid categories: Housing, Transport, Food & Drink, Entertainment, Shopping, Utilities, Health, Income, Other, No category.
+- Spending insights pie chart derives slice widths from `totalAmount` values, not the backend `percentage` field. Each category has a stable named colour. Only categories with non-zero spend are shown.
+- Percentages across all visible categories must sum to exactly 100; the last slice absorbs any rounding remainder.
+- CREDIT transactions do not contribute to spending insights totals. Only DEBIT and TRANSFER transactions are eligible.
+- The six-month trend bar chart always renders all six months; months with no spend show zero bars.
 
-## 6. Session and Routing Rules
+### Minimum Recommended Approach
 
-### Authentication
+- React Router for routes and guards
+- Axios for HTTP transport
+- React Query for request lifecycle, caching, and mutation states
+- Local React state for forms and modal state
 
-- Store `accessToken`, `refreshToken`, `tokenType`, `expiresIn`, decoded `sub`, decoded `roles`, and last known `customerId` in local storage.
-- Persist a customer-context mapping keyed by JWT `sub` so returning customer users regain their linked customer context after logout and login on the same browser.
-- Synchronize that `sub` to `customerId` mapping whenever the settled authenticated state contains both values, so registration and later logins stay linked reliably.
-- Attach `Authorization: Bearer <accessToken>` to protected requests.
-- Treat backend authorization as the source of truth.
+### Auth State
 
-### Default Authenticated Routing
+The frontend should track at minimum:
 
-- If the authenticated user has an admin role, send them to `/customer` so customer selection happens from the customer profile page itself.
-- If the app has a remembered `customerId`, send the user to `/customer/{customerId}`.
-- If the app does not have a remembered `customerId`, send the user to `/` rather than forcing customer creation.
+- `accessToken`
+- `refreshToken`
+- decoded token metadata such as `sub`, `roles`, and `exp`
+- current `customerId` when known
 
-This matters because the backend does not expose a "get my customer profile by token" endpoint. A returning user may already have a customer record even when the browser has lost local context.
+### Domain State
 
-### Customer Context Rules
+The frontend should also manage:
 
-- When registration finishes its customer-bootstrap sequence, remember the created `customerId` locally.
-- When customer create succeeds from the fallback customer-create page, remember `customerId` locally.
-- When customer fetch succeeds, remember `customerId` locally.
-- When a customer user logs back in on the same browser, restore their remembered customer context from the persisted `sub` to `customerId` mapping.
-- When an admin switches customer from the profile or accounts page, update the remembered `customerId` to the selected customer.
-- When the currently remembered customer is deleted, clear local `customerId`.
+- current customer profile
+- account list by `customerId`
+- account detail by `accountId`
+- mutation states for deposit, withdraw, transfer, delete, and update operations
+
+### Cache Rules
+
+- Customer details should be cached by `customerId`.
+- Customer account lists should be cached by `customerId`.
+- Account details should be cached by `accountId`.
+- Successful mutations must invalidate or refresh affected customer and account queries.
 
 ---
 
-## 7. Page-Level Behaviour
+## 9. Validation and Error Handling
 
-### Registration Page
+### Client-Side Validation
 
-- Accept `username`, `password`, `name`, `address`, and `type`.
-- Validate email shape on the client.
-- Require password, name, and address before submit.
-- Submit the auth registration request, then log in automatically, then create the customer profile, then route directly to the new customer profile.
-- Use backend enum values:
-  - `PERSON`
-  - `COMPANY`
+- Validate required fields before submit.
+- Validate email format on registration and login.
+- Validate password presence on login and agreed complexity on registration.
+- Validate customer type values.
+- Validate account type values.
+- Validate monetary amounts as positive numbers with up to two decimal places.
+- Validate `interestRate` as non-negative with up to four decimal places when applicable.
+- Validate `nextCheckNumber` as a whole number greater than or equal to `0` when applicable.
+- Prevent `fromAccountId` and `toAccountId` from being equal on transfer.
 
-### Login Page
+### Server Error Handling
 
-- Accept `username` and `password`.
-- Persist login response and decoded JWT metadata.
-- Restore any previously remembered customer context for the authenticated `sub` before deciding the post-login fallback route.
-- Redirect to the originally requested protected route if present.
-- Otherwise route to remembered customer profile or `/`.
+The UI must map backend errors into user-readable states without exposing internal internals.
 
-### Home Page
+| Error Code or Condition | Frontend Behaviour |
+|---|---|
+| `USER_ALREADY_EXISTS` | Show duplicate registration error |
+| `INVALID_CREDENTIALS` | Show generic login failure |
+| `ACCOUNT_INACTIVE` | Show inactive account message |
+| `UNAUTHORISED` or `401` | Redirect to login or show access denied depending on context |
+| `SESSION_EXPIRED` | Attempt refresh once, then log out on failure |
+| `FIELD_NOT_UPDATABLE` | Show immutable-field warning |
+| `MISSING_REQUIRED_FIELD` | Show field or form validation message |
+| `ACCOUNT_NOT_FOUND` or `404` | Show missing account state |
+| `CUSTOMER_NOT_FOUND` or `404` | Show missing customer state |
+| `409` insufficient funds | Show business conflict message and keep current visible balance until refetch |
+| `409` active accounts on delete | Show delete-blocked state for customer deletion |
+| `409` non-zero balance on delete | Show delete-blocked state for account deletion |
+| `422` invalid amount | Show inline amount error |
+| `422` invalid `interestRate` | Show inline rate error |
+| `422` invalid `nextCheckNumber` | Show inline check number error |
 
-- Show session summary and quick navigation for authenticated and unauthenticated users.
-- For admins, allow opening any customer or account by ID from the overview page.
-- For authenticated users, expose quick-navigation buttons for account detail, deposit, and withdraw when an account ID is entered.
-- For authenticated users, also expose quick-navigation entry points for transaction history, standing orders, monthly statements, and spending insights for a chosen account.
-- Keep the fallback customer-create link available when no remembered customer context exists.
+### Idempotency UX Rules
 
-### Password Reset Page
-
-- Remains in the app as a placeholder page.
-- Must explain that the backend does not currently expose the endpoint.
-
-### Customer Create Page
-
-- Send `name`, `address`, and `type`.
-- Use backend enum values:
-  - `PERSON`
-  - `COMPANY`
-- On success, store `customerId` and route to customer details.
-- Keep this page available as a fallback flow for authenticated users who still do not have a linked customer context.
-
-### Customer Detail Page
-
-- Expose `/customer` as the admin entry point for selecting which customer profile to open.
-- Show `customerId`, `name`, `address`, and `type`.
-- Show `Edit Customer` and `Accounts` actions below the profile details instead of beside the header.
-- If the current user is an admin, show a customer switcher populated from `GET /api/customers` and route to the selected customer profile.
-- If an admin opens the customer profile page without a selected customer, show the switcher and a selection prompt instead of requiring the overview page first.
-- If the current user is not an admin, do not show a customer switcher.
-- Show delete only for admin users.
-
-### Customer Edit Page
-
-- Allow editing `name`, `address`, and `type`.
-- Use backend enum values `PERSON` and `COMPANY`.
-- Refresh customer data after successful update.
-
-### Customer Accounts Page
-
-- List customer accounts from `GET /customers/{customerId}/accounts`.
-- If the backend responds with a generic customer-not-found error for a deleted customer, translate it in the UI to a clearer deleted-or-unavailable customer message.
-- Show empty state if no active accounts are returned.
-- Include the account-create form on the same page.
-- Show per-account actions for detail, deposit, and withdraw directly in the account list.
-- Show per-account actions for transaction history, standing orders, monthly statement, and spending insights directly in the account list so the Group 3 scaffold is discoverable without going through account detail first.
-- Keep account-list actions compact, including quick links for deposit, withdraw, transaction history, standing orders, monthly statement, and spending insights.
-- Allow `CHECKING` and `SAVINGS`.
-- Always require `balance`.
-- Only submit `interestRate` for `SAVINGS`.
-- If the current user is an admin, show a customer switcher populated from `GET /api/customers` and route to the selected customer accounts page.
-- If the current user is not an admin, do not show a customer switcher.
-
-### Account Detail Page
-
-- Show account core fields including `accountId`, `customerId`, `status`, `balance`, and `interestRate` when present.
-- Allow deposit and withdraw navigation.
-- Expose a transfer-funds button from account detail as a quick action.
-- Include a statement-month picker in account detail so users can launch monthly statements with a preselected period.
-- Expose quick links for transaction history, standing orders, monthly statement, and spending insights from account detail.
-- Allow account deletion when the user can access the account and the balance is zero.
-- After account deletion succeeds, route back to the customer accounts page and show a success banner indicating that the account was deleted.
-- If the backend responds with a generic account-not-found error for a deleted account, translate it in the UI to a clearer deleted-or-unavailable account message.
-- Explain that savings accounts are the only type with a mutable field in the current backend.
-
-### Deposit and Withdraw Pages
-
-- Submit to `/accounts/{accountId}/deposit` and `/accounts/{accountId}/withdraw`.
-- Require an idempotency key.
-- Render the updated account payload and transaction payload after success.
-- When the backend responds with `Authenticated user not found` or `Authentication required`, show a clear backend-auth-failure message rather than a generic error.
-
-### Transaction History Page
-
-- Route: `/accounts/:accountId/transactions`.
-- Render a date-range form with separate start-date and end-date pickers.
-- Default the UI to the last 28 days when the user has not chosen a range yet.
-- Do not auto-request history on first render; request only after the user clicks `Apply Range`.
-- Request history in a way that preserves the backend ordering contract, but also render clearly with pending entries visually separated from posted or final entries.
-- Display transaction timestamp, description, type, amount, success-or-failed status, and a separate pending-or-posted state badge when the backend provides that distinction.
-- Keep the list chronological within each backend status grouping.
-- Expose an `Export PDF` action that uses the same selected range.
-- Surface empty-state messaging when no transactions exist for the selected period.
-- If the backend later exposes a freshness indicator, reserve space for a non-blocking stale-data banner.
-
-### Standing Orders Page
-
-- Route: `/accounts/:accountId/standing-orders`.
-- Render the create-standing-order form above the existing orders list.
-- Collect `payeeAccount`, `payeeName`, `amount`, `frequency`, `startDate`, optional `endDate`, and `reference`.
-- Render current standing orders with `payeeName`, `amount`, `frequency`, `status`, `nextRunDate`, `startDate`, and `endDate`.
-- Expose per-row cancellation for orders that are not already cancelled, locked, or terminated.
-- Show a clear message when cancellation is blocked by the 24-hour processing lock.
-- Preserve room in the UI for backend states such as `LOCKED` and `TERMINATED` even if the first scaffold is read-only against mock data.
-
-### Monthly Statement Page
-
-- Route: `/accounts/:accountId/statements`.
-- Use a numeric Year input and Month dropdown selector that combine into `YYYY-MM` rather than a start and end date range.
-- Do not auto-request statements on first render; request only after the user clicks `Load Statement`.
-- Keep the statement layout intentionally close to transaction history so the user sees familiar transaction rendering.
-- Display opening balance, closing balance, total money in, total money out, version number, correction summary when present, and generated timestamp.
-- Render the full transaction list for the selected period, including both success and failed outcomes.
-- Show dedicated states for period not closed yet, no statement found, and statement beyond self-service retention.
-
-### Spending Insights Page
-
-- Route: `/accounts/:accountId/insights`.
-- Provide a numeric Year input and Month dropdown selector that combine into `YYYY-MM` for backend insights requests.
-- Do not auto-request insights on first render; request only after the user clicks `Load Insights`.
-- Render a vertical bar chart (column style with height-based bars) for the six-month trend returned by the backend.
-- Render a pie chart for the selected month category breakdown without an inner ring treatment.
-- Display summary metrics such as total debit spend, transaction count, uncategorised flag, and data freshness.
-- When backend insights are unavailable, show a clearly labeled mock-data preview so chart layout and page behavior remain testable.
-- Ensure mock insights remain internally consistent: if an uncategorised category bucket is present, the uncategorised summary indicator should report `Yes`.
-- Keep the page scaffold compatible with later support for recategorising transactions, but do not prioritize that interaction in the first UI pass unless implementation needs it.
-- Treat deposits as excluded from charts because the backend insight contract is debit-spend only.
-
-### Notifications
-
-- Do not add notification pages, badges, or evaluation UI in this iteration.
-- Future backend notification events may be consumed later, but they should not influence current navigation or layout decisions.
+- The client must generate a new idempotency key for each new logical deposit, withdraw, or transfer submission.
+- The client must not regenerate the key while retrying the same logical request due to a transient network issue.
+- The UI should disable repeat-click duplicates while a mutation is pending.
 
 ---
 
-## 8. Validation Rules
+## 10. Authentication and Authorization Behaviour
 
-### Client Validation
+### Login Success Handling
 
-- Email must look like an email address on login and registration.
-- Password is required on login and registration.
-- Name and address are required on registration because registration now boots the customer profile.
-- Customer `type` must be one of `PERSON` or `COMPANY`.
-- Account `accountType` must be `CHECKING` or `SAVINGS`.
-- `interestRate` is relevant only for `SAVINGS`.
-- Deposit and withdraw require an idempotency key.
-- Transaction history filters must not allow a date range longer than 366 days.
-- Standing order `frequency` must be one of `DAILY`, `WEEKLY`, `MONTHLY`, or `QUARTERLY`.
-- Standing order `startDate` must be at least 24 hours in the future.
-- Standing order `endDate`, when provided, must be later than `startDate`.
-- Standing order `reference` must be 1 to 18 alphanumeric characters.
-- Monthly statement lookup must require a valid numeric year and month selection that forms `YYYY-MM`.
-- Spending insights input must require a valid numeric year and month selection that forms `YYYY-MM`.
+- Save tokens after successful login.
+- Decode the access token for non-authoritative UI hints only.
+- Treat the backend as the source of truth for permissions and ownership decisions.
 
-### Backend Constraints the UI Must Respect
+### Route Protection
 
-- `SAVINGS` account create requires `interestRate`.
-- `CHECKING` account create must not include `interestRate`.
-- Account delete only succeeds when balance is exactly zero.
-- Deleted accounts are no longer retrievable through the active account endpoints.
-- Customer delete only succeeds when no active accounts remain.
-- Deleted customers still come back as generic not-found from the current backend, so the frontend must present a clearer deleted-or-unavailable message in the accounts UI.
-- Creating a second customer for a linked user may fail with `CUSTOMER_ALREADY_LINKED`.
-- Withdraw fails when the account balance is lower than the requested amount.
-- Transaction history export requires a valid selected range before enabling the export action.
-- Standing order creation fails when `payeeAccount` is invalid, the order duplicates an active one, or cancellation is attempted within 24 hours of the next run.
-- Monthly statements may return `409` when the selected period is not closed and `410` when the statement is outside the self-service retention window.
-- Spending insights may return `409` when the requested month has not started.
+- Unauthenticated users must not access customer or account routes.
+- `CUSTOMER` users must be routed only to resources they are allowed to manage.
+- `ADMIN` users may access admin-only actions and cross-customer resources.
+
+### UI Authorization Rules
+
+- Customer delete and account delete controls must be rendered only for `ADMIN`.
+- Customer users may see deposit, withdraw, transfer, create account, read account, and allowed update actions only for owned resources.
+- The UI may hide actions the user is clearly not allowed to invoke, but must still handle backend `401` responses correctly.
+
+### Refresh Strategy
+
+- If implemented, retry only once after an expired-token response.
+- If refresh fails, clear tokens and redirect to login.
+
+### Logout
+
+- Clear auth state and cached protected data.
+- Redirect to login.
 
 ---
 
-## 9. Authorization Rules
+## 11. UI and UX Requirements
 
-- All customer and account pages require authentication.
-- Customer delete is admin-only in the UI because the backend restricts it to admins.
-- Admin-only customer switching is available on the customer profile and customer accounts pages.
-- Non-admin users do not get a customer switcher and should navigate using their remembered customer context only.
-- Account delete is not limited to admins in the UI because the backend allows owner-or-admin access subject to the zero-balance rule.
-- Deposit and withdraw must rely on backend ownership checks for the target account.
-- Transaction history relies on `TRANSACTION:READ`.
-- Standing orders rely on `SO:CREATE`, `SO:READ`, and `SO:CANCEL`.
-- Monthly statements rely on `STATEMENT:READ`.
-- Spending insights rely on `INSIGHTS:READ`.
-- Notifications remain out of scope and therefore have no frontend authorization surface yet.
+### General Requirements
 
----
+- The application must be responsive across desktop and laptop viewports.
+- Forms and actions must show loading, success, and error states.
+- Protected routes must not flash protected data before auth checks complete.
+- Submit buttons must be disabled during in-flight mutations.
+- Destructive actions must require confirmation.
 
-## 10. API Client Requirements
+### Accessibility Requirements
 
-### Frontend Networking Model
+- Every form control must have a visible label.
+- Validation errors must be rendered accessibly.
+- Keyboard navigation must be supported throughout the app.
 
-- Use a single backend base URL rather than separate service URLs.
-- In local development, the Vite app proxies these path groups to the merged backend:
-  - `/api`
-  - `/accounts`
-  - `/customers`
-  - `/standing-orders`
+### Design Direction
 
-### Environment Variables
-
-- `VITE_BANKING_API_BASE_URL` for direct frontend-to-backend requests outside dev proxy mode
-- `VITE_BANKING_API_PROXY_TARGET` for local dev proxy target override
-
-Legacy variables such as `VITE_LOGIN_API_BASE_URL` and `VITE_ACCOUNT_SERVICE_BASE_URL` may still be honored for compatibility, but the canonical model is now a single backend.
+- Clean, modern banking UI
+- Clear separation between public auth pages and authenticated banking pages
+- Obvious visual handling for balances, account status, and destructive/admin-only actions
 
 ---
 
-## 11. Testing Expectations
+## 12. Testing Expectations
 
-### Expected Working Flows
+### Unit and Component Tests
 
-- Register user and automatically bootstrap customer profile
-- Login user
-- Create customer from the fallback authenticated flow
-- View customer
-- Update customer
-- Switch customer context as admin from customer profile
-- List customer accounts and create an account from the same page
-- View account
-- Deposit funds with idempotency key
-- Withdraw funds with idempotency key
-- Update savings account interest rate
-- Delete zero-balance account
+- Registration validation and submit states
+- Login token handling
+- Route guard behavior
+- Customer create and update forms
+- Account create and update forms
+- Deposit, withdraw, and transfer form validation
+- Delete confirmation behavior for admin-only actions
 
-### Current Known Failing Flow
+### Integration Tests
 
-- Deposit and withdraw currently fail against the merged backend because the backend money-movement layer is rejecting authenticated requests.
+- Register then login flow
+- Login then create customer flow
+- Login then list accounts flow
+- Create account flow for `CHECKING` and `SAVINGS`
+- Retrieve account details flow
+- Update account flow for mutable fields by account type
+- Deposit flow with idempotency behavior at client level
+- Withdraw flow with insufficient funds error display
+- Transfer flow with same-account validation and success path
+- Admin delete account and delete customer flows
 
-### Planned Scaffold-Only Flows
+### QA Scenarios
 
-- Open transaction history, choose a date range, render list state, and prepare a PDF export action.
-- Open standing orders, view existing orders, and submit the create form.
-- Open monthly statements, choose a year and month, and render statement layout states.
-- Open spending insights, choose a period, and render bar-chart and pie-chart placeholders from mocked or adapter-backed data.
-
-### Expected Placeholder Flows
-
-- Password reset page should render an explanatory message
-- Any Group 3 page may temporarily use mocked data or a local adapter until the backend merge lands, but the route structure and view-model shape must match the future contract defined here.
-
-### Recommended Manual Checks
-
-1. Register a new user and confirm the app lands directly on the created customer profile.
-2. Log out and log back in with the same user.
-3. Create one savings account and one checking account from the combined accounts page.
-4. Deposit into one account and withdraw from another using idempotency keys.
-5. Update the savings account interest rate.
-6. Open the transaction history, standing orders, monthly statements, and insights routes for a known account and confirm the scaffolding renders without depending on notification flows.
-7. If testing as admin, switch between customers from the profile and accounts pages.
+- Missing token blocks all protected routes
+- Ownership failures surface correctly for customer users
+- Empty account list renders as a valid success state
+- Account creation enforces savings/checking field compatibility
+- Account deletion is blocked when balance is non-zero
+- Customer deletion is blocked when active accounts exist
+- Money movement mutations refresh affected balances after success
 
 ---
 
-## 12. Definition of Done
+## 13. Definition of Done
 
-The frontend is considered aligned with the merged backend when:
+The frontend work is complete when all of the following are true:
 
-- The app calls only the backend routes that actually exist.
-- Auth and customer requests no longer target a separate port.
-- Registration creates a customer and updates local customer context in one flow.
-- Customer type values match the backend enums.
-- Customer profile and customer accounts pages expose admin-only customer switching.
-- Customer accounts and account creation live on one page.
-- Deposit and withdraw remain fully operational with idempotency support.
-- The transaction history page supports date pickers, chronological rendering, success or pending display, and PDF export wiring.
-- The standing orders page presents a create form above the order list.
-- The monthly statement page uses a year-month input and statement-style rendering.
-- The spending insights page renders a bar chart for a selected period and a pie chart for one month.
-- Notifications are intentionally absent from the frontend scope for now.
-- The frontend specification matches the implementation and backend constraints.
+- A React application exists with the routes defined in this specification.
+- Registration, login, customer create, customer get, and customer update flows work against the unified backend.
+- Account create, retrieve, list, update, delete, deposit, withdraw, transfer, transaction history, recategorisation, standing orders, monthly statement, and spending insights flows work against the unified backend.
+- CREDIT transactions show "Not applicable for credits" in the category column and cannot be recategorised.
+- Authenticated API access and token handling are centralized.
+- Money-movement requests include idempotency support.
+- Role-aware UI behavior is implemented for `CUSTOMER` and `ADMIN`.
+- Error states from both services are mapped into usable UI states.
+- Tests cover the primary happy paths and critical failure paths.
+- The architecture still leaves room to plug in a future standalone transactions microservice without reworking auth and core banking navigation.
 
 ---
 
-## 13. Local Run Assumptions
+## Future Extension Note
 
-- Backend runs from `banking-platform-merged/banking-platform` on port `8080`.
-- Frontend runs from `banking-platform/frontend-app` on port `5173`.
-- Default local configuration should work without extra environment variables if the backend stays on `8080`.
+If a separate transactions microservice is added later, the React application should integrate it through the same authenticated shell, shared route protection, and centralized API client conventions defined here. Current deposit, withdraw, and transfer UX should therefore be designed as modular features that can be re-pointed or extended without rewriting the app foundation.
