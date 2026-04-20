@@ -1,7 +1,6 @@
 # Frontend Specification
 
 **Project:** Digital Banking Platform  
-**Contributors:** Lalitha, Sheheyar, Tarunjeet  
 **Frontend Stack:** React 18 · JavaScript · React Router · Axios · React Query  
 **Backend Dependencies:** Unified Banking Backend  
 **Out of Scope for This Spec:** A later standalone transactions microservice, native mobile clients, and non-essential back-office dashboards
