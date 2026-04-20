@@ -70,6 +70,8 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setCreatedAt(Instant.now());
         customer.setUpdatedAt(Instant.now());
         Customer savedCustomer = customerRepository.save(customer);
+        user.setCustomerId(savedCustomer.getCustomerId());
+        userRepository.save(user);
         return customerMapper.toResponse(savedCustomer);
     }
 
