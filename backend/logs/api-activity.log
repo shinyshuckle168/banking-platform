@@ -141,3 +141,4 @@
 2026-04-14 16:52:47 INFO  - method=GET, uri=/h2-console/tables.do?jsessionid=a894f115f15bbaf95c050beaf718556c, status=200, durationMs=187
 2026-04-14 17:00:52 INFO  - method=GET, uri=/accounts/1000/insights?year=2026&month=4, status=200, durationMs=3829
 2026-04-14 17:07:28 INFO  - method=PUT, uri=/accounts/1000/transactions/dfb7f1d0-e53b-4384-9e21-2ff10b350429/category, status=200, durationMs=63060
+2026-04-20 16:13:30 INFO  - method=POST, uri=/api/auth/register, status=201, durationMs=11002
