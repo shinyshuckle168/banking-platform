@@ -107,7 +107,7 @@ public class TransactionHistoryService {
         // Check account status
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Account not found", "ERR_ACC_NOT_FOUND"));
+                        "Account not found", "ERR_ACC_NOT_FOUND", null));
 
         if (account.getStatus() == AccountStatus.CLOSED) {
             Instant closedAt = account.getClosedAt();

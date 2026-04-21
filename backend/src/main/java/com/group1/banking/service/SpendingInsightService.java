@@ -76,7 +76,7 @@ public class SpendingInsightService {
         }
 
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND", null));
 
         // Compute month range
         Instant monthStart = requestedMonth.atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -162,7 +162,7 @@ public class SpendingInsightService {
 
         Transaction transaction = transactionQueryRepository.findById(String.valueOf(transactionId))
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Transaction not found: " + transactionId, "ERR_TX_NOT_FOUND"));
+                        "Transaction not found: " + transactionId, "ERR_TX_NOT_FOUND", null));
 
         String previousCategory = transaction.getCategory();
         transaction.setCategory(category);

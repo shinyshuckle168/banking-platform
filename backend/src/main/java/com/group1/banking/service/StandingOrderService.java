@@ -74,7 +74,7 @@ public class StandingOrderService {
        }
  
         Account account = accountRepository.findById(req.getPayeeAccount())
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND", null));
  
         // Validate amount <= dailyTransferLimit
         if (req.getAmount().compareTo(account.getDailyTransferLimit()) > 0) {
@@ -94,7 +94,7 @@ public class StandingOrderService {
         // Validate payeeAccount is an existing internal account
         accountRepository.findByAccountId(req.getPayeeAccount())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Payee account not found in the system", "ERR_PAYEE_NOT_FOUND"));
+                        "Payee account not found in the system", "ERR_PAYEE_NOT_FOUND", null));
  
         // Check for duplicate ACTIVE order
         standingOrderRepository.findBySourceAccountIdAndPayeeAccountAndAmountAndFrequencyAndStatus(
@@ -166,7 +166,7 @@ public class StandingOrderService {
  
         StandingOrderEntity entity = standingOrderRepository.findById(standingOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Standing order not found: " + standingOrderId, "ERR_SO_NOT_FOUND"));
+                        "Standing order not found: " + standingOrderId, "ERR_SO_NOT_FOUND", standingOrderId));
  
         ownershipValidator.assertOwnership(entity.getSourceAccountId(), toLegacyPrincipal(caller));
  

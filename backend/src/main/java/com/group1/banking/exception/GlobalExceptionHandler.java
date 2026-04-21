@@ -34,6 +34,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400)
                 .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getField()));
     }
+    
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+        logger.warn("Resource Not Found. code={}, message={}", ex.getCode(), ex.getMessage());
+
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getField()));
+    }
 
     @ExceptionHandler(UnauthorisedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorised(UnauthorisedException ex) {

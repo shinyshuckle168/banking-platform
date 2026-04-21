@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Standing order execution scheduler. (T054, T055)
@@ -186,6 +187,7 @@ public class StandingOrderExecutionJob {
 
         // Create SUCCESS transaction
         Transaction tx = new Transaction();
+        tx.setTransactionId(UUID.randomUUID().toString());
         tx.setAccount(account);
         tx.setAmount(order.getAmount());
         tx.setDirection(TransactionDirection.TRANSFER);

@@ -77,7 +77,7 @@ public class MonthlyStatementService {
         // Load account
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Account not found", "ERR_ACC_NOT_FOUND"));
+                        "Account not found", "ERR_ACC_NOT_FOUND", null));
 
         // Ownership check
         boolean isAdmin = hasRole(caller, "ADMIN");

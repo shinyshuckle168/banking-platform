@@ -2,9 +2,12 @@ package com.group1.banking.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     private final String code;
-    public ResourceNotFoundException(String message, String code) {
+    private final String field;
+    public ResourceNotFoundException(String message, String code, String field) {
         super(message);
         this.code = code;
+        this.field = field;
     }
     public String getCode() { return code; }
+	public String getField() {return field; }
 }
