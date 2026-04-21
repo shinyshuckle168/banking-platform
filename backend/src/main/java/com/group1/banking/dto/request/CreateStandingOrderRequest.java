@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
  */
 public class CreateStandingOrderRequest {
 
-    @NotBlank(message = "Payee account is required")
-    @Size(max = 34, message = "Payee account must not exceed 34 characters")
-    private String payeeAccount;
+    // @NotBlank(message = "Payee account is required")
+    // @Size(max = 34, message = "Payee account must not exceed 34 characters")
+    private Long payeeAccount;
 
     @NotBlank(message = "Payee name is required")
     @Size(min = 1, max = 70, message = "Payee name must be 1–70 characters")
@@ -34,8 +34,8 @@ public class CreateStandingOrderRequest {
     @Pattern(regexp = "[A-Za-z0-9]+", message = "Reference must be alphanumeric")
     private String reference;
 
-    public String getPayeeAccount() { return payeeAccount; }
-    public void setPayeeAccount(String payeeAccount) { this.payeeAccount = payeeAccount; }
+    public Long getPayeeAccount() { return payeeAccount; }
+    public void setPayeeAccount(Long payeeAccount) { this.payeeAccount = payeeAccount; }
     public String getPayeeName() { return payeeName; }
     public void setPayeeName(String payeeName) { this.payeeName = payeeName; }
     public BigDecimal getAmount() { return amount; }

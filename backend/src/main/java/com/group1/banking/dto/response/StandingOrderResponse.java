@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class StandingOrderResponse {
     private String standingOrderId;
     private Long sourceAccountId;
-    private String payeeAccount;
+    private Long payeeAccount;
     private String payeeName;
     private BigDecimal amount;
     private String frequency;
@@ -24,8 +24,8 @@ public class StandingOrderResponse {
     public void setStandingOrderId(String standingOrderId) { this.standingOrderId = standingOrderId; }
     public Long getSourceAccountId() { return sourceAccountId; }
     public void setSourceAccountId(Long sourceAccountId) { this.sourceAccountId = sourceAccountId; }
-    public String getPayeeAccount() { return payeeAccount; }
-    public void setPayeeAccount(String payeeAccount) { this.payeeAccount = payeeAccount; }
+    public Long getPayeeAccount() { return payeeAccount; }
+    public void setPayeeAccount(Long payeeAccount) { this.payeeAccount = payeeAccount; }
     public String getPayeeName() { return payeeName; }
     public void setPayeeName(String payeeName) { this.payeeName = payeeName; }
     public BigDecimal getAmount() { return amount; }

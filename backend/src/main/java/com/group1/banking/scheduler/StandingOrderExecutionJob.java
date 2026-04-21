@@ -177,6 +177,13 @@ public class StandingOrderExecutionJob {
         account.setBalance(account.getBalance().subtract(order.getAmount()));
         accountRepository.save(account);
 
+        // 2. Credit receiver (IMPORTANT MISSING PART)
+        Account payeeAccount = accountRepository.findByAccountId(order.getPayeeAccount())
+                .orElseThrow(() -> new RuntimeException("Payee account not found"));
+ 
+        payeeAccount.setBalance(payeeAccount.getBalance().add(order.getAmount()));
+        accountRepository.save(payeeAccount);
+
         // Create SUCCESS transaction
         Transaction tx = new Transaction();
         tx.setAccount(account);
@@ -217,4 +224,5 @@ public class StandingOrderExecutionJob {
         };
         return canadianHolidayService.nextBusinessDay(next);
     }
+
 }

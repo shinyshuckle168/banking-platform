@@ -18,7 +18,7 @@ public interface StandingOrderRepository extends JpaRepository<StandingOrderEnti
     List<StandingOrderEntity> findByStatusAndNextRunDateBefore(StandingOrderStatus status, LocalDateTime cutoff);
 
     Optional<StandingOrderEntity> findBySourceAccountIdAndPayeeAccountAndAmountAndFrequencyAndStatus(
-            Long sourceAccountId, String payeeAccount, BigDecimal amount,
+            Long sourceAccountId, Long payeeAccount, BigDecimal amount,
             Frequency frequency, StandingOrderStatus status);
 
     List<StandingOrderEntity> findByStatus(StandingOrderStatus status);

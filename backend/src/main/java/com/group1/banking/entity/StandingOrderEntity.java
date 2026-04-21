@@ -24,7 +24,7 @@ public class StandingOrderEntity {
     private Long sourceAccountId;
 
     @Column(name = "payee_account", nullable = false, length = 34)
-    private String payeeAccount;
+    private Long payeeAccount;
 
     @Column(name = "payee_name", nullable = false, length = 70)
     private String payeeName;
@@ -73,8 +73,8 @@ public class StandingOrderEntity {
     public void setStandingOrderId(String standingOrderId) { this.standingOrderId = standingOrderId; }
     public Long getSourceAccountId() { return sourceAccountId; }
     public void setSourceAccountId(Long sourceAccountId) { this.sourceAccountId = sourceAccountId; }
-    public String getPayeeAccount() { return payeeAccount; }
-    public void setPayeeAccount(String payeeAccount) { this.payeeAccount = payeeAccount; }
+    public Long getPayeeAccount() { return payeeAccount; }
+    public void setPayeeAccount(Long payeeAccount) { this.payeeAccount = payeeAccount; }
     public String getPayeeName() { return payeeName; }
     public void setPayeeName(String payeeName) { this.payeeName = payeeName; }
     public BigDecimal getAmount() { return amount; }
