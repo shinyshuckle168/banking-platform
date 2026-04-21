@@ -1,4 +1,13 @@
+import { createIdempotencyKey } from '../types';
 import { accountApiClient } from './axiosClient';
+
+function buildIdempotencyHeaders(idempotencyKey) {
+  return {
+    headers: {
+      'Idempotency-Key': idempotencyKey || createIdempotencyKey()
+    }
+  };
+}
 
 export async function createAccount(payload) {
   const body = {
@@ -53,11 +62,7 @@ export async function depositToAccount(payload) {
       description: payload.description || null,
       category: payload.category || null
     },
-    {
-      headers: {
-        'Idempotency-Key': payload.idempotencyKey
-      }
-    }
+    buildIdempotencyHeaders(payload.idempotencyKey)
   );
   return response.data;
 }
@@ -70,11 +75,7 @@ export async function withdrawFromAccount(payload) {
       description: payload.description || null,
       category: payload.category || null
     },
-    {
-      headers: {
-        'Idempotency-Key': payload.idempotencyKey
-      }
-    }
+    buildIdempotencyHeaders(payload.idempotencyKey)
   );
   return response.data;
 }
@@ -89,11 +90,7 @@ export async function transferBetweenAccounts(payload) {
       description: payload.description || null,
       category: payload.category || null
     },
-    {
-      headers: {
-        'Idempotency-Key': payload.idempotencyKey
-      }
-    }
+    buildIdempotencyHeaders(payload.idempotencyKey)
   );
   return response.data;
 }

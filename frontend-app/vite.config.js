@@ -8,10 +8,15 @@ export default defineConfig(({ mode }) => {
     env.VITE_BANKING_API_PROXY_TARGET ||
     env.VITE_ACCOUNT_SERVICE_PROXY_TARGET ||
     env.VITE_LOGIN_API_PROXY_TARGET ||
-    'http://localhost:8080';
+    'https://digital-banking-service-524103119199.northamerica-northeast1.run.app';
 
   return {
     plugins: [react()],
+    preview: {
+      allowedHosts: ['frontend-524103119199.northamerica-northeast2.run.app'],
+      host: '0.0.0.0',
+      port: 8080
+    },   
     server: {
       port: 5173,
       proxy: {

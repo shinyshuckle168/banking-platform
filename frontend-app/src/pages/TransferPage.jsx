@@ -4,15 +4,14 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { transferBetweenAccounts } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
 import { useRecategoriseTransaction } from '../hooks/useGroup3';
-import { TRANSACTION_CATEGORIES, createIdempotencyKey } from '../types';
+import { TRANSACTION_CATEGORIES } from '../types';
 
 const emptyTransferForm = {
   fromAccountId: '',
   toAccountId: '',
   amount: '25.00',
   description: '',
-  category: '',
-  idempotencyKey: createIdempotencyKey()
+  category: ''
 };
 
 function validateTransferForm(form) {
@@ -34,10 +33,6 @@ function validateTransferForm(form) {
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return 'Amount must be greater than zero.';
-  }
-
-  if (!String(form.idempotencyKey || '').trim()) {
-    return 'Idempotency Key is required.';
   }
 
   return null;
@@ -87,8 +82,7 @@ export function TransferPage() {
       ...form,
       fromAccountId: Number.parseInt(String(form.fromAccountId).trim(), 10),
       toAccountId: Number.parseInt(String(form.toAccountId).trim(), 10),
-      amount: String(form.amount).trim(),
-      idempotencyKey: String(form.idempotencyKey).trim()
+      amount: String(form.amount).trim()
     };
 
     try {
@@ -130,7 +124,7 @@ export function TransferPage() {
         <div>
           <p className="eyebrow">POST /accounts/transfer</p>
           <h2>Transfer Funds</h2>
-          <p className="muted">Move money between accounts using an idempotency key and review both resulting transaction records.</p>
+          <p className="muted">Move money between accounts and review both resulting transaction records. A fresh idempotency key is generated automatically for each submit.</p>
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
@@ -180,24 +174,8 @@ export function TransferPage() {
             </select>
             <p className="field-hint">Optional. Category for this transaction.</p>
           </div>
-          <div className="field full">
-            <label htmlFor="transfer-idempotency-key">Idempotency Key</label>
-            <input
-              id="transfer-idempotency-key"
-              value={form.idempotencyKey}
-              onChange={(event) => setForm((current) => ({ ...current, idempotencyKey: event.target.value }))}
-              required
-            />
-          </div>
           <div className="actions">
             <button type="submit" disabled={transferMutation.isPending}>Submit Transfer</button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setForm((current) => ({ ...current, idempotencyKey: createIdempotencyKey() }))}
-            >
-              New Key
-            </button>
             <Link className="button-link subtle" to={form.fromAccountId ? `/accounts/${form.fromAccountId}` : '/'}>Back</Link>
           </div>
         </form>

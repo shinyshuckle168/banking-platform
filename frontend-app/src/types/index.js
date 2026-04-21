@@ -134,8 +134,7 @@ export const emptyMoneyMovementForm = {
   accountId: '',
   amount: '25.00',
   description: '',
-  category: '',
-  idempotencyKey: createIdempotencyKey()
+  category: ''
 };
 
 export function isEmailLike(value) {

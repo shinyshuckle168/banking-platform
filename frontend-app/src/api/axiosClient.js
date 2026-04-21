@@ -6,7 +6,7 @@ const mergedBackendBaseUrl =
   import.meta.env.VITE_BANKING_API_BASE_URL ||
   import.meta.env.VITE_LOGIN_API_BASE_URL ||
   import.meta.env.VITE_ACCOUNT_SERVICE_BASE_URL ||
-  (import.meta.env.DEV ? '/' : 'http://localhost:8080');
+  (import.meta.env.DEV ? '/' : '/');
 
 function attachAuthInterceptor(client) {
   client.interceptors.request.use((config) => {

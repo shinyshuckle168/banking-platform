@@ -7,6 +7,11 @@ import { useAuth } from '../auth/AuthContext';
 import { mapAxiosError } from '../api/axiosClient';
 import { CUSTOMER_TYPES, emptyRegisterForm, isEmailLike } from '../types';
 
+const REGISTER_CUSTOMER_TYPE_LABELS = {
+  PERSON: 'Personal',
+  COMPANY: 'Business'
+};
+
 export function RegisterPage() {
   const navigate = useNavigate();
   const { completeLogin, rememberCustomerId } = useAuth();
@@ -107,14 +112,14 @@ export function RegisterPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="register-type">Customer Type</label>
+            <label htmlFor="register-type">Profile Type</label>
             <select
               id="register-type"
               value={formState.type}
               onChange={(event) => setFormState((current) => ({ ...current, type: event.target.value }))}
             >
               {CUSTOMER_TYPES.map((type) => (
-                <option key={type} value={type}>{type}</option>
+                <option key={type} value={type}>{REGISTER_CUSTOMER_TYPE_LABELS[type] || type}</option>
               ))}
             </select>
           </div>

@@ -95,7 +95,7 @@ export function HomePage() {
         </article>
         <article className="panel">
           <h3>Money Movement</h3>
-          <p className="muted">Deposit, withdraw, and transfer are all live through the merged backend and require an idempotency key.</p>
+          <p className="muted">Deposit, withdraw, and transfer are all live through the merged backend, with a fresh idempotency key generated automatically for each submit.</p>
         </article>
       </section>
 

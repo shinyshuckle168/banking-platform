@@ -158,7 +158,7 @@ export function AccountDetailPage() {
           </div>
           {!canDeleteAccount ? <p className="muted compact-text">The merged backend only allows account deletion when the balance is exactly zero.</p> : null}
 
-          <p className="muted compact-text">Deposit, withdraw, and transfer all require a valid idempotency key and remain subject to backend ownership checks.</p>
+          <p className="muted compact-text">Deposit, withdraw, and transfer automatically send a fresh idempotency key for each submit and remain subject to backend ownership checks.</p>
           {location.pathname.endsWith('/edit') ? <div className="banner success">You are viewing the edit route for this account.</div> : null}
           <pre className="code">{JSON.stringify(account, null, 2)}</pre>
         </section>

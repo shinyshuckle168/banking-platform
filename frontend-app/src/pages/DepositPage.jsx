@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
 import { useDeposit } from '../hooks/useDeposit';
-import { createIdempotencyKey, emptyMoneyMovementForm } from '../types';
+import { emptyMoneyMovementForm } from '../types';
 
 function mapMoneyMovementError(error) {
   const mapped = mapAxiosError(error);
@@ -44,7 +44,7 @@ export function DepositPage() {
         <div>
           <p className="eyebrow">POST /accounts/{'{accountId}'}/deposit</p>
           <h2>Deposit Funds</h2>
-          <p className="muted">Submit a deposit with an idempotency key and inspect the updated account plus resulting transaction.</p>
+          <p className="muted">Submit a deposit and inspect the updated account plus resulting transaction. A fresh idempotency key is generated automatically for each submit.</p>
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
@@ -67,23 +67,8 @@ export function DepositPage() {
               onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
             />
           </div>
-          <div className="field full">
-            <label htmlFor="deposit-idempotency-key">Idempotency Key</label>
-            <input
-              id="deposit-idempotency-key"
-              value={form.idempotencyKey}
-              onChange={(event) => setForm((current) => ({ ...current, idempotencyKey: event.target.value }))}
-            />
-          </div>
           <div className="actions">
             <button type="submit" disabled={deposit.isPending}>Submit Deposit</button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setForm((current) => ({ ...current, idempotencyKey: createIdempotencyKey() }))}
-            >
-              New Key
-            </button>
             <Link className="button-link subtle" to={`/accounts/${accountId}`}>Back to Account</Link>
           </div>
         </form>
