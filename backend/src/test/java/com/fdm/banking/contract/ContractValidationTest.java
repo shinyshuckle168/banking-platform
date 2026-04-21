@@ -20,37 +20,37 @@ class ContractValidationTest {
 
     @Test
     void transactionHistoryControllerExists() throws Exception {
-        Class<?> cls = Class.forName("com.fdm.banking.controller.TransactionController");
+        Class<?> cls = Class.forName("com.group1.banking.controller.TransactionController");
         assertThat(cls).isNotNull();
     }
 
     @Test
     void standingOrderControllerExists() throws Exception {
-        Class<?> cls = Class.forName("com.fdm.banking.controller.StandingOrderController");
+        Class<?> cls = Class.forName("com.group1.banking.controller.StandingOrderController");
         assertThat(cls).isNotNull();
     }
 
     @Test
     void notificationControllerExists() throws Exception {
-        Class<?> cls = Class.forName("com.fdm.banking.controller.NotificationController");
+        Class<?> cls = Class.forName("com.group1.banking.controller.NotificationController");
         assertThat(cls).isNotNull();
     }
 
     @Test
     void statementControllerExists() throws Exception {
-        Class<?> cls = Class.forName("com.fdm.banking.controller.StatementController");
+        Class<?> cls = Class.forName("com.group1.banking.controller.StatementController");
         assertThat(cls).isNotNull();
     }
 
     @Test
     void insightControllerExists() throws Exception {
-        Class<?> cls = Class.forName("com.fdm.banking.controller.InsightController");
+        Class<?> cls = Class.forName("com.group1.banking.controller.InsightController");
         assertThat(cls).isNotNull();
     }
 
     @Test
     void transactionController_hasGetHistoryMapping() throws Exception {
-        Class<?> cls = Class.forName("com.fdm.banking.controller.TransactionController");
+        Class<?> cls = Class.forName("com.group1.banking.controller.TransactionController");
         boolean hasGetHistory = java.util.Arrays.stream(cls.getDeclaredMethods())
                 .anyMatch(m -> m.getName().equals("getTransactionHistory"));
         assertThat(hasGetHistory).isTrue();
@@ -58,7 +58,7 @@ class ContractValidationTest {
 
     @Test
     void notificationController_hasEvaluateMapping() throws Exception {
-        Class<?> cls = Class.forName("com.fdm.banking.controller.NotificationController");
+        Class<?> cls = Class.forName("com.group1.banking.controller.NotificationController");
         boolean hasEvaluate = java.util.Arrays.stream(cls.getDeclaredMethods())
                 .anyMatch(m -> m.getName().equals("evaluate"));
         assertThat(hasEvaluate).isTrue();
