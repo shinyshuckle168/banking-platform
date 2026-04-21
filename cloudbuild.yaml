@@ -1,0 +1,23 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '--network=host', '-t', 'northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend', '.']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args:
+      - 'gcloud'
+      - 'run'
+      - 'deploy'
+      - 'frontend'
+      - '--image'
+      - 'northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend'
+      - '--region'
+      - 'northamerica-northeast2'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend'
