@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
@@ -61,7 +62,7 @@ public class AccountService {
 
         // 2️⃣ Load customer
         Customer customer = customerRepository.findByCustomerIdAndDeletedAtIsNull(customerId)
-                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found"));
+                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found", Map.of("customerId", customerId)));
 
         // 3️⃣ Authorization check
         boolean isAdmin = user.getRoles().stream()
@@ -107,7 +108,7 @@ public class AccountService {
     	User user = getAuthenticatedUser();
 
         if (!customerRepository.existsByCustomerIdAndDeletedAtIsNull(customerId)) {
-            throw new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found");
+            throw new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found", Map.of("customerId", customerId));
         }
 
         if (!isAdmin(user) && !user.getCustomerId().equals(customerId)) {
@@ -199,7 +200,7 @@ public class AccountService {
     private Account loadActiveAccount(Long accountId) {
         return accountRepository.findByAccountIdAndDeletedAtIsNull(accountId)
                 .filter(existing -> existing.getStatus() == AccountStatus.ACTIVE)
-                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "Account not found"));
+                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "Account not found", Map.of("accountId", accountId)));
     }
 
     private BigDecimal scaleMoney(BigDecimal value) {

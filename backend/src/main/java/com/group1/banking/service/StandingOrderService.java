@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
  
@@ -74,7 +75,7 @@ public class StandingOrderService {
        }
  
         Account account = accountRepository.findById(req.getPayeeAccount())
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND", null));
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND", Map.of("accountId", String.valueOf(req.getPayeeAccount()))));
  
         // Validate amount <= dailyTransferLimit
         if (req.getAmount().compareTo(account.getDailyTransferLimit()) > 0) {
@@ -92,9 +93,9 @@ public class StandingOrderService {
         }
  
         // Validate payeeAccount is an existing internal account
-        accountRepository.findByAccountId(req.getPayeeAccount())
+        accountRepository.findById(req.getPayeeAccount())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Payee account not found in the system", "ERR_PAYEE_NOT_FOUND", null));
+                        "Payee account not found in the system", "ERR_PAYEE_NOT_FOUND", Map.of("transactionId", String.valueOf(req.getPayeeAccount()))));
  
         // Check for duplicate ACTIVE order
         standingOrderRepository.findBySourceAccountIdAndPayeeAccountAndAmountAndFrequencyAndStatus(
@@ -166,7 +167,7 @@ public class StandingOrderService {
  
         StandingOrderEntity entity = standingOrderRepository.findById(standingOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Standing order not found: " + standingOrderId, "ERR_SO_NOT_FOUND", standingOrderId));
+                        "Standing order not found: " + standingOrderId, "ERR_SO_NOT_FOUND", Map.of("standingOrderId", String.valueOf(standingOrderId))));
  
         ownershipValidator.assertOwnership(entity.getSourceAccountId(), toLegacyPrincipal(caller));
  

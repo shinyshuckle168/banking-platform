@@ -2,6 +2,7 @@ package com.group1.banking.service.impl;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
@@ -57,10 +58,13 @@ public class CustomerServiceImpl implements CustomerService {
         UUID userId = principal.getUserId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "User not found."));
+                .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "User not found.", Map.of("uderId", userId)));
 
         if (user.getCustomerId() != null) {
-            throw new BadRequestException("CUSTOMER_ALREADY_LINKED", "This user already has a customer profile.", null);
+            throw new BadRequestException("CUSTOMER_ALREADY_LINKED", "This user already has a customer profile.", Map.of(
+                    "userId", user.getUserId(),
+                    "customerId", user.getCustomerId()
+                ));
         }
 
         Customer customer = new Customer();
@@ -82,7 +86,7 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found."));
+                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found.", Map.of("customerId", customerId)));
 
         if (request.getName() != null) {
             customer.setName(request.getName().trim());
@@ -101,7 +105,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Transactional(readOnly = true)
     public CustomerResponse getCustomer(Long customerId) {
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found."));
+                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found.", Map.of("customerId", customerId)));
 
         List<AccountResponse> accounts = accountRepository
                 .findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(customerId, AccountStatus.ACTIVE)
@@ -170,7 +174,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         // 3️⃣ Load customer and check active accounts
         Customer customer = customerRepository.findByCustomerIdAndDeletedAtIsNull(customerId)
-                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found"));
+                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found", Map.of("customerId", customerId)));
 
         if (accountRepository.existsByCustomerCustomerIdAndDeletedAtIsNullAndStatus(customerId, AccountStatus.ACTIVE)) {
             throw new ConflictException("CUSTOMER_HAS_ACTIVE_ACCOUNTS",

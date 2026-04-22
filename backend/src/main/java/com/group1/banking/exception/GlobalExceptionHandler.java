@@ -1,9 +1,13 @@
 package com.group1.banking.exception;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,14 +21,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
-        String field = ex.getBindingResult().getFieldErrors().isEmpty()
-                ? null
-                : ex.getBindingResult().getFieldErrors().get(0).getField();
 
-        logger.warn("Validation failed for field={}", field);
+        Map<String, String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        FieldError::getDefaultMessage,
+                        (existing, replacement) -> existing // handle duplicate keys
+                ));
+
+        logger.warn("Validation failed: {}", errors);
 
         return ResponseEntity.unprocessableEntity()
-                .body(new ErrorResponse("VALIDATION_FAILED", "Validation failed", field));
+                .body(new ErrorResponse("VALIDATION_FAILED", "Validation failed", errors));
     }
 
     @ExceptionHandler(BadRequestException.class)
@@ -32,15 +42,15 @@ public class GlobalExceptionHandler {
         logger.warn("Bad request. code={}, message={}", ex.getCode(), ex.getMessage());
 
         return ResponseEntity.status(400)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getField()));
+                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
     }
     
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
-        logger.warn("Resource Not Found. code={}, message={}", ex.getCode(), ex.getMessage());
+        logger.warn("Resource Not Found. code={}, message={}", ex.getCode(), ex.getMessage(), ex.getDetails());
 
         return ResponseEntity.status(404)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getField()));
+                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
     }
 
     @ExceptionHandler(UnauthorisedException.class)
@@ -72,7 +82,7 @@ public class GlobalExceptionHandler {
         logger.warn("Resource not found. code={}, message={}", ex.getCode(), ex.getMessage());
 
         return ResponseEntity.status(404)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), null));
+                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
     }
 
     @ExceptionHandler(OwnershipException.class)
@@ -86,11 +96,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handlePermissionDenied(PermissionDeniedException ex) {
         logger.warn("Permission denied: {}", ex.getPermission());
         return ResponseEntity.status(403)
-                .body(new ErrorResponse("FORBIDDEN", "Access denied.", null));
+                .body(new ErrorResponse("FORBIDDEN", "Access denied.", null)); 
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
         logger.warn("Access denied.");
         return ResponseEntity.status(403)
                 .body(new ErrorResponse("FORBIDDEN", "Access denied.", null));

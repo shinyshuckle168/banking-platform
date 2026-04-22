@@ -2,6 +2,7 @@ package com.group1.banking.service.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -162,7 +163,7 @@ public class MonetaryOperationService {
 	    if (result == null) {
 	        Account account = loadActiveAccount(accountId);
 	        if (account == null) {
-	            result = notFound("ACCOUNT_NOT_FOUND", "Account not found", null);
+	            result = notFound("ACCOUNT_NOT_FOUND", "Account not found", Map.of("accountId", String.valueOf(accountId)));
 	        } else {
 	            User user = userRepository.findById(userId)
 	                    .orElseThrow(() -> new UnauthorisedException("UNAUTHORIZED", "User not found"));
@@ -258,7 +259,7 @@ public class MonetaryOperationService {
 	    Account from = loadActiveAccount(request.fromAccountId());
 	    if (from == null) {
 	        return persistAndReturn(storageKey, idempotencyKey, userId, TRANSFER,
-	                notFound("ACCOUNT_NOT_FOUND", "Source account not found", null));
+	                notFound("ACCOUNT_NOT_FOUND", "Source account not found", Map.of("accountId", String.valueOf(request.fromAccountId()))));
 	    }
 
 	    Account to = loadActiveAccount(request.toAccountId());
@@ -495,7 +496,7 @@ public class MonetaryOperationService {
 		return new OperationResult(HttpStatus.NOT_FOUND, new ErrorResponse(code, message, null));
 	}
 
-	private OperationResult notFound(String code, String message, String field) {
+	private OperationResult notFound(String code, String message, Map<String, String> field) {
 		return new OperationResult(HttpStatus.NOT_FOUND, new ErrorResponse(code, message, field));
 	}
 
