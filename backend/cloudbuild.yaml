@@ -1,37 +1,15 @@
-# steps:
-#   - name: 'gcr.io/cloud-builders/docker'
-#     dir: 'backend'
-#     args: ['build', '-t', '${_IMAGE}', '.']
-
-#   - name: 'gcr.io/cloud-builders/docker'
-#     args: ['push', '${_IMAGE}']
-
-#   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-#     entrypoint: gcloud
-#     args:
-#       - run
-#       - deploy
-#       - ${_SERVICE}
-#       - --image=${_IMAGE}
-#       - --region=${_REGION}
-#       - --platform=managed
-#       - --allow-unauthenticated
-#       - --port=8080
-#       - --set-env-vars=JWT_SECRET=ThisIsADevOnlySecretKeyForHs256JwtTokenMinimum32Chars
-
-# options:
-#   logging: CLOUD_LOGGING_ONLY
-
-# substitutions:
-#   _IMAGE: northamerica-northeast1-docker.pkg.dev/gcp-class-14/banking-repo/banking
-#   _SERVICE: digital-banking-service
-#   _REGION: northamerica-northeast1
-
 steps:
   - name: 'maven:3.9.9-eclipse-temurin-21'
     dir: 'backend'
-    entrypoint: 'mvn'
-    args: ['clean', 'verify']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        mvn clean verify \
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+          -Dsonar.organization=YOUR_SONAR_ORGANIZATION \
+          -Dsonar.projectKey=YOUR_SONAR_PROJECT_KEY
+    secretEnv: ['SONAR_TOKEN']
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'backend'
@@ -52,6 +30,11 @@ steps:
       - --allow-unauthenticated
       - --port=8080
       - --set-env-vars=JWT_SECRET=ThisIsADevOnlySecretKeyForHs256JwtTokenMinimum32Chars
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/gcp-class-14/secrets/sonar-cloud-auth-token/versions/latest
+      env: 'SONAR_TOKEN'
 
 options:
   logging: CLOUD_LOGGING_ONLY
