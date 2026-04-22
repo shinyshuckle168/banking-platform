@@ -1,5 +1,8 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+
+const testSetupFile = fileURLToPath(new URL('./src/test/setup.js', import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -12,6 +15,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: testSetupFile
+    },
     preview: {
       allowedHosts: ['frontend-524103119199.northamerica-northeast2.run.app'],
       host: '0.0.0.0',
