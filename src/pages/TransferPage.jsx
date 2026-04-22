@@ -183,26 +183,8 @@ export function TransferPage() {
       </section>
 
       {result ? (
-        <section className="panel stack">
-          <h3>{result.message || 'Transfer completed'}</h3>
-          <div className="result-grid">
-            <div className="result-block">
-              <p className="muted">From Account</p>
-              <pre className="code">{JSON.stringify(result.fromAccount, null, 2)}</pre>
-            </div>
-            <div className="result-block">
-              <p className="muted">To Account</p>
-              <pre className="code">{JSON.stringify(result.toAccount, null, 2)}</pre>
-            </div>
-            <div className="result-block">
-              <p className="muted">Debit Transaction</p>
-              <pre className="code">{JSON.stringify(result.debitTransaction, null, 2)}</pre>
-            </div>
-            <div className="result-block">
-              <p className="muted">Credit Transaction</p>
-              <pre className="code">{JSON.stringify(result.creditTransaction, null, 2)}</pre>
-            </div>
-          </div>
+        <section className="panel">
+          <div className="banner success">{result.message || 'Transfer completed'}</div>
         </section>
       ) : null}
     </div>

@@ -129,7 +129,6 @@ export function CustomerDetailPage() {
             <Link className="button-link" to={`/customer/${customerId}/accounts`}>Accounts</Link>
             {isAdmin ? <button type="button" className="danger" onClick={handleDelete} disabled={deleteMutation.isPending}>Delete Customer</button> : null}
           </div>
-          <pre className="code">{JSON.stringify(customer, null, 2)}</pre>
         </section>
       ) : null}
     </div>

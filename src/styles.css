@@ -399,6 +399,26 @@ button:disabled {
   background: rgba(255, 255, 255, 0.6);
 }
 
+.detail-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.detail-list dt {
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.detail-list dd {
+  margin: 0;
+  font-weight: 600;
+  word-break: break-all;
+}
+
 .kicker {
   display: inline-flex;
   align-items: center;

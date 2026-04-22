@@ -113,18 +113,8 @@ export function WithdrawPage() {
         {error ? <div className="banner error">{error.message}</div> : null}
       </section>
       {result ? (
-        <section className="panel stack">
-          <h3>{result.message}</h3>
-          <div className="result-grid">
-            <div className="result-block">
-              <p className="muted">Updated Account</p>
-              <pre className="code">{JSON.stringify(result.account, null, 2)}</pre>
-            </div>
-            <div className="result-block">
-              <p className="muted">Transaction</p>
-              <pre className="code">{JSON.stringify(result.transaction, null, 2)}</pre>
-            </div>
-          </div>
+        <section className="panel">
+          <div className="banner success">{result.message}</div>
         </section>
       ) : null}
     </div>
