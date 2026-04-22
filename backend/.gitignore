@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Java / Maven
+target/
+*.class
+
+# Eclipse / STS
+.classpath
+.project
+.settings/
+.factorypath
+
+# Logs
+logs/
+*.log
+
+# Env
+.env
