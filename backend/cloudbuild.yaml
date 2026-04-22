@@ -7,8 +7,8 @@ steps:
       - |
         mvn clean verify \
           org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-          -Dsonar.organization=YOUR_SONAR_ORGANIZATION \
-          -Dsonar.projectKey=YOUR_SONAR_PROJECT_KEY
+          -Dsonar.organization=fdm-gcp-2026 \
+          -Dsonar.projectKey=shinyshuckle168_banking-platform
     secretEnv: ['SONAR_TOKEN']
 
   - name: 'gcr.io/cloud-builders/docker'
