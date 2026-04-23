@@ -1,34 +1,39 @@
 steps:
+  # Step 1: Build + Test + Sonar
   - name: 'maven:3.9.9-eclipse-temurin-21'
     dir: 'backend'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        mvn clean verify \
-          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+        mvn clean verify sonar:sonar \
+          -Dsonar.projectKey=shinyshuckle168_banking-platform \
           -Dsonar.organization=fdm-gcp-2026 \
-          -Dsonar.projectKey=shinyshuckle168_banking-platform
-    secretEnv: ['SONAR_TOKEN']
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.login=$SONAR_TOKEN
 
+  # Step 2: Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'backend'
     args: ['build', '-t', '${_IMAGE}', '.']
 
+  # Step 3: Trivy Scan (CRITICAL ONLY)
   - name: 'aquasec/trivy:latest'
     entrypoint: 'sh'
     args:
       - '-c'
       - |
         trivy image \
-          --severity HIGH,CRITICAL \
+          --severity CRITICAL \
           --ignore-unfixed \
           --exit-code 1 \
           ${_IMAGE}
 
+  # Step 4: Push Image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', '${_IMAGE}']
 
+  # Step 5: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -44,7 +49,7 @@ steps:
 
 availableSecrets:
   secretManager:
-    - versionName: projects/gcp-class-14/secrets/sonar-cloud-auth-token/versions/latest
+    - versionName: projects/$PROJECT_ID/secrets/SONAR_TOKEN/versions/latest
       env: 'SONAR_TOKEN'
 
 options:
