@@ -15,6 +15,17 @@ steps:
     dir: 'backend'
     args: ['build', '-t', '${_IMAGE}', '.']
 
+  - name: 'aquasec/trivy:latest'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        trivy image \
+          --severity HIGH,CRITICAL \
+          --ignore-unfixed \
+          --exit-code 1 \
+          ${_IMAGE}
+
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', '${_IMAGE}']
 
