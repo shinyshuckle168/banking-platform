@@ -23,7 +23,7 @@ steps:
         trivy image \
           --severity CRITICAL \
           --ignore-unfixed \
-          --exit-code 0 \
+          --exit-code 1 \
           ${_IMAGE}
 
   - name: 'gcr.io/cloud-builders/docker'
