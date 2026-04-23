@@ -77,91 +77,88 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="register-page">
-      <div className="register-card stack">
-        <div>
-          <p className="eyebrow">Merged Backend</p>
-          <h2>Register</h2>
-        </div>
-        <div className="register-stepper">
-          <span className={`register-step ${step === 'selectType' ? 'active' : 'completed'}`}>
-            {step !== 'selectType' && <span className="register-step-check">✓</span>}
-            1. Account Type
-          </span>
-          <span className="register-step-arrow">→</span>
-          <span className={`register-step ${step === 'details' ? 'active' : ''}`}>2. Details</span>
-        </div>
-        {error ? <div className="banner error">{error.message}</div> : null}
-        <form className="stack" onSubmit={handleSubmit}>
-          {step === 'selectType' ? (
-            <div className="form-grid">
-              <div className="field full">
-                <label htmlFor="register-type">Account Type</label>
-                <select
-                  id="register-type"
-                  value={formState.type}
-                  onChange={(event) => setFormState((current) => ({ ...current, type: event.target.value }))}
-                >
-                  {CUSTOMER_TYPES.map((type) => (
-                    <option key={type} value={type}>{REGISTER_CUSTOMER_TYPE_LABELS[type] || type}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ) : (
-            <div className="stack">
-              <div className="field">
-                <label htmlFor="register-username">Email</label>
-                <input
-                  id="register-username"
-                  type="email"
-                  value={formState.username}
-                  onChange={(event) => setFormState((current) => ({ ...current, username: event.target.value }))}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="register-password">Password</label>
-                <input
-                  id="register-password"
-                  type="password"
-                  value={formState.password}
-                  onChange={(event) => setFormState((current) => ({ ...current, password: event.target.value }))}
-                />
-                <p className="field-hint">Minimum 8 characters with uppercase, digit, and special character.</p>
-              </div>
-              <div className="field">
-                <label htmlFor="register-name">{isPerson ? 'Full Name' : 'Company Name'}</label>
-                <input
-                  id="register-name"
-                  value={formState.name}
-                  onChange={(event) => setFormState((current) => ({ ...current, name: event.target.value }))}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="register-address">Address</label>
-                <input
-                  id="register-address"
-                  value={formState.address}
-                  onChange={(event) => setFormState((current) => ({ ...current, address: event.target.value }))}
-                />
-              </div>
-            </div>
-          )}
-          <div className="actions">
-            {step === 'selectType' ? (
-              <>
-                <button type="button" onClick={() => setStep('details')}>Continue</button>
-                <Link className="button-link subtle" to="/login">Back to Login</Link>
-              </>
-            ) : (
-              <>
-                <button type="button" className="secondary" onClick={() => setStep('selectType')}>Back</button>
-                <button type="submit" disabled={mutation.isPending}>Create Account</button>
-              </>
-            )}
-          </div>
-        </form>
+    <section className="panel stack auth-panel-page">
+      <div>
+        <p className="eyebrow">Merged Backend</p>
+        <h2>Register</h2>
+        <p className="muted">Create your account, sign in automatically, and set up your customer profile.</p>
       </div>
-    </div>
+      <div className="register-stepper">
+        <span className={`register-step ${step === 'selectType' ? 'active' : 'completed'}`}>
+          {step !== 'selectType' && <span className="register-step-check">✓</span>}
+          1. Account Type
+        </span>
+        <span className="register-step-arrow">→</span>
+        <span className={`register-step ${step === 'details' ? 'active' : ''}`}>2. Details</span>
+      </div>
+      {error ? <div className="banner error">{error.message}</div> : null}
+      <form className="stack" onSubmit={handleSubmit}>
+        {step === 'selectType' ? (
+          <div className="field">
+            <label htmlFor="register-type">Account Type</label>
+            <select
+              id="register-type"
+              value={formState.type}
+              onChange={(event) => setFormState((current) => ({ ...current, type: event.target.value }))}
+            >
+              {CUSTOMER_TYPES.map((type) => (
+                <option key={type} value={type}>{REGISTER_CUSTOMER_TYPE_LABELS[type] || type}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <>
+            <div className="field">
+              <label htmlFor="register-username">Email</label>
+              <input
+                id="register-username"
+                type="email"
+                value={formState.username}
+                onChange={(event) => setFormState((current) => ({ ...current, username: event.target.value }))}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="register-password">Password</label>
+              <input
+                id="register-password"
+                type="password"
+                value={formState.password}
+                onChange={(event) => setFormState((current) => ({ ...current, password: event.target.value }))}
+              />
+              <p className="field-hint">Minimum 8 characters with uppercase, digit, and special character.</p>
+            </div>
+            <div className="field">
+              <label htmlFor="register-name">{isPerson ? 'Full Name' : 'Company Name'}</label>
+              <input
+                id="register-name"
+                value={formState.name}
+                onChange={(event) => setFormState((current) => ({ ...current, name: event.target.value }))}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="register-address">Address</label>
+              <input
+                id="register-address"
+                value={formState.address}
+                onChange={(event) => setFormState((current) => ({ ...current, address: event.target.value }))}
+              />
+            </div>
+          </>
+        )}
+        <div className="actions">
+          {step === 'selectType' ? (
+            <>
+              <button type="button" onClick={() => setStep('details')}>Continue</button>
+              <Link className="button-link subtle" to="/login">Back to Login</Link>
+            </>
+          ) : (
+            <>
+              <button type="button" className="secondary" onClick={() => setStep('selectType')}>Back</button>
+              <button type="submit" disabled={mutation.isPending}>Create Account</button>
+            </>
+          )}
+        </div>
+      </form>
+    </section>
   );
 }

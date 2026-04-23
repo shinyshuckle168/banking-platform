@@ -50,42 +50,41 @@ function AppLayout() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="stack tight-gap">
-          <p className="eyebrow">Banking Platform</p>
-          <h1>Digital Banking Frontend</h1>
-          <p className="lede">
-            React client for the merged banking backend, including authentication, customer management, accounts, deposits, and withdrawals.
-          </p>
-        </div>
-        <section className="panel stack tight-gap auth-summary">
-          <p className="eyebrow">Session</p>
+      <header className="navbar">
+        <span className="navbar-brand">FDM</span>
+        <div className="navbar-actions">
           {isAuthenticated ? (
-            <>
-              <strong>{authState.username || 'Authenticated user'}</strong>
-              <p className="muted compact-text">
-                Roles: {authState.roles.length > 0 ? authState.roles.join(', ') : 'None'}
-              </p>
-              <p className="muted compact-text">
-                Customer context: {customerId || 'Not linked yet'}
-              </p>
+            <div className="navbar-profile">
+              <img
+                src="https://via.placeholder.com/32"
+                alt="Profile"
+                className="profile-avatar"
+              />
               <button type="button" className="secondary" onClick={logout}>Log Out</button>
-            </>
+            </div>
           ) : (
-            <p className="muted compact-text">Sign in or register to access customer and account flows.</p>
+            <>
+              <NavLink className="button-link subtle" to="/login">Login</NavLink>
+              <NavLink className="button-link" to="/register">Get Started</NavLink>
+            </>
           )}
-        </section>
-        <nav className="nav-list">
-          <NavLink to="/" end>Overview</NavLink>
-          {!isAuthenticated ? <NavLink to="/login">Login</NavLink> : null}
-          {!isAuthenticated ? <NavLink to="/register">Register</NavLink> : null}
-          {!isAuthenticated ? <NavLink to="/password-reset">Password Reset</NavLink> : null}
-          {isAuthenticated && !customerId ? <NavLink to="/customer/create">Create Customer</NavLink> : null}
-          {isAuthenticated && (isAdmin || customerId) ? <NavLink to={isAdmin ? '/customer' : `/customer/${customerId}`} end>Customer Profile</NavLink> : null}
-          {isAuthenticated && customerId ? <NavLink to={`/customer/${customerId}/accounts`}>Customer Accounts</NavLink> : null}
-          {isAuthenticated && isAdmin ? <p className="nav-hint">Admin delete actions are available inside customer and account details.</p> : null}
-        </nav>
-      </aside>
+        </div>
+      </header>
+      {isAuthenticated && (
+        <div className="subnav">
+          <nav className="subnav-list">
+            <NavLink to="/" end>Overview</NavLink>
+            {(isAdmin || customerId) && (
+              <NavLink to={isAdmin ? '/customer' : `/customer/${customerId}`} end>
+                Customer Profile
+              </NavLink>
+            )}
+            {customerId && (
+              <NavLink to={`/customer/${customerId}/accounts`}>Customer Accounts</NavLink>
+            )}
+          </nav>
+        </div>
+      )}
       <main className="content-area">
         <Outlet />
       </main>
