@@ -6,6 +6,16 @@ steps:
       - |
         npm ci
         npm test
+  - name: 'aquasec/trivy:latest'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        trivy image \
+          --severity CRITICAL \
+          --ignore-unfixed \
+          --exit-code 1 \
+          ${_IMAGE}
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '--network=host', '-t', 'northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend', '.']
