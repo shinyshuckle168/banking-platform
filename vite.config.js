@@ -5,13 +5,8 @@ import react from '@vitejs/plugin-react';
 const testSetupFile = fileURLToPath(new URL('./src/test/setup.js', import.meta.url));
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const backendTarget =
-    env.VITE_GROUP123_BACKEND_PROXY_TARGET ||
-    env.VITE_BANKING_API_PROXY_TARGET ||
-    env.VITE_ACCOUNT_SERVICE_PROXY_TARGET ||
-    env.VITE_LOGIN_API_PROXY_TARGET ||
-    'http://localhost:8080';
+  loadEnv(mode, process.cwd(), '');
+  const backendTarget = 'https://digital-banking-service-524103119199.northamerica-northeast1.run.app/';
 
   return {
     plugins: [react()],
