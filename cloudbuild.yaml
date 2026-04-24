@@ -43,3 +43,6 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _IMAGE: northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend
