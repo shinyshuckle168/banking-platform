@@ -20,6 +20,7 @@ steps:
           -Dsonar.sources=src \
           -Dsonar.exclusions=node_modules,dist,coverage \
           -Dsonar.userHome=/tmp/sonar \
+          -Dsonar.working.directory=/tmp/.scannerwork \
           -Dsonar.login=$$SONAR_TOKEN
 
   - name: 'gcr.io/cloud-builders/docker'
