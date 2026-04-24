@@ -10,6 +10,7 @@ steps:
   - name: 'sonarsource/sonar-scanner-cli'
     secretEnv: ['SONAR_TOKEN']
     entrypoint: 'bash'
+    dir: /tmp
     args:
       - '-c'
       - |
