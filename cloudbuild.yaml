@@ -8,6 +8,7 @@ steps:
         npm test
 
   - name: 'sonarsource/sonar-scanner-cli'
+    secretEnv: ['SONAR_TOKEN']
     entrypoint: 'bash'
     args:
       - '-c'
