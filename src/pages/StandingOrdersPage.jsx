@@ -108,7 +108,7 @@ export function StandingOrdersPage() {
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
         {localError ? <div className="banner error">{localError.message || localError}</div> : null}
         {queryError ? <div className="banner error">{queryError.message}</div> : null}
-        <form className="form-grid" onSubmit={handleSubmit}>
+        <form id="standing-order-form" className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="standing-order-payee-account">Payee Account</label>
             <input
@@ -189,11 +189,11 @@ export function StandingOrdersPage() {
             </select>
             <p className="field-hint">Optional. Selected category is applied to executed standing-order transactions and included in spending insights.</p>
           </div>
-          <div className="actions">
-            <button type="submit" disabled={createMutation.isPending}>Create Standing Order</button>
-            <Link className="button-link subtle" to={`/accounts/${accountId}`}>Back to Account</Link>
-          </div>
         </form>
+        <div className="actions">
+          <button type="submit" form="standing-order-form" disabled={createMutation.isPending}>Create Standing Order</button>
+          <Link className="button-link subtle" to={`/accounts/${accountId}`}>Back to Account</Link>
+        </div>
       </section>
 
       <section className="panel stack">

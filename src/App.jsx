@@ -121,11 +121,6 @@ function AppLayout() {
         <div className="subnav">
           <nav className="subnav-list">
             <NavLink to="/" end>Overview</NavLink>
-            {(isAdmin || customerId) && (
-              <NavLink to={isAdmin ? '/customer' : `/customer/${customerId}`} end>
-                Customer Profile
-              </NavLink>
-            )}
             {customerId && <NavLink to={`/customer/${customerId}/accounts`}>Customer Accounts</NavLink>}
           </nav>
         </div>

@@ -225,7 +225,7 @@ export function SpendingInsightsPage() {
   const initial = splitPeriod(emptySpendingInsightsLookup.period);
   const [form, setForm] = useState({ year: initial.year, month: initial.month });
   const [submittedPeriod, setSubmittedPeriod] = useState('');
-  const [expandedChart, setExpandedChart] = useState({ trend: true, breakdown: false });
+  const [expandedChart, setExpandedChart] = useState({ trend: false, breakdown: false });
   const query = useSpendingInsights({ accountId, period: submittedPeriod });
 
   function handleSubmit(event) {

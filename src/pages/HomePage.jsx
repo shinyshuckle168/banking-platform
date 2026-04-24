@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getCustomer } from '../api/customers';
 import { mapAxiosError } from '../api/axiosClient';
 import { useAuth } from '../auth/AuthContext';
@@ -38,15 +38,18 @@ export function HomePage() {
   const [linkError, setLinkError] = useState(null);
   const [linkMessage, setLinkMessage] = useState(null);
   const [isLinkingCustomer, setIsLinkingCustomer] = useState(false);
+  const intervalRef = useRef(null);
 
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
+  function startSliderTimer() {
+    window.clearInterval(intervalRef.current);
+    intervalRef.current = window.setInterval(() => {
       setActiveOfferIndex((current) => (current + 1) % offers.length);
     }, 4500);
+  }
 
-    return () => {
-      window.clearInterval(intervalId);
-    };
+  useEffect(() => {
+    startSliderTimer();
+    return () => window.clearInterval(intervalRef.current);
   }, []);
 
   function openCustomer() {
@@ -127,7 +130,7 @@ export function HomePage() {
               key={offer.title}
               type="button"
               className={index === activeOfferIndex ? 'offer-dot active' : 'offer-dot'}
-              onClick={() => setActiveOfferIndex(index)}
+              onClick={() => { setActiveOfferIndex(index); startSliderTimer(); }}
               aria-label={`Show offer ${index + 1}`}
               aria-selected={index === activeOfferIndex}
               role="tab"

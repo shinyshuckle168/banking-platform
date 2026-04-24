@@ -108,7 +108,6 @@ export function AccountListPage() {
           </div>
         ) : null}
         <div className="actions">
-          <Link className="button-link subtle" to={`/customer/${customerId}`}>Back to My Profile</Link>
           {!accountsError && !customerError ? <button type="button" onClick={openCreateModal}>Create Account</button> : null}
         </div>
         {deletedAccountMessage ? <div className="banner success">{deletedAccountMessage}</div> : null}
@@ -222,8 +221,6 @@ export function AccountListPage() {
                       <tr className="account-actions-row" id={`account-actions-${account.accountId}`}>
                         <td colSpan={4}>
                           <div className="account-row-actions">
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/deposit`} title="Deposit Funds">Deposit</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/withdraw`} title="Withdraw Funds">Withdraw</Link>
                             <Link className="button-mini" to={`/accounts/transfer?fromAccountId=${account.accountId}`} title="Transfer Funds">Transfer Funds</Link>
                             <Link className="button-mini" to={`/accounts/${account.accountId}/transactions`} title="View Transaction History">Transaction History</Link>
                             <Link className="button-mini" to={`/accounts/${account.accountId}/standing-orders`} title="Manage Standing Orders">Standing Orders</Link>
