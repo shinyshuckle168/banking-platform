@@ -4,9 +4,9 @@ import { getCustomer } from '../api/customers';
 import { mapAxiosError } from '../api/axiosClient';
 import { useAuth } from '../auth/AuthContext';
 import { emptyCustomerLookup } from '../types';
-import offerImage1 from '../images/image_1.png';
-import offerImage2 from '../images/image_2.jpg';
-import offerImage3 from '../images/image_3.jpg';
+import offerImage1 from '../images/image1.png';
+import offerImage2 from '../images/image2.jpg';
+import offerImage3 from '../images/image3.jpg';
 
 const offers = [
   {
@@ -32,7 +32,6 @@ const offers = [
 export function HomePage() {
   const navigate = useNavigate();
   const { authState, isAuthenticated, isAdmin, rememberCustomerId } = useAuth();
-  const currentYear = new Date().getFullYear();
   const [lookup, setLookup] = useState(emptyCustomerLookup);
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
   const [linkError, setLinkError] = useState(null);
@@ -94,7 +93,7 @@ export function HomePage() {
   }
 
   return (
-    <div className="stack home-page">
+    <div className="stack">
       <section className="stack offers-panel">
         <div className="offers-header">
           <div>
@@ -201,23 +200,6 @@ export function HomePage() {
           </div>
         </section>
       )}
-
-      <footer className="overview-footer">
-        <div className="footer-bottom-row">
-          <p className="footer-meta">© {currentYear} Digital Banking Platform</p>
-          <div className="footer-center-info">
-            <p className="footer-meta">support@bankingplatform.local</p>
-            <p className="footer-meta">Mon-Fri, 8:00 AM to 6:00 PM</p>
-          </div>
-          <div className="footer-social" aria-label="Social media links">
-            <a href="#" aria-label="Facebook">f</a>
-            <a href="#" aria-label="Instagram">ig</a>
-            <a href="#" aria-label="X">x</a>
-            <a href="#" aria-label="LinkedIn">in</a>
-            <a href="#" aria-label="YouTube">yt</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
