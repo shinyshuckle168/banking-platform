@@ -7,6 +7,19 @@ steps:
         npm ci
         npm test
 
+  - name: 'sonarsource/sonar-scanner-cli'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        sonar-scanner \
+          -Dsonar.projectKey=shinyshuckle168_banking-platform \
+          -Dsonar.organization=fdm-gcp-2026 \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.sources=src \
+          -Dsonar.exclusions=node_modules,dist,coverage \
+          -Dsonar.login=$$SONAR_TOKEN
+
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '--network=host', '-t', 'northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend', '.']
 
@@ -40,6 +53,11 @@ steps:
 
 images:
   - 'northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend'
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/gcp-class-14/secrets/sonar-cloud-auth-token/versions/latest
+      env: 'SONAR_TOKEN'
 
 options:
   logging: CLOUD_LOGGING_ONLY
