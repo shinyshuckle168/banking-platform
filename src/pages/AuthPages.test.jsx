@@ -125,11 +125,6 @@ describe('auth pages', () => {
   it('shows register validation errors before submitting', async () => {
     renderRegisterPage();
 
-    // Step 1: select type then advance to step 2
-    expect(screen.getByLabelText('Account Type')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-
-    // Step 2: all detail fields are now visible
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'bad-email' } });
     submitCurrentForm();
     expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
@@ -142,31 +137,17 @@ describe('auth pages', () => {
     submitCurrentForm();
     expect(await screen.findByText('Name is required.')).toBeInTheDocument();
 
-    // Default type is PERSON so the label is 'Full Name'
-    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'New Customer' } });
+    fireEvent.change(screen.getByLabelText('Customer Name'), { target: { value: 'New Customer' } });
     submitCurrentForm();
     expect(await screen.findByText('Address is required.')).toBeInTheDocument();
 
     expect(registerUser).not.toHaveBeenCalled();
   });
 
-  it('shows Company Name label when account type is COMPANY', () => {
-    renderRegisterPage();
-
-    fireEvent.change(screen.getByLabelText('Account Type'), { target: { value: 'COMPANY' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-
-    expect(screen.getByLabelText('Company Name')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Full Name')).not.toBeInTheDocument();
-  });
-
   it('disables register submit while the mutation is pending', () => {
     mutationState.isPending = true;
 
     renderRegisterPage();
-
-    // Advance to step 2 where the Create Account submit button lives
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(screen.getByRole('button', { name: 'Create Account' })).toBeDisabled();
   });
@@ -178,13 +159,9 @@ describe('auth pages', () => {
 
     renderRegisterPage();
 
-    // Step 1: leave default type as PERSON and advance
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-
-    // Step 2: fill in all detail fields
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
-    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'New Customer' } });
+    fireEvent.change(screen.getByLabelText('Customer Name'), { target: { value: 'New Customer' } });
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: '1 Main St' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 

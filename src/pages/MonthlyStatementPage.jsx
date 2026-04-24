@@ -115,7 +115,6 @@ export function MonthlyStatementPage() {
     <div className="stack">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">GET /accounts/{'{accountId}'}/statements/{'{period}'}</p>
           <h2>Monthly Statement</h2>
           <p className="muted">Request a monthly statement PDF for a specific year and month.</p>
         </div>

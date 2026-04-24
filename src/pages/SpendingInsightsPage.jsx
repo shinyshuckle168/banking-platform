@@ -225,6 +225,7 @@ export function SpendingInsightsPage() {
   const initial = splitPeriod(emptySpendingInsightsLookup.period);
   const [form, setForm] = useState({ year: initial.year, month: initial.month });
   const [submittedPeriod, setSubmittedPeriod] = useState('');
+  const [expandedChart, setExpandedChart] = useState({ trend: true, breakdown: false });
   const query = useSpendingInsights({ accountId, period: submittedPeriod });
 
   function handleSubmit(event) {
@@ -245,11 +246,17 @@ export function SpendingInsightsPage() {
     && !queryError
     && (chartData.transactionCount ?? 0) === 0;
 
+  function toggleChart(panel) {
+    setExpandedChart((current) => ({
+      ...current,
+      [panel]: !current[panel]
+    }));
+  }
+
   return (
     <div className="stack">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">GET /accounts/{'{accountId}'}/insights</p>
           <h2>Spending Insights</h2>
           <p className="muted">Review debit-spend totals for a selected month as a pie chart plus a six-month bar chart trend.</p>
         </div>
@@ -300,21 +307,74 @@ export function SpendingInsightsPage() {
             <strong>{submittedPeriod || 'None selected'}</strong>
           </article>
           <article className="metric">
-            <p className="muted">Total Debit Spend</p>
+            <p className="muted">Total Expenses</p>
             <strong>{chartData.totalDebitSpend ?? '0.00'}</strong>
           </article>
           <article className="metric">
             <p className="muted">Transactions Counted</p>
             <strong>{chartData.transactionCount ?? 0}</strong>
           </article>
-          <article className="metric">
-            <p className="muted">Data Fresh</p>
-            <strong>{chartData.dataFresh === false ? 'No' : 'Yes'}</strong>
-          </article>
         </div>
-        <div className="chart-grid">
-          <SpendingBarChart entries={chartData.sixMonthTrend} />
-          <SpendingPieChart categories={chartData.categoryBreakdown} />
+        <div className="insights-accordion" role="region" aria-label="Spending insights charts">
+          <article className="insights-accordion-item">
+            <button
+              type="button"
+              className="insights-accordion-trigger"
+              onClick={() => toggleChart('trend')}
+              aria-expanded={expandedChart.trend}
+              aria-controls="insights-panel-trend"
+            >
+              <span>Six-Month Trend</span>
+              <span
+                className={`chevron-icon${expandedChart.trend ? ' open' : ''}`}
+                aria-hidden="true"
+              >
+                ▽
+              </span>
+            </button>
+            <div
+              id="insights-panel-trend"
+              className={`insights-accordion-content${expandedChart.trend ? ' open' : ''}`}
+            >
+              <div className="insights-accordion-inner">
+                <SpendingBarChart
+                  entries={chartData.sixMonthTrend}
+                  showTitle={false}
+                  className="accordion-chart-card"
+                />
+              </div>
+            </div>
+          </article>
+
+          <article className="insights-accordion-item">
+            <button
+              type="button"
+              className="insights-accordion-trigger"
+              onClick={() => toggleChart('breakdown')}
+              aria-expanded={expandedChart.breakdown}
+              aria-controls="insights-panel-breakdown"
+            >
+              <span>Category Breakdown</span>
+              <span
+                className={`chevron-icon${expandedChart.breakdown ? ' open' : ''}`}
+                aria-hidden="true"
+              >
+                ▽
+              </span>
+            </button>
+            <div
+              id="insights-panel-breakdown"
+              className={`insights-accordion-content${expandedChart.breakdown ? ' open' : ''}`}
+            >
+              <div className="insights-accordion-inner">
+                <SpendingPieChart
+                  categories={chartData.categoryBreakdown}
+                  showTitle={false}
+                  className="accordion-chart-card"
+                />
+              </div>
+            </div>
+          </article>
         </div>
       </section>
     </div>

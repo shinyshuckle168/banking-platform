@@ -1,56 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { deleteAccount, updateAccount } from '../api/accounts';
+import { deleteAccount } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
 import { useGetAccount } from '../hooks/useGetAccount';
-import { emptyAccountUpdateForm } from '../types';
-
-function getCurrentMonthValue() {
-  return new Date().toISOString().slice(0, 7);
-}
 
 export function AccountDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { accountId } = useParams();
   const [error, setError] = useState(null);
-  const [actionMessage, setActionMessage] = useState(null);
-  const [updateForm, setUpdateForm] = useState(emptyAccountUpdateForm);
-  const [statementMonth, setStatementMonth] = useState(getCurrentMonthValue);
   const query = useGetAccount(accountId);
-  const updateAccountMutation = useMutation({ mutationFn: updateAccount });
   const deleteAccountMutation = useMutation({ mutationFn: deleteAccount });
-
-  useEffect(() => {
-    if (query.data?.interestRate != null) {
-      setUpdateForm({ interestRate: String(query.data.interestRate) });
-    } else {
-      setUpdateForm(emptyAccountUpdateForm);
-    }
-  }, [query.data]);
-
-  async function handleUpdate() {
-    if (!query.data) {
-      return;
-    }
-
-    setError(null);
-    setActionMessage(null);
-    try {
-      const result = await updateAccountMutation.mutateAsync({
-        accountId: query.data.accountId,
-        interestRate: updateForm.interestRate
-      });
-      setActionMessage('Account updated successfully.');
-      setUpdateForm({
-        interestRate: result.interestRate ?? ''
-      });
-      await query.refetch();
-    } catch (mutationError) {
-      setError(mapAxiosError(mutationError));
-    }
-  }
 
   async function handleDelete() {
     if (!query.data) {
@@ -58,7 +19,6 @@ export function AccountDetailPage() {
     }
 
     setError(null);
-    setActionMessage(null);
     try {
       if (!window.confirm('Delete this account? This action is restricted to zero-balance accounts and cannot be undone from the UI.')) {
         return;
@@ -76,89 +36,45 @@ export function AccountDetailPage() {
   }
 
   const account = query.data;
-  const showInterestRate = account?.accountType === 'SAVINGS';
   const canDeleteAccount = Number(account?.balance) === 0;
   const queryError = query.error ? mapDeletedAccountError(query.error) : null;
 
   return (
     <div className="stack">
-      <section className="panel stack">
-        <div>
-          <p className="eyebrow">GET /accounts/{'{accountId}'}</p>
-          <h2>Account Detail</h2>
-          <p className="muted">Inspect account details and account-type-specific actions.</p>
-        </div>
-        {query.isLoading ? <div className="banner success">Loading account...</div> : null}
-        {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
-        {error ? <div className="banner error">{error.message}</div> : null}
-        {queryError ? <div className="banner error">{queryError.message}</div> : null}
-      </section>
+      {query.isLoading ? <div className="banner success">Loading account...</div> : null}
+      {error ? <div className="banner error">{error.message}</div> : null}
+      {queryError ? <div className="banner error">{queryError.message}</div> : null}
       {account ? (
         <section className="panel stack">
-          <h3>Account Payload</h3>
-          <div className="card-grid">
-            <article className="metric">
-              <p className="muted">Account ID</p>
-              <strong>{account.accountId}</strong>
-            </article>
-            <article className="metric">
-              <p className="muted">Customer ID</p>
-              <strong>{account.customerId}</strong>
-            </article>
-            <article className="metric">
-              <p className="muted">Status</p>
-              <strong>{account.status}</strong>
-            </article>
-            <article className="metric">
-              <p className="muted">Balance</p>
-              <strong>{account.balance}</strong>
-            </article>
-          </div>
-          <div className="actions">
-            <Link className="button-link subtle" to={`/customer/${account.customerId}/accounts`}>Back to Account List</Link>
-            <Link className="button-link subtle" to={`/accounts/${account.accountId}/deposit`}>Deposit</Link>
-            <Link className="button-link subtle" to={`/accounts/${account.accountId}/withdraw`}>Withdraw</Link>
-            <Link className="button-link subtle" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link>
-          </div>
-          <div className="section-divider" />
-          <div className="form-grid">
-            <div className="field">
-              <label htmlFor="account-detail-statement-month">Statement Month</label>
-              <input
-                id="account-detail-statement-month"
-                type="month"
-                value={statementMonth}
-                onChange={(event) => setStatementMonth(event.target.value)}
-              />
+          <div className="section-header">
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.75rem' }}>Account Overview</h2>
+              <p className="muted" style={{ margin: '0.25rem 0 0 0' }}>View your account balance and access account features.</p>
+            </div>
+            <div className="actions">
+              <Link className="button-link subtle" to={`/customer/${account.customerId}/accounts`}>Back to Account List</Link>
+              <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending || !canDeleteAccount}>Delete Account</button>
             </div>
           </div>
+          <div style={{ display: 'flex', gap: '3rem', padding: '2.25rem 3rem', background: 'var(--color-surface, #f8f9fa)', borderRadius: '12px', border: '1px solid var(--color-border, #e2e6ea)', margin: '0.5rem 0 1.5rem 0', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 16px 0 rgba(0,0,0,0.04)' }}>
+            <div style={{ flex: 1, textAlign: 'center' }}>
+              <p className="muted" style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', textAlign: 'center' }}>Account Type</p>
+              <p style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, textAlign: 'center' }}>{account.accountType}</p>
+            </div>
+            <div style={{ flex: 1, borderLeft: '1px solid var(--color-border, #e2e6ea)', paddingLeft: '3rem', textAlign: 'center' }}>
+              <p className="muted" style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', textAlign: 'center' }}>Balance</p>
+              <p style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, textAlign: 'center' }}>{account.balance}</p>
+            </div>
+          </div>
+          <div className="section-divider" />
           <div className="actions">
+            <Link className="button-link subtle" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/transactions`}>Transaction History</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/standing-orders`}>Standing Orders</Link>
-            <Link className="button-link subtle" to={`/accounts/${account.accountId}/statements?period=${statementMonth}`}>Monthly Statement</Link>
+            <Link className="button-link subtle" to={`/accounts/${account.accountId}/statements`}>Monthly Statement</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/insights`}>Spending Insights</Link>
           </div>
-          <div className="form-grid">
-            {showInterestRate ? (
-              <div className="field">
-                <label htmlFor="update-interest-rate">Interest Rate</label>
-                <input
-                  id="update-interest-rate"
-                  value={updateForm.interestRate}
-                  placeholder={String(account.interestRate ?? '')}
-                  onChange={(event) => setUpdateForm((current) => ({ ...current, interestRate: event.target.value }))}
-                />
-              </div>
-            ) : null}
-          </div>
-          <div className="actions">
-            {showInterestRate ? <button type="button" onClick={handleUpdate} disabled={updateAccountMutation.isPending}>Update Account</button> : null}
-            {showInterestRate ? <span className="inline-note">Savings accounts currently expose `interestRate` as the only mutable field in the running backend.</span> : null}
-            <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending || !canDeleteAccount}>Delete Account</button>
-          </div>
-          {!canDeleteAccount ? <p className="muted compact-text">The merged backend only allows account deletion when the balance is exactly zero.</p> : null}
-
-          <p className="muted compact-text">Deposit, withdraw, and transfer automatically send a fresh idempotency key for each submit and remain subject to backend ownership checks.</p>
+          {!canDeleteAccount ? <p className="muted compact-text">Balance must be exactly zero to delete this account.</p> : null}
           {location.pathname.endsWith('/edit') ? <div className="banner success">You are viewing the edit route for this account.</div> : null}
         </section>
       ) : null}

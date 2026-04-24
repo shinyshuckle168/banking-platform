@@ -20,11 +20,36 @@ function monthLabel(entry) {
   return `${entry.year}-${String(entry.month).padStart(2, '0')}`;
 }
 
-export function SpendingBarChart({ entries }) {
+function toNiceStep(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return 1;
+  }
+
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  const normalized = value / magnitude;
+  const candidates = [1, 2, 2.5, 5, 7.5, 10];
+  const chosen = candidates.find((candidate) => normalized <= candidate) || 10;
+  return chosen * magnitude;
+}
+
+function formatAxisTick(value) {
+  const rounded = Math.abs(value) < 1e-9 ? 0 : value;
+  if (Number.isInteger(rounded)) {
+    return String(rounded);
+  }
+
+  if (Math.abs(rounded) >= 10) {
+    return rounded.toFixed(1).replace(/\.0$/, '');
+  }
+
+  return rounded.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+export function SpendingBarChart({ entries, showTitle = true, className = '' }) {
   if (!Array.isArray(entries) || entries.length === 0) {
     return (
-      <div className="chart-card empty-state stack tight-gap">
-        <h3>Six-Month Trend</h3>
+      <div className={`chart-card empty-state stack tight-gap ${className}`.trim()}>
+        {showTitle ? <h3>Six-Month Trend</h3> : null}
         <p className="muted">No trend data returned for this period yet.</p>
       </div>
     );
@@ -32,37 +57,62 @@ export function SpendingBarChart({ entries }) {
 
   const amounts = entries.map((entry) => toAmount(entry.totalSpend ?? entry.totalDebitSpend));
   const maxAmount = Math.max(...amounts, 0);
+  const axisTickCount = 5;
+  const axisIntervals = axisTickCount - 1;
+  const paddedMax = maxAmount > 0 ? maxAmount * 1.2 : 1;
+  const axisStep = toNiceStep(paddedMax / axisIntervals);
+  const axisMax = axisStep * axisIntervals;
+  const gridStepPercent = `${100 / axisIntervals}%`;
+  const axisTicks = Array.from({ length: axisTickCount }, (_, index) => {
+    const value = axisMax - (axisStep * index);
+    return formatAxisTick(value);
+  });
 
   return (
-    <div className="chart-card stack">
-      <h3>Six-Month Trend</h3>
-      <div className="bar-chart">
-        {entries.map((entry) => {
-          const amount = toAmount(entry.totalSpend ?? entry.totalDebitSpend);
-          const height = maxAmount > 0 ? `${(amount / maxAmount) * 100}%` : '0%';
+    <div className={`chart-card stack ${className}`.trim()}>
+      {showTitle ? <h3>Six-Month Trend</h3> : null}
+      <div className="bar-chart-shell">
+        <div className="bar-y-axis" aria-hidden="true">
+          {axisTicks.map((tick, index) => (
+            <span key={`${tick}-${index}`}>{tick}</span>
+          ))}
+        </div>
+        <div className="bar-chart" style={{ '--grid-step': gridStepPercent }}>
+          {entries.map((entry) => {
+            const amount = toAmount(entry.totalSpend ?? entry.totalDebitSpend);
+            const isZero = amount <= 0;
+            const height = isZero
+              ? '2px'
+              : axisMax > 0
+                ? `${(amount / axisMax) * 100}%`
+                : '2px';
 
-          return (
-            <div className="bar-row" key={`${entry.year}-${entry.month}`}>
-              <div className="bar-track">
-                <div className="bar-fill" style={{ height }} />
+            return (
+              <div className="bar-row" key={`${entry.year}-${entry.month}`}>
+                <div className="bar-track">
+                  <div
+                    className={`bar-fill${isZero ? ' placeholder' : ''}`}
+                    style={{ height }}
+                    title={`Amount: ${amount.toFixed(2)}`}
+                  />
+                </div>
+                <div className="bar-meta">
+                  <strong>{monthLabel(entry)}</strong>
+                </div>
               </div>
-              <div className="bar-meta">
-                <strong>{monthLabel(entry)}</strong>
-                <span className="muted compact-text">{amount.toFixed(2)}</span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
 
-export function SpendingPieChart({ categories }) {
+export function SpendingPieChart({ categories, showTitle = true, className = '' }) {
   if (!Array.isArray(categories) || categories.length === 0) {
     return (
-      <div className="chart-card empty-state stack tight-gap">
-        <h3>Category Breakdown</h3>
+      <div className={`chart-card empty-state stack tight-gap ${className}`.trim()}>
+        {showTitle ? <h3>Category Breakdown</h3> : null}
         <p className="muted">No category data returned for this month yet.</p>
       </div>
     );
@@ -92,23 +142,25 @@ export function SpendingPieChart({ categories }) {
     : { background: `conic-gradient(${segments.join(', ')})` };
 
   return (
-    <div className="chart-card stack">
-      <h3>Category Breakdown</h3>
+    <div className={`chart-card stack ${className}`.trim()}>
+      {showTitle ? <h3>Category Breakdown</h3> : null}
       <div className="pie-layout">
         <div className={`pie-chart${isEmpty ? ' empty' : ''}`} style={chartStyle} aria-hidden="true">
           {isEmpty ? <span className="pie-empty-label">No spend</span> : null}
         </div>
-        <div className="pie-legend">
-          {categories.map((category, index) => (
-            <div className="legend-row" key={`${category.category}-${index}`}>
-              <span className="legend-swatch" style={{ backgroundColor: CATEGORY_COLORS[category.category] || '#475569' }} />
-              <div>
-                <strong>{category.category}</strong>
-                <p className="muted compact-text">{category.totalAmount} ({category.percentage}%)</p>
+        {visibleCategories.length > 0 ? (
+          <div className="pie-legend">
+            {visibleCategories.map((category, index) => (
+              <div className="legend-row" key={`${category.category}-${index}`}>
+                <span className="legend-swatch" style={{ backgroundColor: CATEGORY_COLORS[category.category] || '#475569' }} />
+                <div>
+                  <strong>{category.category}</strong>
+                  <p className="muted compact-text">{category.totalAmount} ({category.percentage}%)</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     env.VITE_BANKING_API_PROXY_TARGET ||
     env.VITE_ACCOUNT_SERVICE_PROXY_TARGET ||
     env.VITE_LOGIN_API_PROXY_TARGET ||
-    'https://digital-banking-service-524103119199.northamerica-northeast1.run.app';
+    'http://localhost:8080';
 
   return {
     plugins: [react()],

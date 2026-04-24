@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { createAccount } from '../api/accounts';
@@ -16,6 +16,9 @@ export function AccountListPage() {
   const [formState, setFormState] = useState(emptyCreateAccountForm);
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [expandedAccountId, setExpandedAccountId] = useState(null);
+
   const query = useListCustomerAccounts(customerId);
   const customerQuery = useQuery({
     queryKey: ['customer', customerId],
@@ -28,6 +31,7 @@ export function AccountListPage() {
     enabled: isAdmin
   });
   const createAccountMutation = useMutation({ mutationFn: createAccount });
+
   const deletedAccountMessage = location.state?.deletedAccountMessage || null;
   const accountsError = query.error ? mapDeletedCustomerAccountsError(query.error) : null;
   const customerError = customerQuery.error ? mapDeletedCustomerAccountsError(customerQuery.error) : null;
@@ -46,6 +50,7 @@ export function AccountListPage() {
       });
       setActionMessage(`Account ${createdAccount.accountId} created successfully.`);
       setFormState(emptyCreateAccountForm);
+      setIsCreateModalOpen(false);
       await Promise.all([query.refetch(), customerQuery.refetch()]);
     } catch (mutationError) {
       setError(mapAxiosError(mutationError));
@@ -66,13 +71,27 @@ export function AccountListPage() {
 
   const showInterestRate = formState.accountType === 'SAVINGS';
 
+  function openCreateModal() {
+    setError(null);
+    setActionMessage(null);
+    setIsCreateModalOpen(true);
+  }
+
+  function closeCreateModal() {
+    if (createAccountMutation.isPending) {
+      return;
+    }
+
+    setIsCreateModalOpen(false);
+    setError(null);
+  }
+
   return (
     <div className="stack">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">GET /customers/{'{customerId}'}/accounts</p>
-          <h2>Customer Accounts</h2>
-          <p className="muted">List active accounts and create a new account for customer {customerId} from the same page.</p>
+          <h2>My Accounts</h2>
+           <p className="muted" style={{ margin: '0.25rem 0 1.25rem 0' }}>View and manage your accounts.</p>
         </div>
         {isAdmin ? (
           <div className="field">
@@ -89,7 +108,8 @@ export function AccountListPage() {
           </div>
         ) : null}
         <div className="actions">
-          <Link className="button-link subtle" to={`/customer/${customerId}`}>Back to Customer</Link>
+          <Link className="button-link subtle" to={`/customer/${customerId}`}>Back to My Profile</Link>
+          {!accountsError && !customerError ? <button type="button" onClick={openCreateModal}>Create Account</button> : null}
         </div>
         {deletedAccountMessage ? <div className="banner success">{deletedAccountMessage}</div> : null}
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
@@ -98,64 +118,69 @@ export function AccountListPage() {
         {accountsError ? <div className="banner error">{accountsError.message}</div> : null}
         {customerError ? <div className="banner error">{customerError.message}</div> : null}
       </section>
-      {!accountsError && !customerError ? (
-      <section className="panel stack">
-        <div>
-          <p className="eyebrow">POST /customers/{'{customerId}'}/accounts</p>
-          <h3>Create Account</h3>
-          <p className="muted">Open a checking or savings account for {customerQuery.data?.name || `customer ${customerId}`}.</p>
-        </div>
-        <form className="stack" onSubmit={handleCreateAccount}>
-          <div className="form-grid">
-            <div className="field">
-              <label htmlFor="accountType">Account Type</label>
-              <select
-                id="accountType"
-                value={formState.accountType}
-                onChange={(event) => setFormState((current) => ({ ...current, accountType: event.target.value }))}
-              >
-                {ACCOUNT_TYPES.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="balance">Opening Balance</label>
-              <input
-                id="balance"
-                value={formState.balance}
-                onChange={(event) => setFormState((current) => ({ ...current, balance: event.target.value }))}
-              />
-            </div>
-            {showInterestRate ? (
-              <div className="field">
-                <label htmlFor="interestRate">Interest Rate</label>
-                <input
-                  id="interestRate"
-                  value={formState.interestRate}
-                  onChange={(event) => setFormState((current) => ({ ...current, interestRate: event.target.value }))}
-                />
+
+      {isCreateModalOpen ? (
+        <div className="modal-backdrop" onClick={closeCreateModal}>
+          <div className="modal-panel stack" role="dialog" aria-modal="true" aria-labelledby="create-account-modal-title" onClick={(event) => event.stopPropagation()}>
+            <div className="section-header">
+              <div>
+                <h3 id="create-account-modal-title">Create Account</h3>
               </div>
-            ) : null}
+              <button type="button" className="secondary" onClick={closeCreateModal} disabled={createAccountMutation.isPending}>Close</button>
+            </div>
+            <form className="stack" onSubmit={handleCreateAccount}>
+              <div className="form-grid">
+                <div className="field">
+                  <label htmlFor="accountType">Account Type</label>
+                  <select
+                    id="accountType"
+                    value={formState.accountType}
+                    onChange={(event) => setFormState((current) => ({ ...current, accountType: event.target.value }))}
+                  >
+                    {ACCOUNT_TYPES.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="balance">Opening Balance</label>
+                  <input
+                    id="balance"
+                    value={formState.balance}
+                    onChange={(event) => setFormState((current) => ({ ...current, balance: event.target.value }))}
+                  />
+                </div>
+                {showInterestRate ? (
+                  <div className="field">
+                    <label htmlFor="interestRate">Interest Rate</label>
+                    <input
+                      id="interestRate"
+                      value={formState.interestRate}
+                      onChange={(event) => setFormState((current) => ({ ...current, interestRate: event.target.value }))}
+                    />
+                  </div>
+                ) : null}
+              </div>
+              <div className="actions centered-actions">
+                <button type="submit" disabled={createAccountMutation.isPending}>Create Account</button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setFormState(emptyCreateAccountForm);
+                    setError(null);
+                  }}
+                  disabled={createAccountMutation.isPending}
+                >
+                  Reset
+                </button>
+              </div>
+            </form>
           </div>
-          <div className="actions">
-            <button type="submit" disabled={createAccountMutation.isPending}>Create Account</button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                setFormState(emptyCreateAccountForm);
-                setError(null);
-                setActionMessage(null);
-              }}
-            >
-              Reset
-            </button>
-          </div>
-        </form>
-      </section>
+        </div>
       ) : null}
-      <section className="table-shell">
+
+      <section className="table-shell accounts-table-shell">
         {accountsError || customerError ? (
           <div className="panel">
             <h3>Accounts unavailable</h3>
@@ -167,31 +192,50 @@ export function AccountListPage() {
               <tr>
                 <th>Account</th>
                 <th>Type</th>
-                <th>Status</th>
                 <th>Balance</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {query.data.map((account) => (
-                <tr key={account.accountId}>
-                  <td><Link className="table-link" to={`/accounts/${account.accountId}`}>{account.accountId}</Link></td>
-                  <td>{account.accountType}</td>
-                  <td>{account.status}</td>
-                  <td>{account.balance}</td>
-                  <td className="actions-cell">
-                    <div className="action-buttons">
-                      <Link className="button-mini" to={`/accounts/${account.accountId}/deposit`} title="Deposit Funds">Deposit</Link>
-                      <Link className="button-mini" to={`/accounts/${account.accountId}/withdraw`} title="Withdraw Funds">Withdraw</Link>
-                      <Link className="button-mini" to={`/accounts/transfer?fromAccountId=${account.accountId}`} title="Transfer Funds">Transfer Funds</Link>
-                      <Link className="button-mini" to={`/accounts/${account.accountId}/transactions`} title="View Transaction History">Transaction History</Link>
-                      <Link className="button-mini" to={`/accounts/${account.accountId}/standing-orders`} title="Manage Standing Orders">Standing Orders</Link>
-                      <Link className="button-mini" to={`/accounts/${account.accountId}/statements`} title="View Monthly Statement">Monthly Statement</Link>
-                      <Link className="button-mini" to={`/accounts/${account.accountId}/insights`} title="View Spending Insights">Spending Insights</Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {query.data.map((account) => {
+                const isExpanded = expandedAccountId === account.accountId;
+
+                return (
+                  <Fragment key={account.accountId}>
+                    <tr>
+                      <td><Link className="table-link" to={`/accounts/${account.accountId}`}>{account.accountId}</Link></td>
+                      <td>{account.accountType}</td>
+                      <td>{account.balance}</td>
+                      <td className="actions-cell">
+                        <button
+                          type="button"
+                          className="button-mini"
+                          onClick={() => setExpandedAccountId((current) => (current === account.accountId ? null : account.accountId))}
+                          aria-expanded={isExpanded}
+                          aria-controls={`account-actions-${account.accountId}`}
+                        >
+                          {isExpanded ? 'Hide Actions' : 'Show Actions'}
+                        </button>
+                      </td>
+                    </tr>
+                    {isExpanded ? (
+                      <tr className="account-actions-row" id={`account-actions-${account.accountId}`}>
+                        <td colSpan={4}>
+                          <div className="account-row-actions">
+                            <Link className="button-mini" to={`/accounts/${account.accountId}/deposit`} title="Deposit Funds">Deposit</Link>
+                            <Link className="button-mini" to={`/accounts/${account.accountId}/withdraw`} title="Withdraw Funds">Withdraw</Link>
+                            <Link className="button-mini" to={`/accounts/transfer?fromAccountId=${account.accountId}`} title="Transfer Funds">Transfer Funds</Link>
+                            <Link className="button-mini" to={`/accounts/${account.accountId}/transactions`} title="View Transaction History">Transaction History</Link>
+                            <Link className="button-mini" to={`/accounts/${account.accountId}/standing-orders`} title="Manage Standing Orders">Standing Orders</Link>
+                            <Link className="button-mini" to={`/accounts/${account.accountId}/statements`} title="View Monthly Statement">Monthly Statement</Link>
+                            <Link className="button-mini" to={`/accounts/${account.accountId}/insights`} title="View Spending Insights">Spending Insights</Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         ) : (
@@ -200,7 +244,7 @@ export function AccountListPage() {
             <p className="muted">
               If the customer exists, this empty state is still a valid success outcome for the current spec.
             </p>
-            <button type="button" onClick={() => document.getElementById('accountType')?.focus()}>Create First Account</button>
+            <button type="button" onClick={openCreateModal}>Create First Account</button>
           </div>
         )}
       </section>

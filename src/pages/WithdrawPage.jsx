@@ -68,7 +68,6 @@ export function WithdrawPage() {
     <div className="stack">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">POST /accounts/{'{accountId}'}/withdraw</p>
           <h2>Withdraw Funds</h2>
           <p className="muted">Submit a withdrawal and inspect the updated account plus resulting transaction. A fresh idempotency key is generated automatically for each submit.</p>
         </div>

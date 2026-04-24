@@ -102,7 +102,6 @@ export function StandingOrdersPage() {
     <div className="stack">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">POST + GET /accounts/{'{accountId}'}/standing-orders</p>
           <h2>Standing Orders</h2>
           <p className="muted">Create a recurring payment instruction above the current list of orders for this account.</p>
         </div>

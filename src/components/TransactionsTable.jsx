@@ -56,7 +56,6 @@ export function TransactionsTable({
             <th>Outcome</th>
             <th>Amount</th>
             <th>Category</th>
-            <th>Idempotency Key</th>
           </tr>
         </thead>
         <tbody>
@@ -93,7 +92,6 @@ export function TransactionsTable({
                     currentCategory || (isCredit ? 'Not applicable for credits' : 'No category')
                   )}
                 </td>
-                <td>{transaction.idempotencyKey || 'None'}</td>
               </tr>
             );
           })}

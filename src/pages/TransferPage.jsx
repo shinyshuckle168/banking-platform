@@ -122,11 +122,10 @@ export function TransferPage() {
     <div className="stack">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">POST /accounts/transfer</p>
           <h2>Transfer Funds</h2>
-          <p className="muted">Move money between accounts and review both resulting transaction records. A fresh idempotency key is generated automatically for each submit.</p>
+          <p className="muted">Move money between accounts and review both resulting transaction records.</p>
         </div>
-        <form className="form-grid" onSubmit={handleSubmit}>
+        <form id="transfer-form" className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="transfer-from-account-id">From Account ID</label>
             <input
@@ -174,11 +173,11 @@ export function TransferPage() {
             </select>
             <p className="field-hint">Optional. Category for this transaction.</p>
           </div>
-          <div className="actions">
-            <button type="submit" disabled={transferMutation.isPending}>Submit Transfer</button>
-            <Link className="button-link subtle" to={form.fromAccountId ? `/accounts/${form.fromAccountId}` : '/'}>Back</Link>
-          </div>
         </form>
+        <div className="actions">
+          <button type="submit" form="transfer-form" disabled={transferMutation.isPending}>Submit Transfer</button>
+          <Link className="button-link subtle" to={form.fromAccountId ? `/accounts/${form.fromAccountId}` : '/'}>Back</Link>
+        </div>
         {error ? <div className="banner error">{error.message}</div> : null}
       </section>
 

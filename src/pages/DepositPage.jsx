@@ -42,7 +42,6 @@ export function DepositPage() {
     <div className="stack">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">POST /accounts/{'{accountId}'}/deposit</p>
           <h2>Deposit Funds</h2>
           <p className="muted">Submit a deposit and inspect the updated account plus resulting transaction. A fresh idempotency key is generated automatically for each submit.</p>
         </div>

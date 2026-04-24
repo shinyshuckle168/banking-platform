@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountListPage } from './AccountListPage';
@@ -87,6 +87,8 @@ describe('AccountListPage', () => {
 
     expect(screen.getByRole('link', { name: '101' })).toBeInTheDocument();
     expect(screen.getAllByText('SAVINGS').length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Back to My Profile' })).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Actions', { selector: 'summary' }));
     expect(screen.getByRole('link', { name: 'Deposit' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Withdraw' })).toBeInTheDocument();
   });

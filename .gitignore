@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+frontend/dist/
+
+# Vite cache
+.vite/
+frontend/.vite/
+
+# Database files
+data/
+*.mv.db
+*.trace.db
+
+# Logs
+logs/
+*.log
+
+# Java build artifacts
+**/target/
+**/*.class
+**/.classpath
+**/.project
+**/.factorypath
+**/.settings/
+**/.DS_Store
+**/.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+group123-backend/
+spec_frontend.md

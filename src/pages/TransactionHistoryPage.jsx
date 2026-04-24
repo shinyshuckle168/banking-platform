@@ -129,7 +129,6 @@ export function TransactionHistoryPage() {
     <div className="stack">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">GET /accounts/{'{accountId}'}/transactions</p>
           <h2>Transaction History</h2>
           <p className="muted">Filter account activity by date range and export the same slice as PDF.</p>
         </div>
