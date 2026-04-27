@@ -33,6 +33,7 @@ export function AccountListPage() {
   const createAccountMutation = useMutation({ mutationFn: createAccount });
 
   const deletedAccountMessage = location.state?.deletedAccountMessage || null;
+  const flashMessage = location.state?.flash || null;
   const accountsError = query.error ? mapDeletedCustomerAccountsError(query.error) : null;
   const customerError = customerQuery.error ? mapDeletedCustomerAccountsError(customerQuery.error) : null;
 
@@ -111,6 +112,7 @@ export function AccountListPage() {
           {!accountsError && !customerError ? <button type="button" onClick={openCreateModal}>Create Account</button> : null}
         </div>
         {deletedAccountMessage ? <div className="banner success">{deletedAccountMessage}</div> : null}
+        {flashMessage ? <div className="banner info">{flashMessage}</div> : null}
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
         {error ? <div className="banner error">{error.message}</div> : null}
         {query.isLoading ? <div className="banner success">Loading accounts...</div> : null}
@@ -192,47 +194,18 @@ export function AccountListPage() {
                 <th>Account</th>
                 <th>Type</th>
                 <th>Balance</th>
-                <th>Actions</th>
+                {/* Actions column removed */}
               </tr>
             </thead>
             <tbody>
-              {query.data.map((account) => {
-                const isExpanded = expandedAccountId === account.accountId;
-
-                return (
-                  <Fragment key={account.accountId}>
-                    <tr>
-                      <td><Link className="table-link" to={`/accounts/${account.accountId}`}>{account.accountId}</Link></td>
-                      <td>{account.accountType}</td>
-                      <td>{account.balance}</td>
-                      <td className="actions-cell">
-                        <button
-                          type="button"
-                          className="button-mini"
-                          onClick={() => setExpandedAccountId((current) => (current === account.accountId ? null : account.accountId))}
-                          aria-expanded={isExpanded}
-                          aria-controls={`account-actions-${account.accountId}`}
-                        >
-                          {isExpanded ? 'Hide Actions' : 'Show Actions'}
-                        </button>
-                      </td>
-                    </tr>
-                    {isExpanded ? (
-                      <tr className="account-actions-row" id={`account-actions-${account.accountId}`}>
-                        <td colSpan={4}>
-                          <div className="account-row-actions">
-                            <Link className="button-mini" to={`/accounts/transfer?fromAccountId=${account.accountId}`} title="Transfer Funds">Transfer Funds</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/transactions`} title="View Transaction History">Transaction History</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/standing-orders`} title="Manage Standing Orders">Standing Orders</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/statements`} title="View Monthly Statement">Monthly Statement</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/insights`} title="View Spending Insights">Spending Insights</Link>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : null}
-                  </Fragment>
-                );
-              })}
+              {query.data.map((account) => (
+                <tr key={account.accountId}>
+                  <td><Link className="table-link" to={`/accounts/${account.accountId}`}>{account.accountId}</Link></td>
+                  <td>{account.accountType}</td>
+                  <td>{account.balance}</td>
+                  {/* Actions cell removed */}
+                </tr>
+              ))}
             </tbody>
           </table>
         ) : (

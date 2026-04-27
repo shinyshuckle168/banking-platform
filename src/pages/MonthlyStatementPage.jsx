@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
+import { AccountSwitcher } from '../components/AccountSwitcher';
+import { useAuth } from '../auth/AuthContext';
+import { useListCustomerAccounts } from '../hooks/useListCustomerAccounts';
 import { useMonthlyStatement } from '../hooks/useGroup3';
 import { emptyMonthlyStatementLookup } from '../types';
 
@@ -74,6 +77,8 @@ function resolveStatementErrorMessage(queryError, submittedPeriod) {
 
 export function MonthlyStatementPage() {
   const { accountId } = useParams();
+  const { authState } = useAuth();
+  const accountsQuery = useListCustomerAccounts(authState.customerId);
   const [searchParams] = useSearchParams();
   const requestedPeriod = searchParams.get('period');
   const initialPeriod = requestedPeriod || emptyMonthlyStatementLookup.period;
@@ -114,9 +119,12 @@ export function MonthlyStatementPage() {
   return (
     <div className="stack">
       <section className="panel stack">
-        <div>
-          <h2>Monthly Statement</h2>
-          <p className="muted">Request a monthly statement PDF for a specific year and month.</p>
+        <div className="section-header">
+          <div>
+            <h2>Monthly Statement</h2>
+            <p className="muted">Request a monthly statement PDF for a specific year and month.</p>
+          </div>
+          <AccountSwitcher accountId={accountId} accounts={accountsQuery.data} feature="statements" />
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">

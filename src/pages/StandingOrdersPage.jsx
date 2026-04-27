@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
+import { AccountSwitcher } from '../components/AccountSwitcher';
+import { useAuth } from '../auth/AuthContext';
+import { useListCustomerAccounts } from '../hooks/useListCustomerAccounts';
 import {
   useCancelStandingOrder,
   useCreateStandingOrder,
@@ -50,6 +53,8 @@ function validateStandingOrderForm(form) {
 
 export function StandingOrdersPage() {
   const { accountId } = useParams();
+  const { authState } = useAuth();
+  const accountsQuery = useListCustomerAccounts(authState.customerId);
   const [form, setForm] = useState(emptyStandingOrderForm);
   const [localError, setLocalError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
@@ -101,9 +106,12 @@ export function StandingOrdersPage() {
   return (
     <div className="stack">
       <section className="panel stack">
-        <div>
-          <h2>Standing Orders</h2>
-          <p className="muted">Create a recurring payment instruction above the current list of orders for this account.</p>
+        <div className="section-header">
+          <div>
+            <h2>Standing Orders</h2>
+            <p className="muted">Create a recurring payment instruction above the current list of orders for this account.</p>
+          </div>
+          <AccountSwitcher accountId={accountId} accounts={accountsQuery.data} feature="standing-orders" />
         </div>
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
         {localError ? <div className="banner error">{localError.message || localError}</div> : null}

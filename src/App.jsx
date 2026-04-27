@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
+import { NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
+import { FeatureGuard } from './components/FeatureGuard';
+import { useListCustomerAccounts } from './hooks/useListCustomerAccounts';
 import { AccountDetailPage } from './pages/AccountDetailPage';
 import { AccountListPage } from './pages/AccountListPage';
 import { CustomerCreatePage } from './pages/CustomerCreatePage';
@@ -72,11 +74,38 @@ function ProfileDropdown({ onClose }) {
   );
 }
 
+const FEATURE_SEGMENTS = ['transactions', 'statements', 'insights', 'standing-orders'];
+
+function getActiveAccountIdFromPath(pathname) {
+  const match = pathname.match(/^\/accounts\/(\d+)/);
+  return match ? match[1] : null;
+}
+
 function AppLayout() {
   const { authState, isAdmin, isAuthenticated } = useAuth();
   const customerId = authState.customerId;
+  const location = useLocation();
+  const navigate = useNavigate();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Active account context — seeded from the URL on first render
+  const [activeAccountId, setActiveAccountId] = useState(() => getActiveAccountIdFromPath(location.pathname));
+
+  // Account picker modal state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pendingFeature, setPendingFeature] = useState(null);
+
+  // Accounts list for the picker
+  const accountsQuery = useListCustomerAccounts(customerId);
+
+  // Keep activeAccountId in sync when the user navigates via browser back/forward
+  useEffect(() => {
+    const id = getActiveAccountIdFromPath(location.pathname);
+    if (id) {
+      setActiveAccountId(id);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!profileMenuOpen) return;
@@ -88,6 +117,59 @@ function AppLayout() {
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [profileMenuOpen]);
+
+  const pathname = location.pathname;
+  const overviewPath = isAdmin ? '/customer' : customerId ? `/customer/${customerId}` : '/';
+
+  function handleOverview() {
+    setActiveAccountId(null);
+    navigate(overviewPath);
+  }
+
+  function handleFeatureNav(feature) {
+    if (activeAccountId) {
+      navigate(`/accounts/${activeAccountId}/${feature}`);
+    } else {
+      setPendingFeature(feature);
+      setPickerOpen(true);
+    }
+  }
+
+  function handlePickAccount(accountId) {
+    const id = String(accountId);
+    setActiveAccountId(id);
+    setPickerOpen(false);
+    navigate(`/accounts/${id}/${pendingFeature}`);
+    setPendingFeature(null);
+  }
+
+  function handleClosePicker() {
+    setPickerOpen(false);
+    setPendingFeature(null);
+  }
+
+  function isFeatureActive(segment) {
+    return pathname.includes(`/${segment}`);
+  }
+
+  // Account detail page: /accounts/:id or /accounts/:id/edit (no feature segment)
+  const isAccountDetailPage = /^\/accounts\/\d+(\/edit)?$/.test(pathname);
+
+  const isProfilePage = pathname === '/customer-profile';
+
+  const isCustomerAccountsActive = customerId
+    ? pathname === `/customer/${customerId}/accounts` || isAccountDetailPage
+    : isAccountDetailPage;
+
+  const isOverviewActive =
+    !FEATURE_SEGMENTS.some((seg) => isFeatureActive(seg)) &&
+    !isCustomerAccountsActive &&
+    !isProfilePage;
+
+  // Show feature buttons when: admin, loading (unknown), has accounts, or already on a feature page
+  const hasAccounts = accountsQuery.data ? accountsQuery.data.length > 0 : false;
+  const isOnFeaturePage = FEATURE_SEGMENTS.some((seg) => isFeatureActive(seg));
+  const showFeatureButtons = isAdmin || accountsQuery.isLoading || hasAccounts || isOnFeaturePage;
 
   return (
     <div className="app-shell">
@@ -117,14 +199,109 @@ function AppLayout() {
           )}
         </div>
       </header>
+
       {isAuthenticated && (
         <div className="subnav">
           <nav className="subnav-list">
-            <NavLink to="/" end>Overview</NavLink>
-            {customerId && <NavLink to={`/customer/${customerId}/accounts`}>Customer Accounts</NavLink>}
+            <button
+              type="button"
+              className={`subnav-btn${isOverviewActive ? ' active' : ''}`}
+              onClick={handleOverview}
+            >
+              Overview
+            </button>
+            {customerId && (
+              <NavLink
+                className={() => `subnav-btn${isCustomerAccountsActive ? ' active' : ''}`}
+                to={`/customer/${customerId}/accounts`}
+              >
+                My Accounts
+              </NavLink>
+            )}
+            {showFeatureButtons && (
+              <>
+                <button
+                  type="button"
+                  className={`subnav-btn${isFeatureActive('transactions') ? ' active' : ''}`}
+                  onClick={() => handleFeatureNav('transactions')}
+                >
+                  Transactions
+                </button>
+                <button
+                  type="button"
+                  className={`subnav-btn${isFeatureActive('statements') ? ' active' : ''}`}
+                  onClick={() => handleFeatureNav('statements')}
+                >
+                  Monthly Statement
+                </button>
+                <button
+                  type="button"
+                  className={`subnav-btn${isFeatureActive('insights') ? ' active' : ''}`}
+                  onClick={() => handleFeatureNav('insights')}
+                >
+                  Spending Insights
+                </button>
+                <button
+                  type="button"
+                  className={`subnav-btn${isFeatureActive('standing-orders') ? ' active' : ''}`}
+                  onClick={() => handleFeatureNav('standing-orders')}
+                >
+                  Standing Orders
+                </button>
+              </>
+            )}
           </nav>
         </div>
       )}
+
+      {pickerOpen && (
+        <div className="modal-backdrop" onClick={handleClosePicker}>
+          <div
+            className="modal-panel stack"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="account-picker-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="section-header">
+              <div>
+                <h3 id="account-picker-title">Select an Account</h3>
+                <p className="muted" style={{ margin: '0.25rem 0 0' }}>
+                  Choose which account to view {pendingFeature && pendingFeature.replace('-', ' ')}.
+                </p>
+              </div>
+              <button type="button" className="secondary" onClick={handleClosePicker}>
+                Close
+              </button>
+            </div>
+            {accountsQuery.isLoading ? (
+              <div className="banner success">Loading accounts…</div>
+            ) : accountsQuery.data && accountsQuery.data.length > 0 ? (
+              <ul className="account-picker-list">
+                {accountsQuery.data.map((account) => (
+                  <li key={account.accountId}>
+                    <button
+                      type="button"
+                      className="account-picker-item"
+                      onClick={() => handlePickAccount(account.accountId)}
+                    >
+                      <span className="account-picker-id">#{account.accountId}</span>
+                      <span className="account-picker-meta">
+                        {account.accountType} · {account.balance}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">
+                No accounts found. Please create an account first.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       <main className="content-area">
         <Outlet />
       </main>
@@ -156,10 +333,12 @@ export default function App() {
           <Route path="/accounts/:accountId/edit" element={<AccountDetailPage />} />
           <Route path="/accounts/:accountId/deposit" element={<DepositPage />} />
           <Route path="/accounts/:accountId/withdraw" element={<WithdrawPage />} />
-          <Route path="/accounts/:accountId/transactions" element={<TransactionHistoryPage />} />
-          <Route path="/accounts/:accountId/standing-orders" element={<StandingOrdersPage />} />
-          <Route path="/accounts/:accountId/statements" element={<MonthlyStatementPage />} />
-          <Route path="/accounts/:accountId/insights" element={<SpendingInsightsPage />} />
+          <Route element={<FeatureGuard />}>
+            <Route path="/accounts/:accountId/transactions" element={<TransactionHistoryPage />} />
+            <Route path="/accounts/:accountId/standing-orders" element={<StandingOrdersPage />} />
+            <Route path="/accounts/:accountId/statements" element={<MonthlyStatementPage />} />
+            <Route path="/accounts/:accountId/insights" element={<SpendingInsightsPage />} />
+          </Route>
           <Route path="/accounts/transfer" element={<TransferPage />} />
         </Route>
 

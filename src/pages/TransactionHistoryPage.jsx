@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
 import { exportTransactionHistoryPdf } from '../api/group3';
+import { AccountSwitcher } from '../components/AccountSwitcher';
 import { TransactionsTable } from '../components/TransactionsTable';
+import { useListCustomerAccounts } from '../hooks/useListCustomerAccounts';
 import { useRecategoriseTransaction, useTransactionHistory } from '../hooks/useGroup3';
+import { useAuth } from '../auth/AuthContext';
 import { TRANSACTION_CATEGORIES, emptyTransactionHistoryFilters } from '../types';
 
 function todayDateInputValue() {
@@ -43,6 +46,8 @@ function validateDateRange(startDate, endDate) {
 
 export function TransactionHistoryPage() {
   const { accountId } = useParams();
+  const { authState } = useAuth();
+  const accountsQuery = useListCustomerAccounts(authState.customerId);
   const [filters, setFilters] = useState(emptyTransactionHistoryFilters);
   const [submittedFilters, setSubmittedFilters] = useState(null);
   const [localError, setLocalError] = useState(null);
@@ -128,9 +133,12 @@ export function TransactionHistoryPage() {
   return (
     <div className="stack">
       <section className="panel stack">
-        <div>
-          <h2>Transaction History</h2>
-          <p className="muted">Filter account activity by date range and export the same slice as PDF.</p>
+        <div className="section-header">
+          <div>
+            <h2>Transaction History</h2>
+            <p className="muted">Filter account activity by date range and export the same slice as PDF.</p>
+          </div>
+          <AccountSwitcher accountId={accountId} accounts={accountsQuery.data} feature="transactions" />
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">

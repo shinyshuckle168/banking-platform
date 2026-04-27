@@ -265,6 +265,112 @@ body::before {
   border-bottom-color: var(--accent);
 }
 
+.subnav-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1rem;
+  height: 44px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 150ms ease, border-color 150ms ease;
+  box-shadow: none;
+  transform: none;
+}
+
+.subnav-btn:hover {
+  color: var(--ink);
+  background: transparent;
+  transform: none;
+}
+
+.subnav-btn.active {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+.account-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.account-picker-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease, border-color 120ms ease;
+  box-shadow: none;
+  transform: none;
+}
+
+.account-picker-item:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  transform: none;
+}
+
+.account-picker-id {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.account-picker-meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* ── Account Switcher ───────────────────────────────────────── */
+
+.account-switcher {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.account-switcher-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.account-switcher-select {
+  min-width: 230px;
+  font-size: 0.88rem;
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.45rem 0.75rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.account-switcher-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .content-area {
   padding: 2rem;
   flex: 1;

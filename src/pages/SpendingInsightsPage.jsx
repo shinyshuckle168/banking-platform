@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
+import { AccountSwitcher } from '../components/AccountSwitcher';
 import { SpendingBarChart, SpendingPieChart } from '../components/InsightCharts';
+import { useAuth } from '../auth/AuthContext';
+import { useListCustomerAccounts } from '../hooks/useListCustomerAccounts';
 import { useSpendingInsights } from '../hooks/useGroup3';
 import { emptySpendingInsightsLookup } from '../types';
 
@@ -222,6 +225,8 @@ function normalizeInsights(data, period) {
 
 export function SpendingInsightsPage() {
   const { accountId } = useParams();
+  const { authState } = useAuth();
+  const accountsQuery = useListCustomerAccounts(authState.customerId);
   const initial = splitPeriod(emptySpendingInsightsLookup.period);
   const [form, setForm] = useState({ year: initial.year, month: initial.month });
   const [submittedPeriod, setSubmittedPeriod] = useState('');
@@ -256,9 +261,12 @@ export function SpendingInsightsPage() {
   return (
     <div className="stack">
       <section className="panel stack">
-        <div>
-          <h2>Spending Insights</h2>
-          <p className="muted">Review debit-spend totals for a selected month as a pie chart plus a six-month bar chart trend.</p>
+        <div className="section-header">
+          <div>
+            <h2>Spending Insights</h2>
+            <p className="muted">Review debit-spend totals for a selected month as a pie chart plus a six-month bar chart trend.</p>
+          </div>
+          <AccountSwitcher accountId={accountId} accounts={accountsQuery.data} feature="insights" />
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
