@@ -122,7 +122,7 @@ describe('auth pages', () => {
     await waitFor(() => {
       expect(loginUser).toHaveBeenCalledWith({ username: 'user@example.com', password: 'secret' });
       expect(mockCompleteLogin).toHaveBeenCalledWith({ accessToken: 'token' }, 'user@example.com');
-      expect(mockNavigate).toHaveBeenCalledWith('/accounts/12', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
   });
 
@@ -178,7 +178,7 @@ describe('auth pages', () => {
       expect(createCustomer).toHaveBeenCalledWith({ name: 'New Customer', address: '1 Main St', type: 'PERSON' }, 'token');
       expect(mockCompleteLogin).toHaveBeenCalledWith({ accessToken: 'token' }, 'user@example.com');
       expect(mockRememberCustomerId).toHaveBeenCalledWith('88');
-      expect(mockNavigate).toHaveBeenCalledWith('/customer/88', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
   });
 });
