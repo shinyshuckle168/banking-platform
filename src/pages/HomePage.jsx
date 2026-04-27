@@ -32,12 +32,9 @@ const offers = [
 export function HomePage() {
   const navigate = useNavigate();
   const { authState, isAuthenticated, isAdmin, rememberCustomerId } = useAuth();
-  const currentYear = new Date().getFullYear();
   const [lookup, setLookup] = useState(emptyCustomerLookup);
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
-  const [linkError, setLinkError] = useState(null);
-  const [linkMessage, setLinkMessage] = useState(null);
-  const [isLinkingCustomer, setIsLinkingCustomer] = useState(false);
+  // ...existing code...
   const intervalRef = useRef(null);
 
   function startSliderTimer() {
@@ -64,40 +61,10 @@ export function HomePage() {
     }
   }
 
-  async function linkCustomerProfile() {
-    if (!lookup.customerId) {
-      setLinkError({ message: 'Enter your customer ID first.' });
-      setLinkMessage(null);
-      return;
-    }
-
-    setIsLinkingCustomer(true);
-    setLinkError(null);
-    setLinkMessage(null);
-
-    try {
-      const customer = await getCustomer(lookup.customerId);
-      rememberCustomerId(customer.customerId);
-      setLinkMessage(`Customer profile ${customer.customerId} linked for this browser session.`);
-      navigate(`/customer/${customer.customerId}`);
-    } catch (requestError) {
-      const mapped = mapAxiosError(requestError);
-
-      if (mapped.code === 'UNAUTHORISED' || mapped.code === 'UNAUTHORIZED' || mapped.code === 'CUSTOMER_NOT_FOUND') {
-        setLinkError({
-          ...mapped,
-          message: 'That customer profile is not available for the logged-in user. Check the customer ID and try again.'
-        });
-      } else {
-        setLinkError(mapped);
-      }
-    } finally {
-      setIsLinkingCustomer(false);
-    }
-  }
+  // ...existing code...
 
   return (
-    <div className="stack home-page">
+    <div className="stack">
       <section className="stack offers-panel">
         <div className="offers-header">
           <div>
@@ -169,21 +136,7 @@ export function HomePage() {
             </>
           ) : (
             <>
-              {!authState.customerId ? (
-                <div className="stack tight-gap">
-                  <div className="field">
-                    <label htmlFor="link-customer-id">Link Existing Customer ID</label>
-                    <input
-                      id="link-customer-id"
-                      value={lookup.customerId}
-                      onChange={(event) => setLookup((current) => ({ ...current, customerId: event.target.value }))}
-                      placeholder="Enter your customer ID"
-                    />
-                  </div>
-                  {linkError ? <div className="banner error">{linkError.message}</div> : null}
-                  {linkMessage ? <div className="banner success">{linkMessage}</div> : null}
-                </div>
-              ) : null}
+              {/* Removed dummy Link My Profile UI */}
             </>
           )}
           <div className="actions">
@@ -191,28 +144,12 @@ export function HomePage() {
             {isAdmin ? <button type="button" onClick={openAccount} disabled={!lookup.accountId}>Open Account</button> : null}
             {authState.customerId ? <Link className="button-link" to={`/customer/${authState.customerId}`}>My Profile</Link> : null}
             {authState.customerId ? <Link className="button-link subtle" to={`/customer/${authState.customerId}/accounts`}>My Accounts</Link> : null}
-            {!isAdmin && !authState.customerId ? <button type="button" onClick={linkCustomerProfile} disabled={!lookup.customerId || isLinkingCustomer}>Link My Profile</button> : null}
+            {/* Removed Link My Profile button */}
             {!authState.customerId ? <Link className="button-link subtle" to="/customer/create">Create Customer</Link> : null}
           </div>
         </section>
       )}
 
-      <footer className="overview-footer">
-        <div className="footer-bottom-row">
-          <p className="footer-meta">© {currentYear} Digital Banking Platform</p>
-          <div className="footer-center-info">
-            <p className="footer-meta">support@bankingplatform.local</p>
-            <p className="footer-meta">Mon-Fri, 8:00 AM to 6:00 PM</p>
-          </div>
-          <div className="footer-social" aria-label="Social media links">
-            <a href="#" aria-label="Facebook">f</a>
-            <a href="#" aria-label="Instagram">ig</a>
-            <a href="#" aria-label="X">x</a>
-            <a href="#" aria-label="LinkedIn">in</a>
-            <a href="#" aria-label="YouTube">yt</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

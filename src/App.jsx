@@ -72,6 +72,29 @@ function ProfileDropdown({ onClose }) {
   );
 }
 
+function AppFooter() {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <footer className="overview-footer">
+      <div className="footer-bottom-row">
+        <p className="footer-meta">© {currentYear} Digital Banking Platform</p>
+        <div className="footer-center-info">
+          <p className="footer-meta">support@bankingplatform.local</p>
+          <p className="footer-meta">Mon-Fri, 8:00 AM to 6:00 PM</p>
+        </div>
+        <div className="footer-social" aria-label="Social media links">
+          <a href="#" aria-label="Facebook">f</a>
+          <a href="#" aria-label="Instagram">ig</a>
+          <a href="#" aria-label="X">x</a>
+          <a href="#" aria-label="LinkedIn">in</a>
+          <a href="#" aria-label="YouTube">yt</a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 function AppLayout() {
   const { authState, isAdmin, isAuthenticated } = useAuth();
   const customerId = authState.customerId;
@@ -126,7 +149,10 @@ function AppLayout() {
         </div>
       )}
       <main className="content-area">
-        <Outlet />
+        <div className="page-content">
+          <Outlet />
+        </div>
+        <AppFooter />
       </main>
     </div>
   );
