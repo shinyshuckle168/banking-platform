@@ -56,7 +56,6 @@ export function LoginPage() {
   return (
     <section className="panel stack auth-panel-page">
       <div>
-        <p className="eyebrow">Merged Backend</p>
         <h2>Login</h2>
         <p className="muted">Authenticate with the merged backend and store the access token for protected requests.</p>
       </div>

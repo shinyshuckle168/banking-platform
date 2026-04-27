@@ -67,6 +67,10 @@ function submitCurrentForm() {
   fireEvent.submit(document.querySelector('form'));
 }
 
+function goToRegisterDetailsStep() {
+  fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+}
+
 describe('auth pages', () => {
   beforeEach(() => {
     mutationState.isPending = false;
@@ -124,6 +128,7 @@ describe('auth pages', () => {
 
   it('shows register validation errors before submitting', async () => {
     renderRegisterPage();
+    goToRegisterDetailsStep();
 
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'bad-email' } });
     submitCurrentForm();
@@ -137,7 +142,7 @@ describe('auth pages', () => {
     submitCurrentForm();
     expect(await screen.findByText('Name is required.')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Customer Name'), { target: { value: 'New Customer' } });
+    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'New Customer' } });
     submitCurrentForm();
     expect(await screen.findByText('Address is required.')).toBeInTheDocument();
 
@@ -148,6 +153,7 @@ describe('auth pages', () => {
     mutationState.isPending = true;
 
     renderRegisterPage();
+    goToRegisterDetailsStep();
 
     expect(screen.getByRole('button', { name: 'Create Account' })).toBeDisabled();
   });
@@ -158,10 +164,11 @@ describe('auth pages', () => {
     createCustomer.mockResolvedValue({ customerId: '88' });
 
     renderRegisterPage();
+    goToRegisterDetailsStep();
 
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
-    fireEvent.change(screen.getByLabelText('Customer Name'), { target: { value: 'New Customer' } });
+    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'New Customer' } });
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: '1 Main St' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 

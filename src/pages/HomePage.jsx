@@ -146,9 +146,6 @@ export function HomePage() {
           <h3>Quick Navigation</h3>
           {isAdmin ? (
             <>
-              <p className="muted">
-                Admin users can jump to any customer or account by ID, then switch customer context directly from the profile or accounts page.
-              </p>
               <div className="form-grid">
                 <div className="field">
                   <label htmlFor="home-customer-id">Open Customer ID</label>
@@ -172,9 +169,6 @@ export function HomePage() {
             </>
           ) : (
             <>
-              <p className="muted">
-                Customer users only see their own remembered customer context in the navigation. Registration creates that context automatically for new users, and existing users can relink it manually if this browser has lost the saved link.
-              </p>
               {!authState.customerId ? (
                 <div className="stack tight-gap">
                   <div className="field">
@@ -185,7 +179,6 @@ export function HomePage() {
                       onChange={(event) => setLookup((current) => ({ ...current, customerId: event.target.value }))}
                       placeholder="Enter your customer ID"
                     />
-                    <p className="field-hint">The app verifies the ID through your existing customer access before saving it locally.</p>
                   </div>
                   {linkError ? <div className="banner error">{linkError.message}</div> : null}
                   {linkMessage ? <div className="banner success">{linkMessage}</div> : null}
@@ -200,7 +193,6 @@ export function HomePage() {
             {authState.customerId ? <Link className="button-link subtle" to={`/customer/${authState.customerId}/accounts`}>My Accounts</Link> : null}
             {!isAdmin && !authState.customerId ? <button type="button" onClick={linkCustomerProfile} disabled={!lookup.customerId || isLinkingCustomer}>Link My Profile</button> : null}
             {!authState.customerId ? <Link className="button-link subtle" to="/customer/create">Create Customer</Link> : null}
-            {isAdmin ? <span className="inline-note">Admin users can open any customer or account by ID.</span> : null}
           </div>
         </section>
       )}
