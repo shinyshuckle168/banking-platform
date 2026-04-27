@@ -8,6 +8,7 @@ import { CustomerCreatePage } from './pages/CustomerCreatePage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { CustomerEditPage } from './pages/CustomerEditPage';
 import { CustomerProfilePage } from './pages/CustomerProfilePage';
+import NotFoundPage from './pages/NotFoundPage';
 
 import { DepositPage } from './pages/DepositPage';
 import { MonthlyStatementPage } from './pages/MonthlyStatementPage';
@@ -189,7 +190,7 @@ export default function App() {
           <Route path="/accounts/transfer" element={<TransferPage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to={authState.accessToken ? defaultAuthenticatedRoute : '/'} replace />} />
+          <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   );

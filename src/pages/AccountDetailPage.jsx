@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import NotFoundPage from './NotFoundPage';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { deleteAccount } from '../api/accounts';
@@ -38,6 +39,23 @@ export function AccountDetailPage() {
   const account = query.data;
   const canDeleteAccount = Number(account?.balance) === 0;
   const queryError = query.error ? mapDeletedAccountError(query.error) : null;
+
+  // If on an /edit route and error is UNAUTHORISED or ACCOUNT_NOT_FOUND, show NotFoundPage
+  if (
+    location.pathname.endsWith('/edit') &&
+    ((queryError && (queryError.code === 'UNAUTHORISED' || queryError.code === 'UNAUTHORIZED' || queryError.code === 'ACCOUNT_NOT_FOUND')) ||
+    (error && (error.code === 'UNAUTHORISED' || error.code === 'UNAUTHORIZED' || error.code === 'ACCOUNT_NOT_FOUND')))
+  ) {
+    return <NotFoundPage />;
+  }
+
+  // Show NotFoundPage for UNAUTHORISED or ACCOUNT_NOT_FOUND errors
+  if (
+    (queryError && (queryError.code === 'UNAUTHORISED' || queryError.code === 'UNAUTHORIZED' || queryError.code === 'ACCOUNT_NOT_FOUND')) ||
+    (error && (error.code === 'UNAUTHORISED' || error.code === 'UNAUTHORIZED' || error.code === 'ACCOUNT_NOT_FOUND'))
+  ) {
+    return <NotFoundPage />;
+  }
 
   return (
     <div className="stack">
