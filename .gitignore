@@ -18,7 +18,7 @@ data/
 # Logs
 logs/
 *.log
-
+.vscode/
 # Java build artifacts
 **/target/
 **/*.class
