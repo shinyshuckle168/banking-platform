@@ -70,7 +70,7 @@ export function RegisterPage() {
       const { authResponse, customerResponse } = await mutation.mutateAsync(formState);
       completeLogin(authResponse, formState.username);
       rememberCustomerId(customerResponse.customerId);
-      navigate(`/customer/${customerResponse.customerId}`, { replace: true });
+      navigate('/', { replace: true });
     } catch (requestError) {
       setError(mapAxiosError(requestError));
     }

@@ -13,10 +13,6 @@ function getPostLoginRoute(authState) {
     return '/customer';
   }
 
-  if (authState.customerId) {
-    return `/customer/${authState.customerId}`;
-  }
-
   return '/';
 }
 
@@ -45,8 +41,7 @@ export function LoginPage() {
     try {
       const response = await mutation.mutateAsync(formState);
       const nextAuthState = completeLogin(response, formState.username);
-      const fallbackRoute = getPostLoginRoute(nextAuthState);
-      const nextRoute = location.state?.from?.pathname || fallbackRoute;
+      const nextRoute = getPostLoginRoute(nextAuthState);
       navigate(nextRoute, { replace: true });
     } catch (requestError) {
       setError(mapAxiosError(requestError));
