@@ -119,7 +119,9 @@ function AppLayout() {
   }, [profileMenuOpen]);
 
   const pathname = location.pathname;
-  const overviewPath = isAdmin ? '/customer' : customerId ? `/customer/${customerId}` : '/';
+  // const overviewPath = isAdmin ? '/customer' : customerId ? `/customer/${customerId}` : '/';
+  // For now, Overview always redirects to home
+  const overviewPath = '/';
 
   function handleOverview() {
     setActiveAccountId(null);
@@ -324,7 +326,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/customer/create" element={<CustomerCreatePage />} />
           <Route path="/customer" element={<CustomerDetailPage />} />
-          <Route path="/customer/:customerId" element={<CustomerDetailPage />} />
+          {/* <Route path="/customer/:customerId" element={<CustomerDetailPage />} /> */}
           <Route path="/customer/:customerId/edit" element={<CustomerEditPage />} />
           <Route path="/customer-profile" element={<CustomerProfilePage />} />
           <Route path="/customer/:customerId/accounts" element={<AccountListPage />} />
