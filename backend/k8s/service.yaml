@@ -1,12 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend
+  name: banking-platform-backend
 spec:
-  type: LoadBalancer
+  #type: LoadBalancer
+  type: ClusterIP
   selector:
-    app: backend
+    app: banking-platform-backend
   ports:
   - protocol: TCP
-    port: 80
+    port: 8080
     targetPort: 8080
