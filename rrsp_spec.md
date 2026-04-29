@@ -1,6 +1,6 @@
 # Feature Specification: Create RRSP Account
 
-**Feature Branch**: `[001-create-rrsp-account]`  
+**Feature Branch**: `[spec/rrsp]`
 **Created**: April 28, 2026  
 **Status**: Draft  
 **Input**: User description: "As a customer, I want to open an RRSP account so that I can contribute to my retirement savings."
