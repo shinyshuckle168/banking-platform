@@ -6,7 +6,7 @@ spec:
   #type: LoadBalancer
   type: ClusterIP
   selector:
-    app: banking-platform-backend
+    app: backend
   ports:
   - protocol: TCP
     port: 8080
