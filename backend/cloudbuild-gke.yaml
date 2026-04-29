@@ -13,7 +13,7 @@ steps:
 
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'backend'
-    args: ['build', '-t', '${_IMAGE}', '.']
+    args: ['build', '-t', '${_IMAGE}:$SHORT_SHA', '.']
 
   - name: 'aquasec/trivy:latest'
     entrypoint: 'sh'
@@ -24,16 +24,16 @@ steps:
           --severity CRITICAL \
           --ignore-unfixed \
           --exit-code 1 \
-          ${_IMAGE}
+          ${_IMAGE}:$SHORT_SHA
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_IMAGE}']
+    args: ['push', '${_IMAGE}:$SHORT_SHA']
 
   - name: 'gcr.io/cloud-builders/gke-deploy'
     args:
       - run
       - --filename=backend/k8s/ # The directory where your Kubernetes manifests are
-      - --image=${_IMAGE}
+      - --image=${_IMAGE}:$SHORT_SHA
       - --location=${_GKE_REGION}
       - --cluster=${_CLUSTER}
 
@@ -46,7 +46,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
-  _IMAGE: northamerica-northeast1-docker.pkg.dev/gcp-class-14/banking-repo/banking:$SHORT_SHA
+  _IMAGE: northamerica-northeast1-docker.pkg.dev/gcp-class-14/banking-repo/banking
   _SERVICE: digital-banking-service
   _REGION: northamerica-northeast1
   _GKE_REGION: us-central1
