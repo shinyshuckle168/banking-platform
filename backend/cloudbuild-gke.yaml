@@ -36,7 +36,7 @@ steps:
       - --image=${_IMAGE}
       - --location=${_REGION}
       - --cluster=${_CLUSTER}
-      
+
 availableSecrets:
   secretManager:
     - versionName: projects/gcp-class-14/secrets/sonar-cloud-auth-token/versions/latest
