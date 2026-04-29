@@ -32,7 +32,7 @@ steps:
   - name: 'gcr.io/cloud-builders/gke-deploy'
     args:
       - run
-      - --filename=k8s/ # The directory where your Kubernetes manifests are
+      - --filename=backend/k8s/ # The directory where your Kubernetes manifests are
       - --image=${_IMAGE}
       - --location=${_REGION}
       - --cluster=${_CLUSTER}
