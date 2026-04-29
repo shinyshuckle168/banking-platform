@@ -34,7 +34,7 @@ steps:
       - run
       - --filename=backend/k8s/ # The directory where your Kubernetes manifests are
       - --image=${_IMAGE}
-      - --location=${_REGION}
+      - --location=${_GKE_REGION}
       - --cluster=${_CLUSTER}
 
 availableSecrets:
@@ -49,4 +49,5 @@ substitutions:
   _IMAGE: northamerica-northeast1-docker.pkg.dev/gcp-class-14/banking-repo/banking
   _SERVICE: digital-banking-service
   _REGION: northamerica-northeast1
+  _GKE_REGION: us-central1
   _CLUSTER: my-gke-cluster
