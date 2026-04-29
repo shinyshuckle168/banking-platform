@@ -46,7 +46,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
-  _IMAGE: northamerica-northeast1-docker.pkg.dev/gcp-class-14/banking-repo/banking
+  _IMAGE: northamerica-northeast1-docker.pkg.dev/gcp-class-14/banking-repo/banking:$SHORT_SHA
   _SERVICE: digital-banking-service
   _REGION: northamerica-northeast1
   _GKE_REGION: us-central1

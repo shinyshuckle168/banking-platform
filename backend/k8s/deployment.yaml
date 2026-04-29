@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend-container
-          image: northamerica-northeast2-docker.pkg.dev/gcp-class-14/banking-repo/banking
+          image: northamerica-northeast1-docker.pkg.dev/gcp-class-14/banking-repo/banking
           ports:
             - containerPort: 8080
  
