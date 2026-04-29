@@ -192,7 +192,6 @@ export function AccountListPage() {
                 <th>Account</th>
                 <th>Type</th>
                 <th>Balance</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -205,45 +204,15 @@ export function AccountListPage() {
                       <td><Link className="table-link" to={`/accounts/${account.accountId}`}>{account.accountId}</Link></td>
                       <td>{account.accountType}</td>
                       <td>{account.balance}</td>
-                      <td className="actions-cell">
-                        <button
-                          type="button"
-                          className="button-mini"
-                          onClick={() => setExpandedAccountId((current) => (current === account.accountId ? null : account.accountId))}
-                          aria-expanded={isExpanded}
-                          aria-controls={`account-actions-${account.accountId}`}
-                        >
-                          {isExpanded ? 'Hide Actions' : 'Show Actions'}
-                        </button>
-                      </td>
+                      {/* Actions column removed */}
                     </tr>
-                    {isExpanded ? (
-                      <tr className="account-actions-row" id={`account-actions-${account.accountId}`}>
-                        <td colSpan={4}>
-                          <div className="account-row-actions">
-                            <Link className="button-mini" to={`/accounts/transfer?fromAccountId=${account.accountId}`} title="Transfer Funds">Transfer Funds</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/transactions`} title="View Transaction History">Transaction History</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/standing-orders`} title="Manage Standing Orders">Standing Orders</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/statements`} title="View Monthly Statement">Monthly Statement</Link>
-                            <Link className="button-mini" to={`/accounts/${account.accountId}/insights`} title="View Spending Insights">Spending Insights</Link>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : null}
+                    {/* Expanded actions row removed */}
                   </Fragment>
                 );
               })}
             </tbody>
           </table>
-        ) : (
-          <div className="panel">
-            <h3>No active accounts returned</h3>
-            <p className="muted">
-              If the customer exists, this empty state is still a valid success outcome for the current spec.
-            </p>
-            <button type="button" onClick={openCreateModal}>Create First Account</button>
-          </div>
-        )}
+        ) : null}
       </section>
     </div>
   );
