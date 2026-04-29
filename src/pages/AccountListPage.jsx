@@ -90,7 +90,7 @@ export function AccountListPage() {
     <div className="stack">
       <section className="panel stack">
         <div>
-          <h2>My Accounts</h2>
+          <h2>{isAdmin ? 'Customer Accounts' : 'My Accounts'}</h2>
            <p className="muted" style={{ margin: '0.25rem 0 1.25rem 0' }}>View and manage your accounts.</p>
         </div>
         {isAdmin ? (

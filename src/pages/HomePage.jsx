@@ -144,48 +144,22 @@ export function HomePage() {
       ) : (
         <section className="panel stack">
           <h3>Quick Navigation</h3>
-          {isAdmin ? (
-            <>
-              <div className="form-grid">
-                <div className="field">
-                  <label htmlFor="home-customer-id">Open Customer ID</label>
-                  <input
-                    id="home-customer-id"
-                    value={lookup.customerId}
-                    onChange={(event) => setLookup((current) => ({ ...current, customerId: event.target.value }))}
-                    placeholder={authState.customerId || 'Enter customer ID'}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="home-account-id">Open Account ID</label>
-                  <input
-                    id="home-account-id"
-                    value={lookup.accountId}
-                    onChange={(event) => setLookup((current) => ({ ...current, accountId: event.target.value }))}
-                    placeholder="Enter account ID"
-                  />
-                </div>
+          {/* Quick Navigation box: identical for admin and customer */}
+          {!authState.customerId ? (
+            <div className="stack tight-gap">
+              <div className="field">
+                <label htmlFor="link-customer-id">Link Existing Customer ID</label>
+                <input
+                  id="link-customer-id"
+                  value={lookup.customerId}
+                  onChange={(event) => setLookup((current) => ({ ...current, customerId: event.target.value }))}
+                  placeholder="Enter your customer ID"
+                />
               </div>
-            </>
-          ) : (
-            <>
-              {!authState.customerId ? (
-                <div className="stack tight-gap">
-                  <div className="field">
-                    <label htmlFor="link-customer-id">Link Existing Customer ID</label>
-                    <input
-                      id="link-customer-id"
-                      value={lookup.customerId}
-                      onChange={(event) => setLookup((current) => ({ ...current, customerId: event.target.value }))}
-                      placeholder="Enter your customer ID"
-                    />
-                  </div>
-                  {linkError ? <div className="banner error">{linkError.message}</div> : null}
-                  {linkMessage ? <div className="banner success">{linkMessage}</div> : null}
-                </div>
-              ) : null}
-            </>
-          )}
+              {linkError ? <div className="banner error">{linkError.message}</div> : null}
+              {linkMessage ? <div className="banner success">{linkMessage}</div> : null}
+            </div>
+          ) : null}
           <div className="actions">
             {isAdmin ? <button type="button" onClick={openCustomer} disabled={!lookup.customerId}>Open Customer</button> : null}
             {isAdmin ? <button type="button" onClick={openAccount} disabled={!lookup.accountId}>Open Account</button> : null}

@@ -125,68 +125,72 @@ export function CustomerProfilePage() {
   const name = customer?.name || '—';
   const initials = getInitials(customer?.name);
 
-  return (
-    <div className="profile-page">
 
-      {/* Section 1: Identity & Type */}
-      <div className="profile-section">
-        <div className="profile-section-header">
-          <span className="profile-section-title">Identity &amp; Type</span>
-          {!isEditingIdentity && (
-            <button type="button" className="secondary profile-edit-btn" onClick={handleEditIdentity}>
-              Edit
-            </button>
-          )}
-        </div>
-        <div className="panel stack">
-          <div className="profile-identity-card">
-            <div className="profile-avatar-circle">{initials}</div>
-            <div>
-              <p className="eyebrow">{CUSTOMER_TYPE_LABELS[customer?.type] || customer?.type} Account</p>
-              <h2 className="profile-name">{name}</h2>
+  // Remove Identity & Type section for admins
+  if (isAdmin) {
+    return (
+      <div className="profile-page">
+        {/* Section 2: Contact Details (read-only) */}
+        <div className="profile-section">
+          <div className="profile-section-header">
+            <span className="profile-section-title">Contact Details</span>
+          </div>
+          <div className="panel stack">
+            <div className="field">
+              <label htmlFor="profile-email">Email</label>
+              <input
+                id="profile-email"
+                type="email"
+                value={authState.username || ''}
+                disabled
+                readOnly
+              />
+              <p className="field-hint">Email address cannot be changed.</p>
             </div>
           </div>
-          {identityError && <div className="banner error">{identityError.message}</div>}
-          {identitySuccess && !isEditingIdentity && (
-            <div className="banner success">Profile updated.</div>
-          )}
-          {isEditingIdentity && (
-            <>
-              <div className="field">
-                <label htmlFor="profile-name">Name</label>
-                <input
-                  id="profile-name"
-                  value={identityDraft.name}
-                  onChange={(e) => setIdentityDraft((d) => ({ ...d, name: e.target.value }))}
-                />
-                <p className="field-hint">Minimum 2 characters.</p>
-              </div>
-              {isAdmin && (
-                <div className="field">
-                  <label htmlFor="profile-type">Account Type</label>
-                  <select
-                    id="profile-type"
-                    value={identityDraft.type}
-                    onChange={(e) => setIdentityDraft((d) => ({ ...d, type: e.target.value }))}
-                  >
-                    {CUSTOMER_TYPES.map((t) => (
-                      <option key={t} value={t}>{CUSTOMER_TYPE_LABELS[t] || t}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+        </div>
+
+        {/* Section 3: Location */}
+        <div className="profile-section">
+          <div className="profile-section-header">
+            <span className="profile-section-title">Location</span>
+            {!isEditingAddress && (
+              <button type="button" className="secondary profile-edit-btn" onClick={handleEditAddress}>
+                Edit
+              </button>
+            )}
+          </div>
+          <div className="panel stack">
+            {addressError && <div className="banner error">{addressError.message}</div>}
+            {addressSuccess && !isEditingAddress && (
+              <div className="banner success">Address updated.</div>
+            )}
+            <div className="field">
+              <label htmlFor="profile-address">Address</label>
+              <input
+                id="profile-address"
+                value={isEditingAddress ? addressDraft : (customer?.address || '')}
+                disabled={!isEditingAddress}
+                onChange={(e) => setAddressDraft(e.target.value)}
+              />
+            </div>
+            {isEditingAddress && (
               <div className="actions">
-                <button type="button" onClick={handleSaveIdentity} disabled={identityMutation.isPending}>
+                <button type="button" onClick={handleSaveAddress} disabled={addressMutation.isPending}>
                   Update
                 </button>
-                <button type="button" className="secondary" onClick={handleCancelIdentity}>
+                <button type="button" className="secondary" onClick={handleCancelAddress}>
                   Cancel
                 </button>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
       </div>
+    );
+  }
+
+  // ...existing code for non-admins...
 
       {/* Section 2: Contact Details (read-only) */}
       <div className="profile-section">

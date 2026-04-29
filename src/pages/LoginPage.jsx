@@ -8,11 +8,10 @@ import { emptyLoginForm, isEmailLike } from '../types';
 
 function getPostLoginRoute(authState) {
   const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
-
+  // Admins should go to overview page
   if (isAdmin) {
-    return '/customer';
+    return '/';
   }
-
   return '/';
 }
 
