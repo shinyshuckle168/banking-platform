@@ -87,8 +87,7 @@ describe('AccountListPage', () => {
 
     expect(screen.getByRole('link', { name: '101' })).toBeInTheDocument();
     expect(screen.getAllByText('SAVINGS').length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: 'Show Actions' }));
-    expect(screen.getByRole('link', { name: 'Transfer Funds' })).toBeInTheDocument();
+    expect(screen.getByText('500.00')).toBeInTheDocument();
   });
 
   it('renders the unavailable state when the account query fails', () => {

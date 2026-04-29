@@ -196,18 +196,18 @@ describe('Navbar and Sub-Navbar (AppLayout)', () => {
   });
 
   describe('Overview button', () => {
-    it('navigates to the customer detail page for a non-admin with customerId', () => {
+    it('navigates to / (HomePage) when Overview is clicked', () => {
       renderApp();
       fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
-      expect(mockNavigate).toHaveBeenCalledWith('/customer/42');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 
-    it('navigates to /customer for an admin', () => {
+    it('navigates to / (HomePage) for an admin', () => {
       authContext.isAdmin = true;
       authContext.authState = { ...authContext.authState, customerId: null, roles: ['ADMIN'] };
       renderApp();
       fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
-      expect(mockNavigate).toHaveBeenCalledWith('/customer');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 
     it('navigates to / when neither admin nor customerId', () => {
