@@ -94,9 +94,9 @@ describe('Navbar and Sub-Navbar (AppLayout)', () => {
       };
     });
 
-    it('shows the FDM brand', () => {
+    it('shows the Voltio brand', () => {
       renderApp();
-      expect(screen.getByText('FDM')).toBeInTheDocument();
+      expect(screen.getByText(/voltio/i)).toBeInTheDocument();
     });
 
     it('shows Login and Get Started links instead of the avatar', () => {
