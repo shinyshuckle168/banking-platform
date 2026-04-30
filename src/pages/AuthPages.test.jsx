@@ -122,7 +122,7 @@ describe('auth pages', () => {
     await waitFor(() => {
       expect(loginUser).toHaveBeenCalledWith({ username: 'user@example.com', password: 'secret' });
       expect(mockCompleteLogin).toHaveBeenCalledWith({ accessToken: 'token' }, 'user@example.com');
-      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/accounts/12', { replace: true });
     });
   });
 

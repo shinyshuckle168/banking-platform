@@ -44,8 +44,14 @@ export function LoginPage() {
     try {
       const response = await mutation.mutateAsync(formState);
       const nextAuthState = completeLogin(response, formState.username);
-      const nextRoute = getPostLoginRoute(nextAuthState);
-      navigate(nextRoute, { replace: true });
+      // If redirected from a protected route, go there after login
+      const intended = location.state?.from?.pathname;
+      if (intended) {
+        navigate(intended, { replace: true });
+      } else {
+        const nextRoute = getPostLoginRoute(nextAuthState);
+        navigate(nextRoute, { replace: true });
+      }
     } catch (requestError) {
       setError(mapAxiosError(requestError));
     }
