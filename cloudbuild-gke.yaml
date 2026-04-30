@@ -47,7 +47,7 @@ steps:
       - --image=${_IMAGE}:$SHORT_SHA
       - --location=${_GKE_REGION}
       - --cluster=${_CLUSTER}
-      - --namespace=banking-frontend-dev
+      - --namespace=banking-dev
 
 images:
   - 'northamerica-northeast2-docker.pkg.dev/gcp-class-14/quickstart-docker-repo/frontend'
