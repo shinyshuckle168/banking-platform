@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { createAccount } from '../api/accounts';
@@ -16,6 +16,14 @@ export function AccountListPage() {
   const [formState, setFormState] = useState(emptyCreateAccountForm);
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
+  // Show registration success message if present, then clear it from history
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setActionMessage(location.state.successMessage);
+      // Remove the successMessage from history so it doesn't persist on refresh or navigation
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state, location.pathname, navigate]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [expandedAccountId, setExpandedAccountId] = useState(null);
 
@@ -88,29 +96,9 @@ export function AccountListPage() {
   }
 
   return (
-    <div className="stack">
-      <section className="panel stack">
-        <div>
-          <h2>My Accounts</h2>
-           <p className="muted" style={{ margin: '0.25rem 0 1.25rem 0' }}>View and manage your accounts.</p>
-        </div>
-        {isAdmin ? (
-          <div className="field">
-            <label htmlFor="accounts-customer-switcher">Admin Customer Switcher</label>
-            <select id="accounts-customer-switcher" value={customerId || ''} onChange={handleCustomerSwitch}>
-              <option value="">Select customer</option>
-              {(customerListQuery.data || []).map((customerOption) => (
-                <option key={customerOption.customerId} value={customerOption.customerId}>
-                  {customerOption.customerId} - {customerOption.name}
-                </option>
-              ))}
-            </select>
-            {customerListQuery.error ? <p className="field-hint">{mapAxiosError(customerListQuery.error).message}</p> : null}
-          </div>
-        ) : null}
-        <div className="actions">
-          {!accountsError && !customerError ? <button type="button" onClick={openCreateModal}>Create Account</button> : null}
-        </div>
+    <>
+      {/* Banner messages at the very top, outside main content */}
+      <div className="banner-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
         {deletedAccountMessage ? <div className="banner success">{deletedAccountMessage}</div> : null}
         {flashMessage ? <div className="banner info">{flashMessage}</div> : null}
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
@@ -118,7 +106,31 @@ export function AccountListPage() {
         {query.isLoading ? <div className="banner success">Loading accounts...</div> : null}
         {accountsError ? <div className="banner error">{accountsError.message}</div> : null}
         {customerError ? <div className="banner error">{customerError.message}</div> : null}
-      </section>
+      </div>
+      <div className="stack">
+        <section className="panel stack">
+          <div>
+            <h2>My Accounts</h2>
+             <p className="muted" style={{ margin: '0.25rem 0 1.25rem 0' }}>View and manage your accounts.</p>
+          </div>
+          {isAdmin ? (
+            <div className="field">
+              <label htmlFor="accounts-customer-switcher">Admin Customer Switcher</label>
+              <select id="accounts-customer-switcher" value={customerId || ''} onChange={handleCustomerSwitch}>
+                <option value="">Select customer</option>
+                {(customerListQuery.data || []).map((customerOption) => (
+                  <option key={customerOption.customerId} value={customerOption.customerId}>
+                    {customerOption.customerId} - {customerOption.name}
+                  </option>
+                ))}
+              </select>
+              {customerListQuery.error ? <p className="field-hint">{mapAxiosError(customerListQuery.error).message}</p> : null}
+            </div>
+          ) : null}
+          <div className="actions">
+            {!accountsError && !customerError ? <button type="button" onClick={openCreateModal}>Create Account</button> : null}
+          </div>
+        </section>
 
       {isCreateModalOpen ? (
         <div className="modal-backdrop" onClick={closeCreateModal}>
@@ -218,7 +230,8 @@ export function AccountListPage() {
           </div>
         )}
       </section>
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -68,11 +68,32 @@ export function RegisterPage() {
 
     try {
       const { authResponse, customerResponse } = await mutation.mutateAsync(formState);
+      // Set auth state and customer context for auto-login
       completeLogin(authResponse, formState.username);
       rememberCustomerId(customerResponse.customerId);
-      navigate('/', { replace: true });
+      // Redirect to accounts page with success message
+      navigate(`/customer/${customerResponse.customerId}/accounts`, {
+        state: { successMessage: 'Account created successfully! Welcome to Voltio.' }
+      });
     } catch (requestError) {
-      setError(mapAxiosError(requestError));
+      // Enhanced error handling for backend validation errors
+      const err = requestError;
+      const res = err?.response?.data;
+      if (res && res.code === 'VALIDATION_FAILED') {
+        let msg = res.message;
+        if (res.details && typeof res.details === 'object') {
+          // Show the first validation error found
+          const detailMsgs = Object.values(res.details).filter(Boolean);
+          if (detailMsgs.length > 0) {
+            msg = detailMsgs[0];
+          }
+        }
+        setError({ message: msg });
+      } else if (res && res.message) {
+        setError({ message: res.message });
+      } else {
+        setError(mapAxiosError(requestError));
+      }
     }
   }
 
