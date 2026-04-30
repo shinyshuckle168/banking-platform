@@ -43,18 +43,26 @@ public class CorsConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
+                "http://localhost:3000",
                 "https://frontend-524103119199.northamerica-northeast2.run.app",
+                "https://digital-banking-service-524103119199.northamerica-northeast1.run.app",
                 "http://34.72.76.94"
         ));
 
         config.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
         ));
 
         config.setAllowedHeaders(List.of(
                 "Authorization",
                 "Content-Type",
-                "Accept"
+                "Accept",
+                "Origin"
         ));
 
         config.setExposedHeaders(List.of(
