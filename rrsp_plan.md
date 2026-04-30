@@ -120,7 +120,7 @@ Build Tool: Maven
 Deployment: Docker / Kubernetes
 ### Entity Structure
 #### RRSP Account
- RRSPAccount {
+ RRSPAccount 
     - String rrspId;
     - String customerId;
     - BigDecimal balance;
@@ -180,7 +180,7 @@ Response — 201 Created
  #### Rules
 - Customer must not already have an RRSP
 - Customer must exist
- Errors
+#### Errors
 - 409 RRSP_ALREADY_EXISTS
 - 404 CUSTOMER_NOT_FOUND
 - 422 MISSING_REQUIRED_FIELD
@@ -200,15 +200,15 @@ Response — 200 OK
     "maturityDate": "2027-04-29"
   }
 }
-Rules
+#### Rules
 - Must return RRSP with active GIC if present
 - Customer must own the account
-Errors
+#### Errors
 - 404 RRSP_NOT_FOUND
 - 403 FORBIDDEN
 
 #### US-203 — Create GIC
-Endpoint
+#### Endpoint
 POST /api/v1/rrsp/{rrspId}/gic
 Content-Type: application/json
 Request
@@ -224,19 +224,19 @@ Response — 201 Created
   "term": "1_YEAR",
   "maturityDate": "2027-04-29"
 }
-Rules
+#### Rules
 - Only one active GIC per RRSP
 - Balance must be sufficient
 - Interest rate derived from term
 - Amount deducted from RRSP
-Errors
+#### Errors
 - 409 GIC_ALREADY_EXISTS
 - 400 INSUFFICIENT_FUNDS
 - 400 INVALID_TERM
 - 404 RRSP_NOT_FOUND
 
 #### US-204 — Get GIC Details
-Endpoint
+#### Endpoint
 GET /api/v1/rrsp/{rrspId}/gic
 Response — 200 OK
 {
@@ -246,31 +246,31 @@ Response — 200 OK
   "term": "1_YEAR",
   "maturityDate": "2027-04-29"
 }
-Rules
+#### Rules
 - Return only active GIC
-Errors
+#### Errors
 - 404 GIC_NOT_FOUND
 - 404 RRSP_NOT_FOUND
 
 #### US-205 — Redeem GIC
-Endpoint
+#### Endpoint
 POST /api/v1/rrsp/{rrspId}/gic/redeem
 Response — 200 OK
 {
   "message": "GIC redeemed successfully",
   "payoutAmount": 5250
 }
-Rules
+#### Rules
 - Only active GIC can be redeemed
 - Payout includes interest
 - Funds credited back to RRSP
 - Status updated to REDEEMED
-Errors
+#### Errors
 - 404 GIC_NOT_FOUND
 - 400 INVALID_OPERATION
 
 #### US-206 — Close RRSP Account
-Endpoint
+#### Endpoint
 POST /api/v1/rrsp/{rrspId}/close
 Response — 200 OK
 {
@@ -278,11 +278,11 @@ Response — 200 OK
   "rrspId": "RRSP001",
   "closedAt": "2026-04-29T12:00:00Z"
 }
-Rules
+#### Rules
 - No active GIC must exist
 - Balance must be zero
 - Status updated to CLOSED
-Errors
+#### Errors
 - 400 ACTIVE_GIC_EXISTS
 - 400 NON_ZERO_BALANCE
 - 400 RRSP_ALREADY_CLOSED
