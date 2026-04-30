@@ -1,3 +1,24 @@
+# New Feature: Display Current Interest Rates for RRSP and TFSA
+
+This feature enables the frontend to fetch and display the current interest rates for RRSP and TFSA accounts using a mock API endpoint. The goal is to provide users with up-to-date rate information when viewing or opening these account types.
+
+## Mock API Endpoint
+
+- **GET /api/interest-rates**
+	- Returns: `{ rrsp: number, tfsa: number }`
+	- Example response: `{ "rrsp": 4.25, "tfsa": 3.75 }`
+
+## Acceptance Criteria
+
+- On page load, the frontend fetches interest rates from the mock API endpoint.
+- While fetching, a loading indicator is shown.
+- If the fetch fails, an error message is displayed.
+- When successful, the rates for RRSP and TFSA are displayed in the UI, formatted as percentages (e.g., 4.25%).
+
+## Out of Scope
+
+- Real API integration (only the mock endpoint is used)
+- Authentication or authorization for the rates endpoint
 # Feature Specification: Create TFSA Account
 
 **Feature Branch**: `[spec/tfsa]`
