@@ -43,7 +43,8 @@ public class CorsConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "https://frontend-524103119199.northamerica-northeast2.run.app"
+                "https://frontend-524103119199.northamerica-northeast2.run.app",
+                "http://34.72.76.94"
         ));
 
         config.setAllowedMethods(List.of(
