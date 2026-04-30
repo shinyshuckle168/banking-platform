@@ -10,7 +10,6 @@ import com.group1.banking.entity.Customer;
 import lombok.Builder;
 import lombok.Data;
 
-@Builder
 @Component
 public class CustomerMapper {
     public CustomerResponse toResponse(Customer customer) {

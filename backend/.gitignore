@@ -11,7 +11,7 @@ target/
 .project
 .settings/
 .factorypath
-
+vite.config.js
 # Logs
 logs/
 *.log

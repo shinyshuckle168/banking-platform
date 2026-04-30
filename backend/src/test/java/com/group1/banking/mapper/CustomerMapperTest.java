@@ -16,7 +16,7 @@ class CustomerMapperTest {
 
     @BeforeEach
     void setUp() {
-        customerMapper = CustomerMapper.builder().build();
+        customerMapper = new CustomerMapper();
     }
 
     @Test

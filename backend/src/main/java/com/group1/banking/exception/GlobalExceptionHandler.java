@@ -37,53 +37,53 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("VALIDATION_FAILED", "Validation failed", errors));
     }
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
-        logger.warn("Bad request. code={}, message={}", ex.getCode(), ex.getMessage());
-
-        return ResponseEntity.status(400)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
-    }
+        @ExceptionHandler(BadRequestException.class)
+        public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
+                logger.warn("Bad request. code={}, message={}", ex.getCode(), ex.getMessage());
+                return ResponseEntity.status(400)
+                                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
+        }
     
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
-        logger.warn("Resource Not Found. code={}, message={}", ex.getCode(), ex.getMessage(), ex.getDetails());
+        @ExceptionHandler(ResourceNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+                logger.warn("Resource Not Found. code={}, message={}", ex.getCode(), ex.getMessage(), ex.getDetails());
+                return ResponseEntity.status(404)
+                                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
+        }
 
-        return ResponseEntity.status(404)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
-    }
+        @ExceptionHandler(UnauthorisedException.class)
+        public ResponseEntity<ErrorResponse> handleUnauthorised(UnauthorisedException ex) {
+                logger.warn("Unauthorised request. code={}, message={}", ex.getCode(), ex.getMessage());
+                return ResponseEntity.status(401)
+                                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
+        }
 
-    @ExceptionHandler(UnauthorisedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorised(UnauthorisedException ex) {
-        logger.warn("Unauthorised request. code={}, message={}", ex.getCode(), ex.getMessage());
 
-        return ResponseEntity.status(401)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), null));
-    }
+        @ExceptionHandler(ForbiddenException.class)
+        public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
+            ApiException apiEx = ex;
+            logger.warn("Forbidden request. code={}, message={}", apiEx.getCode(), apiEx.getMessage());
+            return ResponseEntity.status(403)
+                    .body(new ErrorResponse(apiEx.getCode(), apiEx.getMessage(), apiEx.getDetails()));
+        }
 
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
-        logger.warn("Forbidden request. code={}, message={}", ex.getCode(), ex.getMessage());
 
-        return ResponseEntity.status(403)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), null));
-    }
+        @ExceptionHandler(ConflictException.class)
+        public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
+            ApiException apiEx = ex;
+            logger.warn("Conflict occurred. code={}, message={}", apiEx.getCode(), apiEx.getMessage());
+            return ResponseEntity.status(409)
+                    .body(new ErrorResponse(apiEx.getCode(), apiEx.getMessage(), apiEx.getDetails()));
+        }
 
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
-        logger.warn("Conflict occurred. code={}, message={}", ex.getCode(), ex.getMessage());
 
-        return ResponseEntity.status(409)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), null));
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
-        logger.warn("Resource not found. code={}, message={}", ex.getCode(), ex.getMessage());
-
-        return ResponseEntity.status(404)
-                .body(new ErrorResponse(ex.getCode(), ex.getMessage(), ex.getDetails()));
-    }
+                @ExceptionHandler(NotFoundException.class)
+                public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
+                        ApiException apiEx = ex;
+                        logger.warn("Resource not found. code={}, message={}", apiEx.getCode(), apiEx.getMessage());
+                        return ResponseEntity.status(404)
+                                        .body(new ErrorResponse(apiEx.getCode(), apiEx.getMessage(), apiEx.getDetails()));
+                }
 
     @ExceptionHandler(OwnershipException.class)
     public ResponseEntity<ErrorResponse> handleOwnership(OwnershipException ex) {

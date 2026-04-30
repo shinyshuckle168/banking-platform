@@ -1,3 +1,4 @@
+// (All stray code removed; file now starts with package statement)
 package com.group1.banking.entity;
 
 import java.time.Instant;
@@ -40,6 +41,13 @@ public class Customer {
     @Column(nullable = false)
     private CustomerType type;
 
+
+    @Column(name = "date_of_birth", nullable = false)
+    private java.time.LocalDate dateOfBirth;
+
+    @Column(name = "kyc_verified", nullable = false)
+    private boolean kycVerified;
+
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private List<Account> accounts = new ArrayList<>();
 
@@ -62,5 +70,20 @@ public class Customer {
     @PreUpdate
     public void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    public java.time.LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public boolean isKycVerified() {
+        return kycVerified;
+    }
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public List<Account> getAccounts() {
+        return accounts;
     }
 }
