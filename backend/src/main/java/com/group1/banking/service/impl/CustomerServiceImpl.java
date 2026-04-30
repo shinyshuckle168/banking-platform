@@ -71,6 +71,8 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setName(request.getName().trim());
         customer.setAddress(request.getAddress().trim());
         customer.setType(request.getType());
+        customer.setDateOfBirth(request.getDateOfBirth());
+        customer.setKycVerified(request.isKycVerified());
         customer.setCreatedAt(Instant.now());
         customer.setUpdatedAt(Instant.now());
         Customer savedCustomer = customerRepository.save(customer);

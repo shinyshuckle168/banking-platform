@@ -14,6 +14,8 @@ public class CustomerResponse {
     private String name;
     private String address;
     private CustomerType type;
+    private java.time.LocalDate dateOfBirth;
+    private boolean kycVerified;
     private List<AccountResponse> accounts;
     private Instant createdAt;
     private Instant updatedAt;

@@ -18,6 +18,8 @@ public class CustomerMapper {
             .name(customer.getName())
             .address(customer.getAddress())
             .type(customer.getType())
+            .dateOfBirth(customer.getDateOfBirth())
+            .kycVerified(customer.isKycVerified())
             .accounts(Collections.emptyList())
             .createdAt(customer.getCreatedAt())
             .updatedAt(customer.getUpdatedAt())

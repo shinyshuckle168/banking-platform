@@ -4,6 +4,8 @@ import com.group1.banking.enums.CustomerType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,4 +22,11 @@ public class CreateCustomerRequest {
 
     @NotNull(message = "type is required")
     private CustomerType type;
+
+    @NotNull(message = "dateOfBirth is required")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private java.time.LocalDate dateOfBirth;
+
+    @JsonProperty
+    private boolean kycVerified;
 }
