@@ -178,7 +178,9 @@ describe('auth pages', () => {
       expect(createCustomer).toHaveBeenCalledWith({ name: 'New Customer', address: '1 Main St', type: 'PERSON' }, 'token');
       expect(mockCompleteLogin).toHaveBeenCalledWith({ accessToken: 'token' }, 'user@example.com');
       expect(mockRememberCustomerId).toHaveBeenCalledWith('88');
-      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/customer/88/accounts', {
+        state: { successMessage: 'Account created successfully! Welcome to Voltio.' }
+      });
     });
   });
 });
