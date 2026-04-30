@@ -1,3 +1,18 @@
+# Interest Rate Fetching Feature: TFSA
+
+**Goal:** Fetch and display real-time interest rates for TFSA from a mock API
+
+**Approach:**
+
+- Mock API layer returns hardcoded TFSA rate (e.g. TFSA: 3.75%)
+- A service module handles the fetch and error handling
+- UI layer consumes the service and renders the TFSA rate
+
+**Dependencies:** Existing HTTP client or fetch utility in the project
+
+**Risks:** Mock data may not reflect real rate structures — flag for future real API swap
+
+**Milestone:** Feature complete when TFSA rate renders correctly with loading/error states
 # Implementation Plan: TFSA Account Creation
 
 **Branch**: `spec/tfsa` | **Date**: 30 April 2026 | **Spec**: tfsa_spec.md

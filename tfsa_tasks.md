@@ -1,5 +1,45 @@
 # Tasks: TFSA Account Creation (Backend & Frontend)
 
+---
+
+## TFSA Interest Rate Fetching Feature
+
+- **Goal:** Fetch and display real-time interest rates for TFSA from a mock API
+
+- **Approach:**
+	- Mock API layer returns hardcoded TFSA rate (e.g. TFSA: 3.75%)
+	- A service module handles the fetch and error handling
+	- UI layer consumes the service and renders the TFSA rate
+
+- **Dependencies:** Existing HTTP client or fetch utility in the project
+
+- **Risks:** Mock data may not reflect real rate structures — flag for future real API swap
+
+- **Milestone:** Feature complete when TFSA rate renders correctly with loading/error states
+---
+
+## Phase 3: GIC Investment Flows (TFSA)
+
+### US2: Create GIC Investment
+
+- [ ] T201 Implement endpoint to create GIC in TFSA (validate only one GIC per account)
+- [ ] T202 Validate sufficient funds before GIC creation
+- [ ] T203 Lock funds for GIC term and calculate maturity
+- [ ] T204 Add tests for GIC creation (one per account, insufficient funds, etc.)
+- [ ] FT201 Create GIC investment page/form (amount, term, etc.)
+- [ ] FT202 Integrate with backend endpoint for GIC creation
+- [ ] FT203 Validate sufficient funds and one GIC per account (show errors)
+- [ ] FT204 Display GIC details and status
+
+---
+
+### US3: GIC Maturity & History
+
+- [ ] T301 Implement GIC maturity processing (update status, credit principal + interest)
+- [ ] T302 Add tests for GIC maturity flow
+- [ ] FT301 Display GIC maturity status and transaction history
+
+---
 **Input**: tfsa_spec.md, tfsa_plan.md  
 **Prerequisites**: Plan and spec files
 
@@ -41,7 +81,15 @@
 
 ## Phase 4: Testing, Documentation & Audit
 
-- [ ] T301 Update API docs and quickstart for TFSA flows
-- [ ] T302 Ensure all actions are logged and auditable
-- [ ] FT301 Write tests for all user flows and edge cases
-- [ ] FT302 Document frontend usage and provide a quickstart
+
+---
+
+## Phase 5: Interest Rate Feature (TFSA)
+
+- [ ] T401 Create mock API endpoint returning TFSA interest rate
+- [ ] T402 Create an interest rate service/fetch function
+- [ ] T403 Add loading and error state handling
+- [ ] FT401 Build UI component to display the TFSA rate
+- [ ] FT402 Write unit tests for the fetch function and UI component
+
+
