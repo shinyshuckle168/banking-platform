@@ -15,6 +15,7 @@
 - **Risks:** Mock data may not reflect real rate structures — flag for future real API swap
 
 - **Milestone:** Feature complete when RRSP rate renders correctly with loading/error states
+
 # Tasks: RRSP Account with GIC Investment Support (Backend & Frontend)
 
 **Input**: rrsp_spec.md, rrsp_plan.md  

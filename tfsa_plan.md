@@ -13,6 +13,7 @@
 **Risks:** Mock data may not reflect real rate structures — flag for future real API swap
 
 **Milestone:** Feature complete when TFSA rate renders correctly with loading/error states
+
 # Implementation Plan: TFSA Account Creation
 
 **Branch**: `spec/tfsa` | **Date**: 30 April 2026 | **Spec**: tfsa_spec.md
@@ -184,6 +185,7 @@ enum TFSAOperationType {
     WITHDRAWAL
 }
 ```
+
 ## Business Rules
 - Customer must be 18 years or older at time of account creation
 - Customer must have verified KYC status
@@ -218,18 +220,21 @@ Response — 201 Created
   "contributionRoomUsed": 1000,
   "createdAt": "2026-04-28T10:00:00Z"
 }
+
 #### Rules
 - Customer must be 18+
 - KYC must be verified
 - Only one active TFSA per customer
 - Initial deposit processed via Transfer API (internal transfer or funding source)
 - Account must be ACTIVE after creation
+
 #### Errors
 - 409 TFSA_ALREADY_EXISTS
 - 404 CUSTOMER_NOT_FOUND
 - 422 KYC_NOT_VERIFIED
 - 400 UNDERAGE_CUSTOMER
 - 400 INVALID_ACCOUNT_TYPE
+
 ### Get TFSA Account Details
 #### Endpoint
 - GET /api/v1/accounts/{tfsaId}
@@ -243,12 +248,15 @@ Response — 200 OK
   "status": "ACTIVE",
   "createdAt": "2026-04-28T10:00:00Z"
 }
+
 #### Rules
 - Must return latest balance and contribution status
 - Only owner or ADMIN can access
+
 #### Errors
 - 404 TFSA_NOT_FOUND
 - 403 FORBIDDEN
+
 ### Transfer INTO TFSA (Deposit / Contribution)
 #### Endpoint (USES GLOBAL TRANSFER API)
 - POST /accounts/transfer
@@ -266,11 +274,13 @@ Response — 200 OK
   "status": "SUCCESS",
   "message": "Transfer completed successfully"
 }
+
 #### TFSA Post-Processing Rules
 ##### After successful transfer:
 - Increase TFSA balance
 - Increase contribution usage
 - Validate against annual limit
+
 ##### TFSA Errors (Post Transfer Validation)
 - 400 CONTRIBUTION_LIMIT_EXCEEDED
 - 400 ACCOUNT_CLOSED
@@ -313,6 +323,7 @@ Response — 200 OK
   "usedContribution": 2500,
   "remainingContributionRoom": 4500
 }
+
 ###  Get Transaction History
 #### Endpoint
 - GET /api/v1/accounts/{tfsaId}/transactions
@@ -364,11 +375,13 @@ Global Error Response Format
   "message": "TFSA contribution limit exceeded",
   "path": "/api/v1/accounts/TFSA12345"
 } ```
+
 ## Key Design Notes
 - All money movement goes through /accounts/transfer
 - TFSA only reacts to transfer results (post-processing)
 - No direct balance mutation APIs allowed
 - Ensures strong consistency and audit compliance
+
 ##### Business Flow
 - Validate authentication (JWT required)
 - Validate role (CUSTOMER or ADMIN)
@@ -379,6 +392,7 @@ Global Error Response Format
 - Validate contribution limit rules
 - Create TFSA account with ACTIVE status
 - Persist account and audit log entry
+
 ### Error Mapping
 #### HTTP	Code	Condition
 - 422	KYC_NOT_VERIFIED	Customer KYC is false
@@ -390,6 +404,7 @@ Global Error Response Format
 - 400	CONTRIBUTION_LIMIT_EXCEEDED	Initial deposit exceeds room
 - 400	MISSING_REQUIRED_FIELDS	Missing DOB or required fields
 - 503	SERVICE_UNAVAILABLE	System failure
+
 ## Non-Functional Requirements
 - API response time < 2 seconds (95th percentile)
 - 99.5% system availability (excluding maintenance)
@@ -398,6 +413,7 @@ Global Error Response Format
 - RBAC must be dynamic (no hardcoded roles)
 - All account creation must be traceable (who, when, outcome)
 - System must support horizontal scaling
+
 ## Audit Logging Requirements
 - Log customerId
 - Log actor role (CUSTOMER / ADMIN)
@@ -406,6 +422,7 @@ Global Error Response Format
 - Log age verification result
 - Log KYC validation result
 - Never log sensitive PII (full DOB, etc.)
+
 ## Notes
 - This API is designed as a single unified account creation endpoint
 - TFSA is enforced via accountType = TFSA
