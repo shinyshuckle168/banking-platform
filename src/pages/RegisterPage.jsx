@@ -76,6 +76,9 @@ export function RegisterPage() {
     }
   }
 
+  // Map step to numeric for text logic
+  const activeStep = step === 'selectType' ? 1 : 2;
+
   return (
     <div className="register-page">
       <div className="register-card stack">
@@ -83,12 +86,12 @@ export function RegisterPage() {
           <h2>Register</h2>
         </div>
         <div className="register-stepper">
-          <span className={`register-step ${step === 'selectType' ? 'active' : 'completed'}`}>
-            {step !== 'selectType' && <span className="register-step-check">✓</span>}
-            1. Account Type
-          </span>
-          <span className="register-step-arrow">→</span>
-          <span className={`register-step ${step === 'details' ? 'active' : ''}`}>2. Details</span>
+          {activeStep === 1 && (
+            <span className={`register-step ${step === 'selectType' ? 'active' : 'completed'}`}>1. Account Type</span>
+          )}
+          {activeStep === 2 && (
+            <span className={`register-step ${step === 'details' ? 'active' : ''}`}>2. Details</span>
+          )}
         </div>
         {error ? <div className="banner error">{error.message}</div> : null}
         <form className="stack" onSubmit={handleSubmit}>

@@ -140,7 +140,7 @@ export function HomePage() {
       </section>
 
       {!isAuthenticated ? (
-        <Link className="big-get-started" to="/login">Get Started</Link>
+        <Link className="big-get-started" to="/register">Get Started</Link>
       ) : (
         <section className="panel stack">
           <h3>Quick Navigation</h3>

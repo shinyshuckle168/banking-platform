@@ -181,7 +181,7 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <header className="navbar">
-        <span className="navbar-brand">FDM</span>
+        <NavLink className="navbar-brand" to="/" style={{ textDecoration: 'none', color: 'inherit' }}>VOLTIO</NavLink>
         <div className="navbar-actions">
           {isAuthenticated ? (
             <div className="navbar-profile" ref={dropdownRef}>
