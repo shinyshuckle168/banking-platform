@@ -163,9 +163,9 @@ Deployment: Docker / Kubernetes
 ### API Specifications
 
 #### US-201 — Create RRSP Account
-- Endpoint
-  POST /api/v1/rrsp
-  Content-Type: application/json
+#### Endpoint
+POST /api/v1/rrsp
+Content-Type: application/json
 Request
 {
   "customerId": "12345"
@@ -177,7 +177,7 @@ Response — 201 Created
   "balance": 0,
   "createdAt": "2026-04-29T10:00:00Z"
 }
- Rules
+ #### Rules
 - Customer must not already have an RRSP
 - Customer must exist
  Errors
