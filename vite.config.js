@@ -6,7 +6,7 @@ const testSetupFile = fileURLToPath(new URL('./src/test/setup.js', import.meta.u
 
 export default defineConfig(({ mode }) => {
   loadEnv(mode, process.cwd(), '');
-  const backendTarget = 'http://banking-platform-backend:8080/';
+  const backendTarget = 'http://banking-platform-backend.dev.svc.cluster.local:8080/';
 
   return {
     plugins: [react()],
