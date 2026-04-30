@@ -36,7 +36,7 @@ steps:
       - --image=${_IMAGE}:$SHORT_SHA
       - --location=${_GKE_REGION}
       - --cluster=${_CLUSTER}
-      - --namespace=dev-banking-backend
+      - --namespace=banking-dev
 
 availableSecrets:
   secretManager:
