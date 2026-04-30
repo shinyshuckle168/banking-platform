@@ -10,6 +10,7 @@ import { CustomerCreatePage } from './pages/CustomerCreatePage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { CustomerEditPage } from './pages/CustomerEditPage';
 import { CustomerProfilePage } from './pages/CustomerProfilePage';
+import AdminCustomersPage from './pages/AdminCustomersPage';
 
 import { DepositPage } from './pages/DepositPage';
 import { MonthlyStatementPage } from './pages/MonthlyStatementPage';
@@ -86,6 +87,10 @@ function AppLayout() {
   const customerId = authState.customerId;
   const location = useLocation();
   const navigate = useNavigate();
+  // Admin-specific nav logic
+  const isAdminUser = isAdmin;
+  const isCustomersActive = location.pathname === '/admin/customers';
+  const isCustomerAccountsActiveAdmin = isAdminUser && location.pathname === '/admin/accounts';
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -205,23 +210,27 @@ function AppLayout() {
       {isAuthenticated && (
         <div className="subnav">
           <nav className="subnav-list">
-            <button
-              type="button"
-              className={`subnav-btn${isOverviewActive ? ' active' : ''}`}
-              onClick={handleOverview}
-            >
-              Overview
-            </button>
-            {customerId && (
-              <NavLink
-                className={() => `subnav-btn${isCustomerAccountsActive ? ' active' : ''}`}
-                to={`/customer/${customerId}/accounts`}
-              >
-                My Accounts
-              </NavLink>
-            )}
-            {showFeatureButtons && (
+            {isAdminUser ? (
               <>
+                <button
+                  type="button"
+                  className={`subnav-btn${isOverviewActive ? ' active' : ''}`}
+                  onClick={handleOverview}
+                >
+                  Overview
+                </button>
+                <NavLink
+                  className={() => `subnav-btn${isCustomerAccountsActiveAdmin ? ' active' : ''}`}
+                  to="/admin/accounts"
+                >
+                  Customer Accounts
+                </NavLink>
+                <NavLink
+                  className={() => `subnav-btn${isCustomersActive ? ' active' : ''}`}
+                  to="/admin/customers"
+                >
+                  Customers
+                </NavLink>
                 <button
                   type="button"
                   className={`subnav-btn${isFeatureActive('transactions') ? ' active' : ''}`}
@@ -250,6 +259,56 @@ function AppLayout() {
                 >
                   Standing Orders
                 </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`subnav-btn${isOverviewActive ? ' active' : ''}`}
+                  onClick={handleOverview}
+                >
+                  Overview
+                </button>
+                {customerId && (
+                  <NavLink
+                    className={() => `subnav-btn${isCustomerAccountsActive ? ' active' : ''}`}
+                    to={`/customer/${customerId}/accounts`}
+                  >
+                    My Accounts
+                  </NavLink>
+                )}
+                {showFeatureButtons && (
+                  <>
+                    <button
+                      type="button"
+                      className={`subnav-btn${isFeatureActive('transactions') ? ' active' : ''}`}
+                      onClick={() => handleFeatureNav('transactions')}
+                    >
+                      Transactions
+                    </button>
+                    <button
+                      type="button"
+                      className={`subnav-btn${isFeatureActive('statements') ? ' active' : ''}`}
+                      onClick={() => handleFeatureNav('statements')}
+                    >
+                      Monthly Statement
+                    </button>
+                    <button
+                      type="button"
+                      className={`subnav-btn${isFeatureActive('insights') ? ' active' : ''}`}
+                      onClick={() => handleFeatureNav('insights')}
+                    >
+                      Spending Insights
+                    </button>
+                    <button
+                      type="button"
+                      className={`subnav-btn${isFeatureActive('standing-orders') ? ' active' : ''}`}
+                      onClick={() => handleFeatureNav('standing-orders')}
+                    >
+                      Standing Orders
+                    </button>
+                  </>
+                )}
               </>
             )}
           </nav>
@@ -323,7 +382,9 @@ export default function App() {
         <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
         <Route path="/password-reset" element={<PublicOnlyRoute><PasswordResetPage /></PublicOnlyRoute>} />
 
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute />}> 
+                    {/* Admin-only Customers page */}
+                    <Route path="/admin/customers" element={<AdminCustomersPage />} />
           <Route path="/customer/create" element={<CustomerCreatePage />} />
           <Route path="/customer" element={<CustomerDetailPage />} />
           {/* <Route path="/customer/:customerId" element={<CustomerDetailPage />} /> */}
