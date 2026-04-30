@@ -7,7 +7,7 @@
 
 ---
 
-## 5.1 Feature Overview
+## 1.1 Feature Overview
 
 This feature enables customers to open a Registered Retirement Savings Plan (RRSP) account and invest funds into Guaranteed Investment Certificates (GICs) within that account.
 
@@ -24,7 +24,7 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 ---
 
-## 5.2 Scope and Non-Goals
+## 1.2 Scope and Non-Goals
 
 ### In Scope:
 - Opening a new RRSP account for eligible customers  
@@ -43,7 +43,7 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 ---
 
-## 5.3 Actors and Preconditions
+## 1.3 Actors and Preconditions
 
 ### Actors:
 - **CUSTOMER** — authenticated end-user (can operate only on owned accounts)  
@@ -58,7 +58,7 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 ---
 
-## 5.4 Core Behavior and Flows
+## 1.4 Core Behavior and Flows
 
 ### Happy Path — Account Creation:
 - Customer requests to open an RRSP account  
@@ -110,7 +110,7 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 ---
 
-## 5.5 Business Rules
+## 1.5 Business Rules
 
 - An RRSP account must have:
   - Unique ID  
@@ -121,21 +121,23 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 - GIC investments:
   - Must be linked to a single RRSP account  
-  - Require sufficient available balance  
+  - Only one GIC investment is allowed per RRSP account at any time  
+  - Require sufficient available balance (validated before GIC creation; if insufficient, transaction fails)  
   - Lock funds for the selected term  
   - Are non-redeemable before maturity (default behavior)  
-  - Must store principal, rate, term, and maturity details  
+  - Must store principal, rate, term, and maturity details
 
 - Interest:
   - Is fixed for the duration of the GIC  
-  - Is calculated at the time of creation and/or maturity  
+  - The interest rate depends on the selected GIC term (e.g., longer terms may have higher rates)  
+  - Is calculated at the time of creation and/or maturity
 
 - On maturity:
   - Principal + interest must be credited back to RRSP account  
 
 ---
 
-## 5.6 Data Model (Logical View)
+## 1.6 Data Model (Logical View)
 
 ### RRSP Account:
 - Account ID  
@@ -158,7 +160,7 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 ---
 
-## 5.7 Account Type Extension
+## 1.7 Account Type Extension
 
 - Existing Account Types:  
   - CHECKING  
@@ -171,7 +173,7 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 ---
 
-## 5.8 Error Conditions and Edge Cases
+## 1.8 Error Conditions and Edge Cases
 
 - **422** — business state → KYC not verified  
 - **409** — RRSP_ALREADY_EXISTS → Active RRSP already exists  
@@ -185,7 +187,7 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 ---
 
-## 5.9 Non-Functional Requirements
+## 1.9 Non-Functional Requirements
 
 - Account and GIC creation must complete within 2 seconds for 95% of requests  
 - All operations must be authenticated and logged  
@@ -196,7 +198,7 @@ This feature enables customers to open a Registered Retirement Savings Plan (RRS
 
 ---
 
-## 5.10 Acceptance Criteria
+## 1.10 Acceptance Criteria
 
 ### Positive Scenario 1 — RRSP Account Creation
 - **Given** an authenticated CUSTOMER or ADMIN with verified KYC and no existing RRSP  
