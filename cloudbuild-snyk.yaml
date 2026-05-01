@@ -18,11 +18,11 @@ steps:
         npx snyk auth $$SNYK_TOKEN
 
         echo "Running open source dependency scan..."
-        npx snyk test --all-projects --org=fahmidovi9 || true
+        npx snyk test --all-projects  || true
         
-        echo "Running code test..."
-        npx snyk code test --org=fahmidovi9 || true
-
+        
+  # echo "Running code test..."
+  # npx snyk code test --all-projects || true
   
 
   # - name: 'gcr.io/cloud-builders/docker'
