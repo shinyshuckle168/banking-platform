@@ -24,6 +24,7 @@ import { StandingOrdersPage } from './pages/StandingOrdersPage';
 import { TransactionHistoryPage } from './pages/TransactionHistoryPage';
 import { TransferPage } from './pages/TransferPage';
 import { WithdrawPage } from './pages/WithdrawPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 function getDefaultAuthenticatedRoute(authState) {
   const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
@@ -405,7 +406,7 @@ export default function App() {
           <Route path="/accounts/transfer" element={<TransferPage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to={authState.accessToken ? defaultAuthenticatedRoute : '/'} replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   );

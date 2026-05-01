@@ -15,8 +15,8 @@ function getPostLoginRoute(authState) {
   if (authState.customerId) {
     return `/customer/${authState.customerId}/accounts`;
   }
-  // fallback
-  return '/';
+  // Per spec Flow B: if no customer profile found, route to customer creation
+  return '/customer/create';
 }
 
 export function LoginPage() {
@@ -44,14 +44,15 @@ export function LoginPage() {
     try {
       const response = await mutation.mutateAsync(formState);
       const nextAuthState = completeLogin(response, formState.username);
+
       // If redirected from a protected route, go there after login
       const intended = location.state?.from?.pathname;
       if (intended) {
         navigate(intended, { replace: true });
-      } else {
-        const nextRoute = getPostLoginRoute(nextAuthState);
-        navigate(nextRoute, { replace: true });
+        return;
       }
+
+      navigate(getPostLoginRoute(nextAuthState), { replace: true });
     } catch (requestError) {
       setError(mapAxiosError(requestError));
     }
@@ -64,6 +65,9 @@ export function LoginPage() {
         <p className="muted">Authenticate with the merged backend and store the access token for protected requests.</p>
       </div>
       {location.state?.registered ? <div className="banner success">Registration complete. You can now sign in.</div> : null}
+      {new URLSearchParams(location.search).get('error') === 'session_expired' ? (
+        <div className="banner error">Your session has expired. Please sign in again.</div>
+      ) : null}
       {error ? <div className="banner error">{error.message}</div> : null}
       <form className="stack" onSubmit={handleSubmit}>
         <div className="field">
