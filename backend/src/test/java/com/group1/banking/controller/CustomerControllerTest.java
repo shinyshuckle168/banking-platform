@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -68,6 +69,7 @@ class CustomerControllerTest {
         request.setName("Jane Doe");
         request.setAddress("123 Main St");
         request.setType(CustomerType.PERSON);
+        request.setDateOfBirth(LocalDate.of(1990, 1, 1));
 
         when(customerService.createCustomer(any(CreateCustomerRequest.class))).thenReturn(sampleResponse());
 

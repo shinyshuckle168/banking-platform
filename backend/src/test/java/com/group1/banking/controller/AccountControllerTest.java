@@ -230,4 +230,17 @@ class AccountControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
+
+    // ===== CLOSE RRSP ACCOUNT =====
+
+    @Test
+    void closeRrspAccount_shouldReturn200_whenSuccessful() throws Exception {
+        when(accountService.closeRrspAccount(1001L))
+                .thenReturn(java.util.Map.of("message", "RRSP account closed successfully", "accountId", 1001L));
+
+        mockMvc.perform(post("/accounts/1001/close"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("RRSP account closed successfully"));
+    }
 }
+

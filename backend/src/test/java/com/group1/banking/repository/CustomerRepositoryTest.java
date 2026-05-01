@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +35,7 @@ class CustomerRepositoryTest {
         customer.setName("Jane Doe");
         customer.setAddress("456 Oak Ave");
         customer.setType(CustomerType.PERSON);
+        customer.setDateOfBirth(LocalDate.of(1985, 6, 15));
         savedCustomer = customerRepository.save(customer);
     }
 
@@ -103,6 +105,7 @@ class CustomerRepositoryTest {
         company.setName("ACME Corp");
         company.setAddress("789 Business Blvd");
         company.setType(CustomerType.COMPANY);
+        company.setDateOfBirth(LocalDate.of(2000, 1, 1));
         Customer saved = customerRepository.save(company);
 
         Optional<Customer> found = customerRepository.findById(saved.getCustomerId());

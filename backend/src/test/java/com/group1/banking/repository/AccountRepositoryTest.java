@@ -10,6 +10,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +41,7 @@ class AccountRepositoryTest {
         customer.setName("John Doe");
         customer.setAddress("123 Main St");
         customer.setType(CustomerType.PERSON);
+        customer.setDateOfBirth(LocalDate.of(1990, 1, 1));
         savedCustomer = customerRepository.save(customer);
 
         activeAccount = new Account();

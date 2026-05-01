@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +45,7 @@ class TransactionRepositoryTest {
         customer.setName("Test Customer");
         customer.setType(CustomerType.PERSON);
         customer.setAddress("1 Test Street");
+        customer.setDateOfBirth(LocalDate.of(1990, 1, 1));
         customer = customerRepository.save(customer);
 
         account = new Account();

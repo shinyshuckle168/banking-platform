@@ -1,5 +1,6 @@
-package com.group1.banking.integration;
+package com.fdm.banking.integration;
 
+import com.group1.banking.DigitalBankingPlatformApplication;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(classes = DigitalBankingPlatformApplication.class)
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @TestPropertySource(properties = {
@@ -80,6 +81,7 @@ class AuthCustomerIntegrationTest {
         createCustomerBody.put("name", "Jane Doe");
         createCustomerBody.put("address", "123 Main St, Toronto, ON");
         createCustomerBody.put("type", "PERSON");
+        createCustomerBody.put("dateOfBirth", "1990-01-01");
 
         String createCustomerResponse = mockMvc.perform(post("/api/customers")
                         .header("Authorization", "Bearer " + accessToken)
@@ -186,6 +188,7 @@ class AuthCustomerIntegrationTest {
         createCustomerBody.put("name", "Original Name");
         createCustomerBody.put("address", "Old Address");
         createCustomerBody.put("type", "PERSON");
+        createCustomerBody.put("dateOfBirth", "1990-01-01");
 
         String createCustomerResponse = mockMvc.perform(post("/api/customers")
                         .header("Authorization", "Bearer " + accessToken)
@@ -243,6 +246,7 @@ class AuthCustomerIntegrationTest {
         createCustomerBody.put("name", "Blocked Field User");
         createCustomerBody.put("address", "Any Address");
         createCustomerBody.put("type", "PERSON");
+        createCustomerBody.put("dateOfBirth", "1990-01-01");
 
         String createCustomerResponse = mockMvc.perform(post("/api/customers")
                         .header("Authorization", "Bearer " + accessToken)

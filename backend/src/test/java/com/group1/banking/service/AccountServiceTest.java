@@ -5,12 +5,14 @@ import com.group1.banking.dto.customer.CreateAccountRequest;
 import com.group1.banking.dto.customer.UpdateAccountRequest;
 import com.group1.banking.entity.*;
 import com.group1.banking.enums.RoleName;
+import com.group1.banking.exception.BadRequestException;
 import com.group1.banking.exception.ConflictException;
 import com.group1.banking.exception.NotFoundException;
 import com.group1.banking.exception.UnauthorisedException;
 import com.group1.banking.exception.UnprocessableException;
 import com.group1.banking.repository.AccountRepository;
 import com.group1.banking.repository.CustomerRepository;
+import com.group1.banking.repository.GicRepository;
 import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.CustomUserPrincipal;
 import com.group1.banking.service.impl.AccountService;
@@ -51,6 +53,9 @@ class AccountServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private GicRepository gicRepository;
 
     @InjectMocks
     private AccountService accountService;
@@ -440,4 +445,71 @@ class AccountServiceTest {
 
         verify(accountRepository).save(argThat(a -> a.getStatus() == AccountStatus.CLOSED));
     }
+
+    // ===== closeRrspAccount TESTS =====
+
+    @Test
+    void closeRrspAccount_shouldSucceed_whenRrspWithZeroBalanceAndNoActiveGic() {
+        account.setAccountType(AccountType.RRSP);
+        account.setBalance(new BigDecimal("0.00"));
+        setUpSecurityContextWith(customerUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(gicRepository.existsByAccount_AccountIdAndDeletedAtIsNullAndStatus(1001L, GicStatus.ACTIVE)).thenReturn(false);
+        when(accountRepository.save(any(Account.class))).thenReturn(account);
+
+        var result = accountService.closeRrspAccount(1001L);
+
+        assertThat(result).containsKey("message");
+        verify(accountRepository).save(argThat(a -> a.getStatus() == AccountStatus.CLOSED));
+    }
+
+    @Test
+    void closeRrspAccount_shouldThrowBadRequest_whenNotRrspAccount() {
+        account.setAccountType(AccountType.CHECKING);
+        account.setBalance(new BigDecimal("0.00"));
+        setUpSecurityContextWith(customerUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+
+        assertThatThrownBy(() -> accountService.closeRrspAccount(1001L))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void closeRrspAccount_shouldThrowBadRequest_whenActiveGicExists() {
+        account.setAccountType(AccountType.RRSP);
+        account.setBalance(new BigDecimal("0.00"));
+        setUpSecurityContextWith(customerUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(gicRepository.existsByAccount_AccountIdAndDeletedAtIsNullAndStatus(1001L, GicStatus.ACTIVE)).thenReturn(true);
+
+        assertThatThrownBy(() -> accountService.closeRrspAccount(1001L))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void closeRrspAccount_shouldThrowBadRequest_whenNonZeroBalance() {
+        account.setAccountType(AccountType.RRSP);
+        account.setBalance(new BigDecimal("100.00"));
+        setUpSecurityContextWith(customerUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(gicRepository.existsByAccount_AccountIdAndDeletedAtIsNullAndStatus(1001L, GicStatus.ACTIVE)).thenReturn(false);
+
+        assertThatThrownBy(() -> accountService.closeRrspAccount(1001L))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void closeRrspAccount_shouldThrowNotFoundException_whenAccountNotFound() {
+        setUpSecurityContextWith(customerUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> accountService.closeRrspAccount(999L))
+                .isInstanceOf(NotFoundException.class);
+    }
 }
+

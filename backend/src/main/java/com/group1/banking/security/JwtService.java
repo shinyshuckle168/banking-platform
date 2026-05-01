@@ -36,6 +36,7 @@ public class JwtService {
     private String buildToken(User user, long expirySeconds) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", user.getRoles().stream().map(Enum::name).toList());
+        claims.put("customerId", user.getCustomerId());
         return Jwts.builder()
             .setClaims(claims)
             .setSubject(user.getUserId().toString())
