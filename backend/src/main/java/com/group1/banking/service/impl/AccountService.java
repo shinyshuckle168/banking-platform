@@ -26,8 +26,11 @@ import com.group1.banking.exception.ConflictException;
 import com.group1.banking.exception.NotFoundException;
 import com.group1.banking.exception.UnauthorisedException;
 import com.group1.banking.exception.UnprocessableException;
+import com.group1.banking.entity.GicStatus;
+import com.group1.banking.exception.BadRequestException;
 import com.group1.banking.repository.AccountRepository;
 import com.group1.banking.repository.CustomerRepository;
+import com.group1.banking.repository.GicRepository;
 import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.AuthenticatedUser;
 import com.group1.banking.security.CustomUserPrincipal;
@@ -42,16 +45,19 @@ public class AccountService {
     private final CustomerRepository customerRepository;
     private final AuthService authorizationService;
     private final UserRepository userRepository;
+    private final GicRepository gicRepository;
 
     public AccountService(
             AccountRepository accountRepository,
             CustomerRepository customerRepository,
             AuthService authorizationService,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            GicRepository gicRepository) {
         this.accountRepository = accountRepository;
         this.customerRepository = customerRepository;
         this.authorizationService = authorizationService;
         this.userRepository = userRepository;
+        this.gicRepository = gicRepository;
     }
 
     @Transactional
@@ -129,6 +135,8 @@ public class AccountService {
             }
         } else if (type == AccountType.TFSA) {
             validateTfsaEligibility(customer, interestRate);
+        } else if (type == AccountType.RRSP) {
+            validateRrspEligibility(customer, interestRate);
         }
     }
 
@@ -156,6 +164,57 @@ public class AccountService {
         }
         // Contribution room check (placeholder)
         // throw new UnprocessableException("CONTRIBUTION_ROOM", "Contribution room exceeded", "contributionRoom");
+    }
+
+    private void validateRrspEligibility(Customer customer, BigDecimal interestRate) {
+        if (interestRate != null) {
+            throw new UnprocessableException("INVALID_INTEREST_RATE",
+                    "interestRate is not applicable for RRSP accounts — it is derived from the GIC term",
+                    "interestRate");
+        }
+        if (!customer.isKycVerified()) {
+            throw new UnprocessableException("KYC_REQUIRED",
+                    "Customer must be KYC verified to open an RRSP account", "kyc");
+        }
+        boolean hasRrsp = accountRepository
+                .existsByCustomerCustomerIdAndAccountTypeAndDeletedAtIsNull(
+                        customer.getCustomerId(), AccountType.RRSP);
+        if (hasRrsp) {
+            throw new ConflictException("RRSP_ALREADY_EXISTS",
+                    "Customer already has an active RRSP account", null);
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> closeRrspAccount(Long accountId) {
+        User user = getAuthenticatedUser();
+        Account account = loadActiveAccount(accountId);
+        checkAuthorization(user, account.getCustomer().getCustomerId());
+
+        if (account.getAccountType() != AccountType.RRSP) {
+            throw new BadRequestException("INVALID_ACCOUNT_TYPE",
+                    "Only RRSP accounts can be closed via this endpoint",
+                    Map.of("accountType", account.getAccountType()));
+        }
+        if (gicRepository.existsByAccount_AccountIdAndDeletedAtIsNullAndStatus(accountId, GicStatus.ACTIVE)) {
+            throw new BadRequestException("ACTIVE_GIC_EXISTS",
+                    "Cannot close RRSP account while an active GIC exists", null);
+        }
+        if (account.getBalance().compareTo(BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY)) != 0) {
+            throw new BadRequestException("NON_ZERO_BALANCE",
+                    "Cannot close RRSP account with a non-zero balance", null);
+        }
+
+        Instant now = Instant.now();
+        account.setStatus(AccountStatus.CLOSED);
+        account.setClosedAt(now);
+        account.setDeletedAt(now);
+        accountRepository.save(account);
+
+        return Map.of(
+                "message", "RRSP account closed successfully",
+                "accountId", accountId,
+                "closedAt", now.toString());
     }
 
     private void validateUpdateRequest(Account account, UpdateAccountRequest request) {

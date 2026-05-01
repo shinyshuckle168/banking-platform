@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.group1.banking.entity.Account;
 import com.group1.banking.entity.AccountStatus;
+import com.group1.banking.entity.AccountType;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
@@ -15,5 +16,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     List<Account> findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(Long customerId, AccountStatus status);
 
     boolean existsByCustomerCustomerIdAndDeletedAtIsNullAndStatus(Long customerId, AccountStatus status);
+
     Optional<Account> findByAccountId(Long accountNumber);
+
+    boolean existsByCustomerCustomerIdAndAccountTypeAndDeletedAtIsNull(Long customerId, AccountType accountType);
 }

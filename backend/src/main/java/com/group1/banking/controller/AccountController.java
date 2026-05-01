@@ -70,6 +70,11 @@ public class AccountController {
         return Map.of("message", "Account deleted successfully");
     }
 
+    @PostMapping("/accounts/{accountId}/close")
+    public Map<String, Object> closeRrspAccount(@PathVariable Long accountId) {
+        return accountService.closeRrspAccount(accountId);
+    }
+
     @PostMapping("/accounts/{accountId}/deposit")
     public ResponseEntity<Object> deposit(
             @PathVariable Long accountId,
