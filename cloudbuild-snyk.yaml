@@ -14,8 +14,11 @@ steps:
       - '-c'
       - |
         npm ci
+        echo "Authenticating..."
         npx snyk auth $$SNYK_TOKEN
+        echo "Running open source dependency scan..."
         npx snyk test || true
+        echo "Running code test..."
         npx snyk code test || true
 
   
