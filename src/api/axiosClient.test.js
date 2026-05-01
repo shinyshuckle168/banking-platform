@@ -2,13 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createMockClient = () => {
   const requestUse = vi.fn();
+  const responseUse = vi.fn();
   return {
     interceptors: {
       request: {
         use: requestUse
+      },
+      response: {
+        use: responseUse
       }
     },
-    __requestUse: requestUse
+    __requestUse: requestUse,
+    __responseUse: responseUse
   };
 };
 

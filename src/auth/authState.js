@@ -153,6 +153,10 @@ export function buildAuthenticatedState(authResponse, username) {
   const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : null;
   const canReuseCustomerContext = existingState.subject && existingState.subject === subject;
   const rememberedCustomerId = getRememberedCustomerContext(subject);
+  // Also try to read customerId from JWT claims (backend may embed it)
+  const jwtCustomerId = normalizeCustomerId(
+    decoded.customerId || decoded.customer_id || decoded.cid || ''
+  );
 
   return {
     accessToken: authResponse.accessToken,
@@ -163,6 +167,6 @@ export function buildAuthenticatedState(authResponse, username) {
     username,
     subject,
     roles,
-    customerId: rememberedCustomerId || (canReuseCustomerContext ? normalizeCustomerId(existingState.customerId) : '')
+    customerId: rememberedCustomerId || jwtCustomerId || (canReuseCustomerContext ? normalizeCustomerId(existingState.customerId) : '')
   };
 }
