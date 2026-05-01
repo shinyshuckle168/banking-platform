@@ -17,14 +17,11 @@ steps:
         echo "Authenticating..."
         npx snyk auth $$SNYK_TOKEN
 
-        echo "Who am I?"
-        npx snyk config get api
-
         echo "Running open source dependency scan..."
-        npx snyk test || true
+        npx snyk test --all-projects --org=fahmidovi9 || true
         
         echo "Running code test..."
-        npx snyk code test || true
+        npx snyk code test --org=fahmidovi9 || true
 
   
 
