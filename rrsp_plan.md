@@ -1,299 +1,151 @@
-# Implementation Plan: RRSP Account with GIC Investment Support
+Implementation Plan: **RRSP** Account with **GIC** Investment Support
 
-**Branch**: `spec/rrsp` | **Date**: 29 April 2026 | **Spec**: rrsp_spec.md
-**Input**: Feature specification from `rrsp_spec.md`
+Branch: spec/rrsp | Date: 29 April **2026** | Spec: rrsp_spec.md Input: Feature specification from rrsp_spec.md
 
-## Summary
+Summary
 
-Enable customers to open an RRSP account and invest in GICs. Each customer can have only one RRSP account, and each RRSP account can have only one GIC at a time. Sufficient funds are required before GIC creation. The interest rate for a GIC depends on the selected term. All validation rules and constraints are clearly defined in the spec.
+This feature extends the existing Account system by introducing **RRSP** as a new account type and adding **GIC** (Guaranteed Investment Certificate) as a separate investment domain.
 
-## Technical Context
+**RRSP** remains a standard Account entity with AccountType.**RRSP**.
 
-**Language/Version**: Java 17 (Spring Boot)
-**Primary Dependencies**: Spring Boot, JPA/Hibernate, JWT, Maven
-**Storage**: Relational DB (e.g., MySQL or H2 for dev)
-**Testing**: JUnit, Mockito
-**Target Platform**: Linux server, Docker/Kubernetes
-**Project Type**: Web service (REST API)
-**Constraints**: One RRSP per customer, one GIC per RRSP, sufficient funds required, interest rate by term
-**Scale/Scope**: Multi-user, production banking platform
+**GIC** is a standalone financial entity linked to **RRSP** accounts.
 
-## Constitution Check
+A customer can have only one **RRSP** account.
 
-- All business rules and validation logic must be enforced in both backend and API layers.
-- All error conditions must return correct HTTP status and error codes.
-- All actions must be logged and auditable.
+An **RRSP** account can have multiple **GIC** investments.
 
-## Project Structure
-
-
-### Documentation (this feature)
-
-```
-./
-├── rrsp_spec.md    # Feature specification
-├── rrsp_plan.md    # Implementation plan (this file)
-├── rrsp_tasks.md   # Task breakdown
-```
-
-### Source Code (repository root)
-
-```
-backend/src/main/java/com/group1/banking/
-backend/src/main/resources/
-backend/src/test/java/com/group1/banking/
-```
-
-## Next Steps
-
-1. Research any unclear technical context (e.g., DB schema, integration points).
-2. Define data model and API contracts for RRSP and GIC flows.
-3. Implement validation logic for GIC creation (one per account, sufficient funds, interest by term).
-4. Write tests for all business rules and error conditions.
-5. Document quickstart and update contracts as needed.
-
----
-
-## Frontend Implementation Plan
-
-### Overview
-The frontend will provide a user interface for customers to:
-- Open an RRSP account (if eligible)
-- View RRSP account details and GIC investments
-- Create a GIC investment (with validation for sufficient funds and one GIC per account)
-- View GIC maturity status and history
-- Receive error messages for business rule violations (e.g., already has RRSP, insufficient funds)
+All balance changes are handled exclusively through MonetaryOperationService.
 
 ### Technical Context
-- **Language/Framework**: React
-- **API Integration**: RESTful calls to backend endpoints
-- **Testing**: Jest, React Testing Library
-- **Target Platform**: Web (desktop/mobile responsive)
+
+Language/Version: Java 17 (Spring Boot) Architecture: Controller → Service → Repository Database: Relational (**JPA**/Hibernate) Security: **JWT**-based authentication Transactions: @Transactional service layer Integration: Existing MonetaryOperationService Testing: JUnit, Mockito Build Tool: Maven
+
+Key principle:
+
+Account system remains unchanged **GIC** is an independent domain module MonetaryOperationService is the single source of truth for balance movement ### Constitution Check No business logic duplication in AccountService and GICService No direct balance updates outside MonetaryOperationService No embedding of **GIC** fields inside Account entity All financial operations must be auditable Strict separation of Account and Investment domains ### System Design Overview ## RRSP as Account Type
+
+**RRSP** is implemented by extending:
+
+AccountType enum:
+
+**CHECKING** **SAVINGS** **RRSP**
+
+No new account entity is introduced.
+
+## GIC as Independent Entity
+
+**GIC** is a standalone domain entity:
+
+Each **GIC**:
+
+Belongs to exactly one **RRSP** account Has independent lifecycle Is persisted separately from Account
+
+Relationship:
+
+Account (**RRSP**) → 0..N GICs **GIC** → 1 **RRSP** Account ## Monetary Flow Strategy
+
+All balance changes go through:
+
+MonetaryOperationService:
+
+withdraw → used for **GIC** creation deposit → used for **GIC** maturity payout transfer → unrelated to **RRSP**/**GIC**
+
+No direct account balance mutation inside **GIC** logic.
 
 ### Project Structure
-```
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── api/
-│   ├── store/
-│   └── App.js
-├── public/
-└── package.json
-```
 
-### Next Steps
-1. Design wireframes for RRSP and GIC flows
-2. Scaffold frontend project and core pages/components
-3. Implement API integration for RRSP and GIC endpoints
-4. Add validation and error handling for all business rules
-5. Write tests for all user flows and edge cases
-6. Document usage and provide a quickstart for running the frontend
+Documentation
 
----
-## Backend Implementation Plan
-### Overview
-Provide REST APIs to manage RRSP accounts and GIC investments
-Allow customers to create exactly one RRSP account
-Support creation of a single active GIC per RRSP account
-Enable retrieval of RRSP and GIC details
-Allow redemption of GIC investments with payout calculation
-Support closing of RRSP accounts using status-based lifecycle
-Enforce all business rules at the service layer
-Ensure all operations are auditable and logged
-Return standardized error responses across all APIs
+rrsp_spec.md rrsp_plan.md rrsp_tasks.md
 
-### Technical Context
-Language: Java 17
-Framework: Spring Boot
-Architecture: Controller → Service → Repository
-Database: Relational database H2
-ORM: JPA/Hibernate
-Security: JWT-based authentication
-Validation: Bean Validation (@Valid, @NotNull, @Min)
-Exception Handling: Global handler using @ControllerAdvice
-Transactions: Managed using @Transactional
-Logging: SLF4J / Logback
-Testing: JUnit and Mockito
-Build Tool: Maven
-Deployment: Docker / Kubernetes
-### Entity Structure
-#### RRSP Account
- RRSPAccount 
-    - String rrspId;
-    - String customerId;
-    - BigDecimal balance;
-    - RRSPStatus status;
-    - LocalDateTime createdAt;
-    - LocalDateTime closedAt;
+### Backend Structure
 
-#### GIC
-    - String gicId;
-    - String rrspId;
-    - BigDecimal amount;
-    - String term;
-    - Double interestRate;
-    - LocalDate startDate;
-    - LocalDate maturityDate;
-    - GICStatus status;
+backend/src/main/java/com/group1/banking/
 
-### Enums
-#### enum RRSPStatus 
-    - ACTIVE
-    - CLOSED
+Core additions:
 
+entity/**GIC**.java repository/GICRepository.java service/GICService.java controller/GICController.java
 
-#### enum GICStatus 
-    - ACTIVE
-    - REDEEMED
+Existing reused:
 
-### Business Rules
-- One RRSP account per customer
-- One active GIC per RRSP account
-- GIC creation requires sufficient RRSP balance
-- Interest rate is derived from term and cannot be user-defined
-- GIC amount is deducted from RRSP balance on creation
-- GIC payout includes principal and interest on redemption
-- RRSP cannot be closed if an active GIC exists
-- RRSP cannot be closed if balance is not zero
-- No hard deletes allowed for RRSP or GIC
-- Use status-based lifecycle management for all entities
+AccountService AccountController MonetaryOperationService ### Data Model Account Structure (source of truth) accountId customer (ManyToOne → Customer) accountType (**CHECKING**, **SAVINGS**, **RRSP**) status (**ACTIVE**, **CLOSED**, etc.) balance (BigDecimal, precision 19, scale 2) interestRate (nullable, precision 12, scale 4) accountNumber (system generated unique identifier) dailyTransferLimit (default **3000**.00 if not set) deletedAt (soft delete support) closedAt (account closure tracking) version (optimistic locking) createdAt (audit) updatedAt (audit)
 
-### API Specifications
+**RRSP** is simply: AccountType = **RRSP**
 
-#### US-201 — Create RRSP Account
-#### Endpoint
-POST /api/v1/rrsp
-Content-Type: application/json
-Request
-{
-  "customerId": "12345"
-}
-Response — 201 Created
-{
-  "rrspId": "RRSP001",
-  "customerId": "12345",
-  "balance": 0,
-  "createdAt": "2026-04-29T10:00:00Z"
-}
- #### Rules
-- Customer must not already have an RRSP
-- Customer must exist
-#### Errors
-- 409 RRSP_ALREADY_EXISTS
-- 404 CUSTOMER_NOT_FOUND
-- 422 MISSING_REQUIRED_FIELD
+**GIC** (new entity) gicId rrspAccountId (FK → Account.accountId) principalAmount interestRate term startDate maturityDate maturityAmount status (**ACTIVE**, **MATURED**) ### Business Rules **RRSP** Rules A customer can have only one active **RRSP** account **RRSP** must pass **KYC** validation **RRSP** uses existing Account lifecycle **GIC** Rules **RRSP** can have multiple **GIC** investments Each **GIC** belongs to exactly one **RRSP** account Each **GIC** has independent lifecycle Sufficient **RRSP** balance required before creation Interest rate is derived from term (not user-controlled long term) Funds are locked at creation time No early redemption allowed (default rule) ### Money Movement Rules
 
-#### US-202 — Get RRSP Details
-#### Endpoint
-GET /api/v1/rrsp/{customerId}
-Response — 200 OK
-{
-  "rrspId": "RRSP001",
-  "balance": 10000,
-  "gic": {
-    "gicId": "GIC001",
-    "amount": 5000,
-    "term": "1_YEAR",
-    "interestRate": 5.0,
-    "maturityDate": "2027-04-29"
-  }
-}
-#### Rules
-- Must return RRSP with active GIC if present
-- Customer must own the account
-#### Errors
-- 404 RRSP_NOT_FOUND
-- 403 FORBIDDEN
+**GIC** Creation:
 
-#### US-203 — Create GIC
-#### Endpoint
-POST /api/v1/rrsp/{rrspId}/gic
-Content-Type: application/json
-Request
-{
-  "amount": 5000,
-  "term": "1_YEAR"
-}
-Response — 201 Created
-{
-  "gicId": "GIC001",
-  "amount": 5000,
-  "interestRate": 5.0,
-  "term": "1_YEAR",
-  "maturityDate": "2027-04-29"
-}
-#### Rules
-- Only one active GIC per RRSP
-- Balance must be sufficient
-- Interest rate derived from term
-- Amount deducted from RRSP
-#### Errors
-- 409 GIC_ALREADY_EXISTS
-- 400 INSUFFICIENT_FUNDS
-- 400 INVALID_TERM
-- 404 RRSP_NOT_FOUND
+Withdraw amount from **RRSP** via MonetaryOperationService Create **GIC** record
 
-#### US-204 — Get GIC Details
-#### Endpoint
-GET /api/v1/rrsp/{rrspId}/gic
-Response — 200 OK
-{
-  "gicId": "GIC001",
-  "amount": 5000,
-  "interestRate": 5.0,
-  "term": "1_YEAR",
-  "maturityDate": "2027-04-29"
-}
-#### Rules
-- Return only active GIC
-#### Errors
-- 404 GIC_NOT_FOUND
-- 404 RRSP_NOT_FOUND
+**GIC** Maturity:
 
-#### US-205 — Redeem GIC
-#### Endpoint
-POST /api/v1/rrsp/{rrspId}/gic/redeem
-Response — 200 OK
-{
-  "message": "GIC redeemed successfully",
-  "payoutAmount": 5250
-}
-#### Rules
-- Only active GIC can be redeemed
-- Payout includes interest
-- Funds credited back to RRSP
-- Status updated to REDEEMED
-#### Errors
-- 404 GIC_NOT_FOUND
-- 400 INVALID_OPERATION
+Calculate interest Deposit principal + interest back to **RRSP** ### Service Layer Design AccountService (unchanged responsibility) **RRSP** creation and validation Customer ownership enforcement **KYC** and eligibility checks Ensures only one **RRSP** per customer
 
-#### US-206 — Close RRSP Account
-#### Endpoint
-POST /api/v1/rrsp/{rrspId}/close
-Response — 200 OK
-{
-  "message": "RRSP account closed successfully",
-  "rrspId": "RRSP001",
-  "closedAt": "2026-04-29T12:00:00Z"
-}
-#### Rules
-- No active GIC must exist
-- Balance must be zero
-- Status updated to CLOSED
-#### Errors
-- 400 ACTIVE_GIC_EXISTS
-- 400 NON_ZERO_BALANCE
-- 400 RRSP_ALREADY_CLOSED
-- 404 RRSP_NOT_FOUND
+No **GIC** logic inside AccountService
 
-### Global Error Response
-{
-  "timestamp": "2026-04-29T10:15:30Z",
-  "status": 400,
-  "error": "BAD_REQUEST",
-  "code": "INSUFFICIENT_FUNDS",
-  "message": "Insufficient balance to create GIC",
-  "path": "/api/v1/rrsp/RRSP001/gic"
-}
+GICService (new)
+
+Responsibilities:
+
+Create **GIC** linked to **RRSP** Validate **RRSP** account and balance Ensure **RRSP** ownership Manage **GIC** lifecycle (**ACTIVE** → **MATURED**) Call MonetaryOperationService for fund movement Compute maturity schedule and interest MonetaryOperationService (unchanged)
+
+Responsibilities:
+
+deposit withdraw transfer idempotency handling transaction logging
+
+No **RRSP**/**GIC** awareness
+
+**API** Design Existing Account APIs (reused) **POST** /customers/{customerId}/accounts **GET** /accounts/{accountId} **GET** /customers/{customerId}/accounts
+
+**RRSP** is filtered using:
+
+accountType = **RRSP** New **GIC** APIs ## Create GIC
+
+**POST** /accounts/{accountId}/gics
+
+Request:
+
+amount term
+
+Rules:
+
+account must be **RRSP** sufficient balance required multiple GICs allowed ## Get all GICs for RRSP
+
+**GET** /accounts/{accountId}/gics
+
+Returns list of all GICs for **RRSP** account
+
+## Get GIC by ID
+
+**GET** /gics/{gicId}
+
+## Maturity processing (system/internal)
+
+Triggered via scheduler or batch job
+
+### Error Handling
+
+**422** → **KYC** or eligibility failure **409** → RRSP_ALREADY_EXISTS **400** → insufficient funds / invalid term **404** → account or **GIC** not found **403** → unauthorized access **503** → system failure Non-Functional Requirements 95% requests under 2 seconds Fully transactional operations Idempotent monetary operations via existing system Audit logs for all financial events Scalable to multiple concurrent GICs per **RRSP** Strict **RBAC** enforcement ### Key Architectural Decisions ## RRSP is NOT a separate entity
+
+Only an AccountType extension
+
+## GIC is fully decoupled from Account
+
+Prevents coupling of investment logic with account lifecycle
+
+## RRSP → GIC is 1:N relationship
+
+Supports multiple concurrent investments per **RRSP**
+
+## MonetaryOperationService is the ONLY money engine
+
+Ensures:
+
+consistency auditability reuse of existing logic ## No embedded investment fields in Account
+
+Keeps Account model clean and stable for future **RRIF** expansion
+
+### Testing Strategy
+
+**RRSP** creation (single per customer) **GIC** creation (multiple allowed) Insufficient balance scenarios Maturity payout correctness Authorization rules (admin vs customer) Idempotency behavior during **GIC** creation ### Next Steps Implement **GIC** entity + repository Create GICService (core business logic) Add **RRSP** validation in AccountService Integrate MonetaryOperationService for: withdraw (**GIC** creation) deposit (**GIC** maturity) Add GICController Implement scheduled job for maturity processing Write integration tests: **RRSP** → multiple **GIC** flows concurrency scenarios balance consistency validation
