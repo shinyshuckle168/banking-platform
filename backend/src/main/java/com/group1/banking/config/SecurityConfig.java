@@ -25,6 +25,8 @@ public class SecurityConfig {
                                                    JwtAuthenticationFilter jwtAuthenticationFilter,
                                                    CustomAuthenticationEntryPoint authenticationEntryPoint,
                                                    CustomAccessDeniedHandler accessDeniedHandler) throws Exception {
+    	// CSRF is disabled because this application uses stateless JWT authentication.
+    	// No session or cookies are used, so CSRF attacks are not applicable.
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
