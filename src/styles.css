@@ -164,6 +164,47 @@ body::before {
   box-shadow: 0 8px 32px rgba(49, 36, 24, 0.12);
 }
 
+.register-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.register-step {
+  color: var(--muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.register-step.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.register-step.completed {
+  color: var(--muted);
+}
+
+.register-step-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.register-step-arrow {
+  color: var(--muted);
+}
   transition: background 120ms ease;
 }
 
@@ -591,6 +632,74 @@ button:disabled {
 
 .accounts-table-shell {
   overflow: visible;
+}
+
+/* ── Account Cards ──────────────────────────────────────────── */
+
+.account-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.account-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(49, 36, 24, 0.07);
+  text-decoration: none;
+  color: var(--ink);
+  transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+
+a.account-card:hover {
+  box-shadow: 0 6px 24px rgba(49, 36, 24, 0.14);
+  border-color: var(--accent);
+}
+
+.account-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.account-card-type {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.account-card-id {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.account-card-balance {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.account-card-total {
+  background: var(--panel-strong);
+  margin-top: 0.5rem;
+}
+
+.account-card-total .account-card-type {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.account-card-total .account-card-balance {
+  font-size: 2rem;
 }
 
 .table-shell table {

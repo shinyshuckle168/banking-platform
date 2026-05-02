@@ -74,20 +74,19 @@ describe('AccountListPage', () => {
 
     renderAccountListPage();
 
-    expect(screen.getByText('No active accounts returned')).toBeInTheDocument();
-    expect(screen.getByText(/valid success outcome/i)).toBeInTheDocument();
+    expect(screen.getByText('No active accounts')).toBeInTheDocument();
   });
 
-  it('renders the accounts table when accounts are returned successfully', () => {
+  it('renders account cards when accounts are returned successfully', () => {
     queryState.data = [
       { accountId: 101, accountType: 'SAVINGS', status: 'ACTIVE', balance: '500.00' }
     ];
 
     renderAccountListPage();
 
-    expect(screen.getByRole('link', { name: '101' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /101/i })).toBeInTheDocument();
     expect(screen.getAllByText('SAVINGS').length).toBeGreaterThan(0);
-    expect(screen.getByText('500.00')).toBeInTheDocument();
+    expect(screen.getAllByText('$500.00').length).toBeGreaterThan(0);
   });
 
   it('renders the unavailable state when the account query fails', () => {
