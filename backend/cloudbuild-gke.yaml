@@ -29,6 +29,14 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', '${_IMAGE}:$SHORT_SHA']
 
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        sed -i "s|REPLACE_WITH_JWT|$$JWT_VAL|g" backend/k8s/deployment.yaml
+    secretEnv: ['JWT_VAL']
+
   - name: 'gcr.io/cloud-builders/gke-deploy'
     args:
       - run
@@ -42,6 +50,8 @@ availableSecrets:
   secretManager:
     - versionName: projects/gcp-class-14/secrets/sonar-cloud-auth-token/versions/latest
       env: 'SONAR_TOKEN'
+    - versionName: projects/gcp-class-14/secrets/JWT_SECRET/versions/latest
+      env: 'JWT_VAL'
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -17,4 +17,7 @@ spec:
           image: northamerica-northeast1-docker.pkg.dev/gcp-class-14/banking-repo/banking
           ports:
             - containerPort: 8080
+          env:
+          - name: JWT_SECRET
+            value: "REPLACE_WITH_JWT"
  
