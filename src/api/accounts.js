@@ -19,17 +19,17 @@ export async function createAccount(payload) {
     body.interestRate = payload.interestRate;
   }
 
-  const response = await accountApiClient.post(`/customers/${payload.customerId}/accounts`, body);
+  const response = await accountApiClient.post(`/api/customers/${payload.customerId}/accounts`, body);
   return response.data;
 }
 
 export async function getAccount(accountId) {
-  const response = await accountApiClient.get(`/accounts/${accountId}`);
+  const response = await accountApiClient.get(`/api/accounts/${accountId}`);
   return response.data;
 }
 
 export async function listCustomerAccounts(customerId) {
-  const response = await accountApiClient.get(`/customers/${customerId}/accounts`);
+  const response = await accountApiClient.get(`/api/customers/${customerId}/accounts`);
   return response.data;
 }
 
@@ -40,12 +40,12 @@ export async function updateAccount(payload) {
     body.interestRate = payload.interestRate;
   }
 
-  const response = await accountApiClient.put(`/accounts/${payload.accountId}`, body);
+  const response = await accountApiClient.put(`/api/accounts/${payload.accountId}`, body);
   return response.data;
 }
 
 export async function deleteAccount(accountId) {
-  const response = await accountApiClient.delete(`/accounts/${accountId}`);
+  const response = await accountApiClient.delete(`/api/accounts/${accountId}`);
   return response.data;
 }
 
@@ -56,7 +56,7 @@ export async function deleteCustomer(customerId) {
 
 export async function depositToAccount(payload) {
   const response = await accountApiClient.post(
-    `/accounts/${payload.accountId}/deposit`,
+    `/api/accounts/${payload.accountId}/deposit`,
     {
       amount: payload.amount,
       description: payload.description || null,
@@ -69,7 +69,7 @@ export async function depositToAccount(payload) {
 
 export async function withdrawFromAccount(payload) {
   const response = await accountApiClient.post(
-    `/accounts/${payload.accountId}/withdraw`,
+    `/api/accounts/${payload.accountId}/withdraw`,
     {
       amount: payload.amount,
       description: payload.description || null,
@@ -82,7 +82,7 @@ export async function withdrawFromAccount(payload) {
 
 export async function transferBetweenAccounts(payload) {
   const response = await accountApiClient.post(
-    '/accounts/transfer',
+    '/api/accounts/transfer',
     {
       fromAccountId: payload.fromAccountId,
       toAccountId: payload.toAccountId,
