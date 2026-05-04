@@ -29,13 +29,13 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', '${_IMAGE}:$SHORT_SHA']
 
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        sed -i "s|REPLACE_WITH_JWT|$$JWT_VAL|g" backend/k8s/deployment.yaml
-    secretEnv: ['JWT_VAL']
+#  - name: 'gcr.io/cloud-builders/gcloud'
+#    entrypoint: 'bash'
+#    args:
+#      - '-c'
+#      - |
+#        sed -i "s|REPLACE_WITH_JWT|$$JWT_VAL|g" backend/k8s/deployment.yaml
+#    secretEnv: ['JWT_VAL']
 
   - name: 'gcr.io/cloud-builders/gke-deploy'
     args:
