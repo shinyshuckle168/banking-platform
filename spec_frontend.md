@@ -791,6 +791,159 @@ The frontend work is complete when all of the following are true:
 
 ---
 
+## 14. UI Change Log
+
+### [2026-04-23] Registration Page — Two-Step Wizard Refactor
+
+**Scope:** `src/pages/RegisterPage.jsx`, `src/styles.css`
+
+#### What Changed
+
+**Step structure**
+- The registration form was refactored from a single-page layout into a two-step wizard controlled by a `step` state (`'selectType'` | `'details'`).
+- Step 1 presents only the Account Type dropdown (`PERSON` / `COMPANY`) and a "Continue" button.
+- Step 2 presents the remaining fields and a "Back" button that returns to Step 1 while preserving all entered `formState`.
+
+**Progress indicator**
+- A stepper is displayed at the top of the card showing "1. Account Type → 2. Details".
+- The active step is highlighted in the app's green (`--accent`).
+- When Step 2 is active, Step 1 shows a filled green circle with a checkmark (✓) — no strikethrough text.
+- Non-active future steps are displayed in a neutral muted colour.
+
+**Step 2 field layout**
+- All four fields (Email, Password, Name, Address) are rendered in a single-column `stack` layout, each taking the full card width on its own row.
+- The name field label is dynamic: "Full Name" for `PERSON`, "Company Name" for `COMPANY`.
+
+**Page and card styling (updated)**
+- The custom `register-page` / `register-card` wrapper (white card on `#efe3d2` background) was removed.
+- The register page now uses the same `<section class="panel stack auth-panel-page">` structure as `LoginPage`, ensuring consistent appearance across all auth screens.
+- The bespoke `.register-page` and `.register-card` CSS classes are no longer used for the page shell.
+- The stepper (`register-stepper`, `register-step`, `register-step-check`, `register-step-arrow`) styles are retained.
+
+**Unchanged**
+- All `handleSubmit`, `useMutation`, and field validation logic remain untouched.
+- API payloads sent to the backend are identical to before.
+
+---
+
+### [2026-04-23] Global Layout — Sidebar Replaced with Horizontal Navbar + Conditional Sub-Navbar
+
+**Scope:** `src/App.jsx`, `src/styles.css`
+
+#### What Changed
+
+**Layout structure**
+- The two-column sidebar layout (`app-shell` as a CSS grid) was replaced with a full-width stacked layout (`app-shell` as `flex-direction: column`).
+- The `<aside class="sidebar">` element was removed entirely.
+- The main content area now spans the full page width below the navigation bars.
+
+**Main Navbar (`<header class="navbar">`)**
+- A persistent top navbar is rendered on all pages, authenticated or not.
+- Left side: "FDM" brand name in bold.
+- Right side is conditional on auth state:
+  - If **not authenticated**: shows a `Login` link and a `Get Started` button.
+  - If **authenticated**: shows a 32×32 circular profile avatar placeholder and a `Log Out` button.
+
+**Sub-Navbar (`<div class="subnav">`)**
+- The sub-navbar is only rendered when `isAuthenticated` is `true`; it is absent entirely for logged-out users.
+- Contains three horizontally-aligned links:
+  - **Overview** → `/`
+  - **Customer Profile** → `/customer/${customerId}` (or `/customer` for `ADMIN` users)
+  - **Customer Accounts** → `/customer/${customerId}/accounts` (only rendered once `customerId` is known)
+- Active links are highlighted with the app's green (`--accent`) bottom border.
+- The sub-navbar is `position: sticky` at `top: 64px` (directly below the main navbar).
+
+**Styles added**
+- `.navbar`, `.navbar-brand`, `.navbar-actions`, `.navbar-profile`, `.profile-avatar` — main navbar layout and identity.
+- `.subnav`, `.subnav-list` — secondary nav bar with horizontal link layout and active-state underline indicator.
+- Responsive breakpoint updated to adjust padding on smaller viewports; old sidebar rules removed.
+
+**Unchanged**
+- All route definitions, auth guards, and `ProtectedRoute` logic remain untouched.
+- `useAuth` hook usage is identical; no changes to `AuthContext`.
+
+---
+
+### [2026-05-04] Profile Security & Navigation Refinement
+
+**Scope:** `src/pages/Profile.jsx`, `src/components/Navbar.jsx`, `src/App.jsx`
+
+#### What Changed
+
+**Customer Profile Editing Restrictions**
+- **Read-Only Fields:** The `Name` and `Email` input fields are now disabled/read-only to prevent unauthorized identity changes.
+- **Support Hint:** Added a muted text notice: "Contact support to update this information" directly below the non-editable fields.
+- **Editable Fields:** The `Address` field remains fully interactive, allowing users to update their primary residence info.
+
+**Navigation & Feature Access**
+- **Transfer Funds Tab:** Added a new "Transfer Funds" link to the sub-navbar pointing to `/accounts/transfer`.
+- **Persistent Active State:** Updated the `NavLink` logic to ensure the green accent underline remains active when query parameters are present (e.g., `?fromAccountId=1003`).
+- **Conditional Visibility:** Refined the sub-navbar to ensure account-specific features (Accounts, Transfer) only render once a `customerId` is successfully resolved in the auth context.
+
+**Global Error Handling**
+- **Custom 404 Page:** Implemented a themed `NotFoundPage` that catches all undefined routes using a wildcard `*` path.
+- **Navigation State Fallback:** Updated the Account List page to check for `location.state.successMessage`, allowing for "Registration Successful" banners to persist across the redirect from the sign-up flow.
+
+**Styles Updated**
+- Added `.banner.success` styles using Voltio Green (#00684a) for account creation and registration feedback.
+- Applied disabled-state styling to inputs to ensure visual clarity on non-editable profile data.
+
+---
+
+### [2026-05-04] Overview Page Features & Global Footer
+
+**Scope:** `src/pages/Home.jsx`, `src/App.jsx`, `src/styles.css`
+
+#### What Changed
+
+**Featured Offers Slider (Home Page)**
+- **Interactive Carousel:** Implemented a "Featured Offers" panel with a sliding track for monthly banking promotions.
+- **Auto-Sliding Logic:** Added a state-managed slider using `activeOfferIndex` with smooth `translateX` transitions.
+- **Pagination Controls:** Included interactive "dots" (tablist role) that allow users to manually jump to specific offer slides.
+- **Offer Content:** Each slide supports a kicker/badge, title, description, and high-quality media/images.
+
+**Global Footer Implementation**
+- **Persistent Bottom Bar:** Added a comprehensive footer (`.overview-footer`) to the main layout.
+- **Metadata & Support:** Displays dynamic copyright information with `currentYear` and localized support contact details (Email + Operating Hours).
+- **Social Integration:** Included a social media link cluster (`.footer-social`) with accessible labels for Facebook, Instagram, X, LinkedIn, and YouTube.
+- **Layout Alignment:** The footer uses a three-column bottom row layout for balanced spacing between meta info, support hours, and social icons.
+
+**Contextual Navigation (Home Page)**
+- **Auth-State Branching:**
+  - **Public:** Displays a "Get Started" call-to-action for non-authenticated users.
+  - **Admin:** Provides "Open Customer" and "Open Account" quick-lookup tools.
+  - **Customer:** Offers direct deep-links to "My Profile" and "My Accounts" once a customer ID is linked or registered.
+
+**Styles Updated**
+- Added `.offers-slider-window` and `.offers-slider-track` for the carousel animation logic.
+- Implemented `.footer-bottom-row` and `.footer-meta` for consistent branding across all application screens.
+
+---
+
+### [2026-05-04] Authentication Architecture — JWT Implementation
+
+**Scope:** `src/auth/AuthContext.jsx`, `src/api/axiosClient.js`, `LocalStorage`
+
+#### What Changed
+
+**Token-Based Authentication**
+- **JWT Storage:** Replaced local boolean flags with a secure JWT flow. The `accessToken` and `refreshToken` are now stored in `LocalStorage` to persist user sessions across browser refreshes.
+- **Payload Parsing:** Implemented `jwt-decode` (or similar logic) to extract user roles (`ADMIN`, `USER`), `customerId`, and expiration timestamps directly from the token.
+- **Dynamic Auth State:** The `isAuthenticated` state in `AuthContext` now depends on the presence and validity of a stored token rather than a hardcoded value.
+
+**Axios Security Interceptors**
+- **Authorization Header:** Added a global Axios Request Interceptor that automatically attaches the `Authorization: Bearer <token>` header to every outgoing API request.
+- **401/403 Handling:** Added a Response Interceptor to catch "UNAUTHORISED" errors. If the backend rejects a token, the frontend automatically triggers a logout and redirects the user to the `/login` page to prevent raw JSON leaks.
+
+**Customer Context Linking**
+- **UUID Mapping:** Upon login, the app maps the JWT `sub` claim to the `banking-app-customer-contexts` object, ensuring that the "My Accounts" and "Profile" links always point to the correct `customerId` associated with that specific token.
+
+**Styles & UX Updated**
+- **Login Redirects:** The `ProtectedRoute` component now uses the `location` state to remember the user's intended destination, redirecting them back to their original page after a successful JWT-authenticated login.
+- **Auth Guard:** Updated the top Navbar to conditionally show the `Profile` avatar only when a valid, non-expired token is present.
+
+---
+
 ## Future Extension Note
 
 If a separate transactions microservice is added later, the React application should integrate it through the same authenticated shell, shared route protection, and centralized API client conventions defined here. Current deposit, withdraw, and transfer UX should therefore be designed as modular features that can be re-pointed or extended without rewriting the app foundation.
