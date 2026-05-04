@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 /**
  * Request DTO for creating a standing order. (T047)
  */
-public class CreateStandingOrderRequest {
+public class CreateStandingOrderRequest {  
 
     // @NotBlank(message = "Payee account is required")
     // @Size(max = 34, message = "Payee account must not exceed 34 characters")
