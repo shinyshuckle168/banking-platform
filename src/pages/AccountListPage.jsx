@@ -28,6 +28,7 @@ export function AccountListPage() {
   const [expandedAccountId, setExpandedAccountId] = useState(null);
 
   const query = useListCustomerAccounts(customerId);
+  const totalBalance = (query.data || []).reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
   const customerQuery = useQuery({
     queryKey: ['customer', customerId],
     queryFn: () => getCustomer(customerId),
@@ -109,9 +110,14 @@ export function AccountListPage() {
       </div>
       <div className="stack">
         <section className="panel stack">
-          <div>
-            <h2>My Accounts</h2>
-             <p className="muted" style={{ margin: '0.25rem 0 1.25rem 0' }}>View and manage your accounts.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <h2>My Accounts</h2>
+              <p className="muted" style={{ margin: '0.25rem 0 0' }}>View and manage your accounts.</p>
+            </div>
+            {!accountsError && !customerError ? (
+              <button type="button" onClick={openCreateModal}>Create Account</button>
+            ) : null}
           </div>
           {isAdmin ? (
             <div className="field">
@@ -127,9 +133,36 @@ export function AccountListPage() {
               {customerListQuery.error ? <p className="field-hint">{mapAxiosError(customerListQuery.error).message}</p> : null}
             </div>
           ) : null}
-          <div className="actions">
-            {!accountsError && !customerError ? <button type="button" onClick={openCreateModal}>Create Account</button> : null}
-          </div>
+          <section className="accounts-table-shell">
+            {accountsError || customerError ? (
+              <div className="panel">
+                <h3>Accounts unavailable</h3>
+                <p className="muted">The selected customer's accounts cannot be displayed right now.</p>
+              </div>
+            ) : query.data && query.data.length > 0 ? (
+              <div className="account-card-list">
+                {query.data.map((account) => (
+                  <Link key={account.accountId} className="account-card" to={`/accounts/${account.accountId}`}>
+                    <div className="account-card-header">
+                      <span className="account-card-type">{account.accountType}</span>
+                      <span className="account-card-id">{account.accountId}</span>
+                    </div>
+                    <span className="account-card-balance">${account.balance}</span>
+                  </Link>
+                ))}
+                <div className="account-card account-card-total">
+                  <div className="account-card-header">
+                    <span className="account-card-type">Total Account Balance</span>
+                  </div>
+                  <span className="account-card-balance">${totalBalance.toFixed(2)}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="panel">
+                <h3>No active accounts</h3>
+              </div>
+            )}
+          </section>
         </section>
 
       {isCreateModalOpen ? (
@@ -193,43 +226,7 @@ export function AccountListPage() {
         </div>
       ) : null}
 
-      <section className="table-shell accounts-table-shell">
-        {accountsError || customerError ? (
-          <div className="panel">
-            <h3>Accounts unavailable</h3>
-            <p className="muted">The selected customer's accounts cannot be displayed right now.</p>
-          </div>
-        ) : query.data && query.data.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th>Type</th>
-                <th>Balance</th>
-                {/* Actions column removed */}
-              </tr>
-            </thead>
-            <tbody>
-              {query.data.map((account) => (
-                <tr key={account.accountId}>
-                  <td><Link className="table-link" to={`/accounts/${account.accountId}`}>{account.accountId}</Link></td>
-                  <td>{account.accountType}</td>
-                  <td>{account.balance}</td>
-                  {/* Actions cell removed */}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="panel">
-            <h3>No active accounts returned</h3>
-            <p className="muted">
-              If the customer exists, this empty state is still a valid success outcome for the current spec.
-            </p>
-            <button type="button" onClick={openCreateModal}>Create First Account</button>
-          </div>
-        )}
-      </section>
+      
       </div>
     </>
   );

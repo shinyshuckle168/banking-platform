@@ -36,8 +36,9 @@ function attachAuthInterceptor(client) {
   client.interceptors.request.use((config) => {
     const authState = readStoredAuthState();
     const headers = config.headers ?? {};
+    const tokenFresh = authState.accessToken && (!authState.expiresAt || authState.expiresAt > Date.now());
 
-    if (authState.accessToken) {
+    if (tokenFresh) {
       headers.Authorization = `Bearer ${authState.accessToken}`;
     }
 

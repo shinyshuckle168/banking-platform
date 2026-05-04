@@ -60,11 +60,21 @@ export function readStoredAuthState() {
 
   try {
     const parsed = JSON.parse(saved);
-    return {
+    const state = {
       ...emptyAuthState,
       ...parsed,
       roles: normalizeRoles(parsed.roles)
     };
+
+    // If we know the token's expiry and it has passed, discard it now so that
+    // ProtectedRoute redirects cleanly to /login instead of firing API calls
+    // that all return 401 and trigger the "session expired" banner.
+    if (state.expiresAt && state.expiresAt < Date.now()) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return emptyAuthState;
+    }
+
+    return state;
   } catch {
     return emptyAuthState;
   }

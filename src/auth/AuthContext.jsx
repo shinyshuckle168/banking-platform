@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     authState,
-    isAuthenticated: Boolean(authState.accessToken),
+    isAuthenticated: Boolean(authState.accessToken) && (!authState.expiresAt || authState.expiresAt > Date.now()),
     isAdmin: authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN'),
     completeLogin(authResponse, username) {
       const nextState = buildAuthenticatedState(authResponse, username);
