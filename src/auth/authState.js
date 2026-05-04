@@ -60,11 +60,21 @@ export function readStoredAuthState() {
 
   try {
     const parsed = JSON.parse(saved);
-    return {
+    const state = {
       ...emptyAuthState,
       ...parsed,
       roles: normalizeRoles(parsed.roles)
     };
+
+    // If we know the token's expiry and it has passed, discard it now so that
+    // ProtectedRoute redirects cleanly to /login instead of firing API calls
+    // that all return 401 and trigger the "session expired" banner.
+    if (state.expiresAt && state.expiresAt < Date.now()) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return emptyAuthState;
+    }
+
+    return state;
   } catch {
     return emptyAuthState;
   }
@@ -153,6 +163,10 @@ export function buildAuthenticatedState(authResponse, username) {
   const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : null;
   const canReuseCustomerContext = existingState.subject && existingState.subject === subject;
   const rememberedCustomerId = getRememberedCustomerContext(subject);
+  // Also try to read customerId from JWT claims (backend may embed it)
+  const jwtCustomerId = normalizeCustomerId(
+    decoded.customerId || decoded.customer_id || decoded.cid || ''
+  );
 
   return {
     accessToken: authResponse.accessToken,
@@ -163,6 +177,6 @@ export function buildAuthenticatedState(authResponse, username) {
     username,
     subject,
     roles,
-    customerId: rememberedCustomerId || (canReuseCustomerContext ? normalizeCustomerId(existingState.customerId) : '')
+    customerId: rememberedCustomerId || jwtCustomerId || (canReuseCustomerContext ? normalizeCustomerId(existingState.customerId) : '')
   };
 }

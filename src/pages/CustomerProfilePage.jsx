@@ -132,11 +132,6 @@ export function CustomerProfilePage() {
       <div className="profile-section">
         <div className="profile-section-header">
           <span className="profile-section-title">Identity &amp; Type</span>
-          {!isEditingIdentity && (
-            <button type="button" className="secondary profile-edit-btn" onClick={handleEditIdentity}>
-              Edit
-            </button>
-          )}
         </div>
         <div className="panel stack">
           <div className="profile-identity-card">
@@ -195,6 +190,16 @@ export function CustomerProfilePage() {
         </div>
         <div className="panel stack">
           <div className="field">
+            <label htmlFor="profile-name">Full Name</label>
+            <input
+              id="profile-name"
+              type="text"
+              value={customer?.name || ''}
+              disabled
+              readOnly
+            />
+          </div>
+          <div className="field">
             <label htmlFor="profile-email">Email</label>
             <input
               id="profile-email"
@@ -203,7 +208,7 @@ export function CustomerProfilePage() {
               disabled
               readOnly
             />
-            <p className="field-hint">Email address cannot be changed.</p>
+            <p className="field-hint">Contact support to update this information.</p>
           </div>
         </div>
       </div>
@@ -228,8 +233,9 @@ export function CustomerProfilePage() {
             <input
               id="profile-address"
               value={isEditingAddress ? addressDraft : (customer?.address || '')}
-              disabled={!isEditingAddress}
+              readOnly={!isEditingAddress}
               onChange={(e) => setAddressDraft(e.target.value)}
+              style={!isEditingAddress ? { pointerEvents: 'none' } : undefined}
             />
           </div>
           {isEditingAddress && (

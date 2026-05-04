@@ -1,6 +1,30 @@
 import axios from 'axios';
 import { readStoredAuthState } from '../auth/authState';
 
+const AUTH_STORAGE_KEY = 'banking-app-auth';
+const CUSTOMER_CONTEXT_KEY = 'banking-app-customer-contexts';
+
+function attachSessionExpiredInterceptor(client) {
+  client.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const status = error?.response?.status;
+      // Only clear the session on 401 (Unauthorized = token missing/expired/invalid).
+      // 403 (Forbidden) means the user IS authenticated but lacks permission — do not log them out.
+      if (status === 401) {
+        window.localStorage.removeItem(AUTH_STORAGE_KEY);
+        window.localStorage.removeItem(CUSTOMER_CONTEXT_KEY);
+        // Only redirect if not already on the login page to avoid redirect loops
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.replace('/login?error=session_expired');
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+  return client;
+}
+
 const mergedBackendBaseUrl =
   import.meta.env.VITE_GROUP123_BACKEND_BASE_URL ||
   import.meta.env.VITE_BANKING_API_BASE_URL ||
@@ -12,8 +36,9 @@ function attachAuthInterceptor(client) {
   client.interceptors.request.use((config) => {
     const authState = readStoredAuthState();
     const headers = config.headers ?? {};
+    const tokenFresh = authState.accessToken && (!authState.expiresAt || authState.expiresAt > Date.now());
 
-    if (authState.accessToken) {
+    if (tokenFresh) {
       headers.Authorization = `Bearer ${authState.accessToken}`;
     }
 
@@ -24,13 +49,13 @@ function attachAuthInterceptor(client) {
   return client;
 }
 
-export const loginApiClient = attachAuthInterceptor(axios.create({
+export const loginApiClient = attachSessionExpiredInterceptor(attachAuthInterceptor(axios.create({
   baseURL: mergedBackendBaseUrl
-}));
+})));
 
-export const accountApiClient = attachAuthInterceptor(axios.create({
+export const accountApiClient = attachSessionExpiredInterceptor(attachAuthInterceptor(axios.create({
   baseURL: mergedBackendBaseUrl
-}));
+})));
 
 function firstValidationError(errors) {
   if (!Array.isArray(errors) || errors.length === 0) {

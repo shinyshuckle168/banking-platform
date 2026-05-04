@@ -99,76 +99,31 @@ describe('CustomerProfilePage', () => {
     expect(emailInput).toBeDisabled();
   });
 
+  it('shows the customer name as a read-only input field', () => {
+    queryState.data = { name: 'Jane Doe', type: 'PERSON', address: '1 Main St' };
+    renderPage();
+    const nameInput = screen.getByLabelText('Full Name');
+    expect(nameInput).toHaveValue('Jane Doe');
+    expect(nameInput).toBeDisabled();
+  });
+
+  it('shows the support hint under the email field', () => {
+    queryState.data = { name: 'Jane Doe', type: 'PERSON', address: '1 Main St' };
+    renderPage();
+    expect(screen.getByText('Contact support to update this information.')).toBeInTheDocument();
+  });
+
+  it('does not show an Edit button for the Identity section', () => {
+    queryState.data = { name: 'Jane Doe', type: 'PERSON', address: '1 Main St' };
+    renderPage();
+    // Only the address section should have an Edit button
+    expect(screen.getAllByRole('button', { name: 'Edit' })).toHaveLength(1);
+  });
+
   it('shows the customer address in the Location section', () => {
     queryState.data = { name: 'Jane Doe', type: 'PERSON', address: '1 Main St' };
     renderPage();
     expect(screen.getByLabelText('Address')).toHaveValue('1 Main St');
-  });
-
-  describe('identity editing', () => {
-    beforeEach(() => {
-      queryState.data = { name: 'Jane Doe', type: 'PERSON', address: '1 Main St' };
-    });
-
-    it('shows the name input and Update/Cancel buttons after clicking the Identity Edit button', () => {
-      renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-      expect(screen.getByLabelText('Name')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-    });
-
-    it('hides the identity edit form after clicking Cancel', () => {
-      renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-      expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
-    });
-
-    it('shows a validation error when the name is shorter than 2 characters', async () => {
-      renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-      fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'J' } });
-      fireEvent.click(screen.getByRole('button', { name: 'Update' }));
-      expect(await screen.findByText('Name must be at least 2 characters.')).toBeInTheDocument();
-      expect(updateCustomer).not.toHaveBeenCalled();
-    });
-
-    it('shows a success banner after identity is saved successfully', async () => {
-      updateCustomer.mockResolvedValue({});
-      renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-      fireEvent.click(screen.getByRole('button', { name: 'Update' }));
-      await waitFor(() => {
-        expect(screen.getByText('Profile updated.')).toBeInTheDocument();
-      });
-    });
-
-    it('shows an error banner when the identity mutation fails', async () => {
-      updateCustomer.mockRejectedValue({
-        response: { data: { message: 'Save failed' } }
-      });
-      renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-      fireEvent.click(screen.getByRole('button', { name: 'Update' }));
-      await waitFor(() => {
-        expect(screen.getByText('Save failed')).toBeInTheDocument();
-      });
-    });
-
-    it('does not show the Account Type selector for non-admin users', () => {
-      authContext.isAdmin = false;
-      renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-      expect(screen.queryByLabelText('Account Type')).not.toBeInTheDocument();
-    });
-
-    it('shows the Account Type selector for admin users', () => {
-      authContext.isAdmin = true;
-      renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-      expect(screen.getByLabelText('Account Type')).toBeInTheDocument();
-    });
   });
 
   describe('address editing', () => {
@@ -178,14 +133,14 @@ describe('CustomerProfilePage', () => {
 
     it('enables the address input and shows Update/Cancel after clicking the Location Edit button', () => {
       renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[1]);
+      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
       expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     });
 
     it('hides the address edit form after clicking Cancel', () => {
       renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[1]);
+      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
       fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
       expect(screen.queryByRole('button', { name: 'Update' })).not.toBeInTheDocument();
     });
@@ -193,7 +148,7 @@ describe('CustomerProfilePage', () => {
     it('shows a success banner after address is saved successfully', async () => {
       updateCustomer.mockResolvedValue({});
       renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[1]);
+      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
       fireEvent.click(screen.getByRole('button', { name: 'Update' }));
       await waitFor(() => {
         expect(screen.getByText('Address updated.')).toBeInTheDocument();
@@ -203,7 +158,7 @@ describe('CustomerProfilePage', () => {
     it('calls updateCustomer with the address payload on save', async () => {
       updateCustomer.mockResolvedValue({});
       renderPage();
-      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[1]);
+      fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
       fireEvent.change(screen.getByLabelText('Address'), { target: { value: '99 New Road' } });
       fireEvent.click(screen.getByRole('button', { name: 'Update' }));
       await waitFor(() => {

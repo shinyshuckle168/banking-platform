@@ -25,10 +25,14 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     authState,
-    isAuthenticated: Boolean(authState.accessToken),
+    isAuthenticated: Boolean(authState.accessToken) && (!authState.expiresAt || authState.expiresAt > Date.now()),
     isAdmin: authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN'),
     completeLogin(authResponse, username) {
       const nextState = buildAuthenticatedState(authResponse, username);
+      // Write to localStorage synchronously so the token is immediately
+      // available for any API calls made right after completeLogin() returns.
+      // The useEffect will also run after re-render, which is a no-op here.
+      writeStoredAuthState(nextState);
       setAuthState(nextState);
       return nextState;
     },
