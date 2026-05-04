@@ -4,14 +4,26 @@ import { readStoredAuthState } from '../auth/authState';
 const AUTH_STORAGE_KEY = 'banking-app-auth';
 const CUSTOMER_CONTEXT_KEY = 'banking-app-customer-contexts';
 
+function isAuthEndpoint(url) {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+
+  return /\/(api\/)?auth\/(login|register|refresh)(\/|$)/.test(url);
+}
+
 function attachSessionExpiredInterceptor(client) {
   client.interceptors.response.use(
     (response) => response,
     (error) => {
       const status = error?.response?.status;
+      const requestUrl = error?.config?.url || '';
+      const authState = readStoredAuthState();
+      const hadSession = Boolean(authState.accessToken);
       // Only clear the session on 401 (Unauthorized = token missing/expired/invalid).
       // 403 (Forbidden) means the user IS authenticated but lacks permission — do not log them out.
-      if (status === 401) {
+      // Ignore auth endpoint failures during login/register so user sees the real error.
+      if (status === 401 && hadSession && !isAuthEndpoint(requestUrl)) {
         window.localStorage.removeItem(AUTH_STORAGE_KEY);
         window.localStorage.removeItem(CUSTOMER_CONTEXT_KEY);
         // Only redirect if not already on the login page to avoid redirect loops
