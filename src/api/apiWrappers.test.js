@@ -42,14 +42,14 @@ describe('account and customer api wrappers', () => {
       balance: '100.00',
       interestRate: '0.0500'
     })).resolves.toEqual({ accountId: 10 });
-    expect(accountApiClient.post).toHaveBeenCalledWith('/api/customers/44/accounts', {
+    expect(accountApiClient.post).toHaveBeenCalledWith('/customers/44/accounts', {
       accountType: 'SAVINGS',
       balance: '100.00',
       interestRate: '0.0500'
     });
 
     await updateAccount({ accountId: '10', interestRate: '' });
-    expect(accountApiClient.put).toHaveBeenCalledWith('/api/accounts/10', {});
+    expect(accountApiClient.put).toHaveBeenCalledWith('/accounts/10', {});
   });
 
   it('adds idempotency headers and nullable description/category for money movements', async () => {
@@ -64,17 +64,17 @@ describe('account and customer api wrappers', () => {
     await transferBetweenAccounts({ fromAccountId: 12, toAccountId: 18, amount: '8.00', description: '', category: 'Food' });
 
     expect(accountApiClient.post).toHaveBeenNthCalledWith(1,
-      '/api/accounts/12/deposit',
+      '/accounts/12/deposit',
       { amount: '5.00', description: null, category: null },
       { headers: { 'Idempotency-Key': 'generated-idempotency-key' } }
     );
     expect(accountApiClient.post).toHaveBeenNthCalledWith(2,
-      '/api/accounts/12/withdraw',
+      '/accounts/12/withdraw',
       { amount: '3.00', description: 'ATM', category: null },
       { headers: { 'Idempotency-Key': 'generated-idempotency-key' } }
     );
     expect(accountApiClient.post).toHaveBeenNthCalledWith(3,
-      '/api/accounts/transfer',
+      '/accounts/transfer',
       { fromAccountId: 12, toAccountId: 18, amount: '8.00', description: null, category: 'Food' },
       { headers: { 'Idempotency-Key': 'generated-idempotency-key' } }
     );
