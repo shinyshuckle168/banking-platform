@@ -139,7 +139,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {!isAuthenticated ? (
+      {/* {!isAuthenticated ? (
         <Link className="big-get-started" to="/register">Get Started</Link>
       ) : (
         <section className="panel stack">
@@ -195,7 +195,7 @@ export function HomePage() {
             {!authState.customerId ? <Link className="button-link subtle" to="/customer/create">Create Customer</Link> : null}
           </div>
         </section>
-      )}
+      )} */}
 
       <footer className="overview-footer">
         <div className="footer-bottom-row">

@@ -1480,8 +1480,9 @@ select:disabled,
 textarea:disabled {
   background: rgba(255, 255, 255, 0.38);
   color: var(--muted);
-  cursor: default;
+  cursor: not-allowed;
   border-color: rgba(90, 63, 40, 0.08);
+  opacity: 0.75;
 }
 
 @media (max-width: 920px) {
