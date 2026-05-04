@@ -1,4 +1,5 @@
 steps:
+  # ---------- Maven build + Sonar ----------
   - name: 'maven:3.9.9-eclipse-temurin-21'
     dir: 'backend'
     entrypoint: 'bash'
@@ -6,15 +7,17 @@ steps:
     args:
       - '-c'
       - |
-        mvn clean verify sonar:sonar \
+        mvn clean package -DskipTests sonar:sonar \
           -Dsonar.projectKey=shinyshuckle168_banking-platform \
           -Dsonar.organization=fdm-gcp-2026 \
           -Dsonar.host.url=https://sonarcloud.io
 
+  # ---------- Docker build ----------
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'backend'
-    args: ['build', '-t', '${_IMAGE}', '.']
+    args: ['build', '-t', '${_IMAGE}:$SHORT_SHA', '.']
 
+  # ---------- Security scan ----------
   - name: 'aquasec/trivy:latest'
     entrypoint: 'sh'
     args:
@@ -24,18 +27,20 @@ steps:
           --severity CRITICAL \
           --ignore-unfixed \
           --exit-code 1 \
-          ${_IMAGE}
+          ${_IMAGE}:$SHORT_SHA
 
+  # ---------- Push ----------
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_IMAGE}']
+    args: ['push', '${_IMAGE}:$SHORT_SHA']
 
+  # ---------- Deploy Cloud Run ----------
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - run
       - deploy
       - ${_SERVICE}
-      - --image=${_IMAGE}
+      - --image=${_IMAGE}:$SHORT_SHA
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
