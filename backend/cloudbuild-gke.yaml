@@ -50,8 +50,8 @@ availableSecrets:
   secretManager:
     - versionName: projects/gcp-class-14/secrets/sonar-cloud-auth-token/versions/latest
       env: 'SONAR_TOKEN'
-    - versionName: projects/gcp-class-14/secrets/JWT_SECRET/versions/latest
-      env: 'JWT_VAL'
+#    - versionName: projects/gcp-class-14/secrets/JWT_SECRET/versions/latest
+#      env: 'JWT_VAL'
 
 options:
   logging: CLOUD_LOGGING_ONLY
